@@ -1,0 +1,419 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { toast } from 'sonner';
+import { Plus, Edit, Trash2, ChevronUp, ChevronDown, HelpCircle } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
+import { Badge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
+import { Card, CardContent } from '@/components/ui/Card';
+import { ModuleForm } from './ModuleForm';
+import { QuizEditor } from './QuizEditor';
+import type { Module, ModuleType, Trail, UserRole } from '@/lib/types';
+
+interface ModulesManagerProps {
+  areaFilter: string | null; // Se presente, filtra trilhas por área (modo gestor)
+  userRole: UserRole;
+}
+
+export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
+  const supabase = createClient();
+  const [trails, setTrails] = useState<Trail[]>([]);
+  const [selectedTrailId, setSelectedTrailId] = useState<string>('');
+  const [modules, setModules] = useState<Module[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isQuizEditorOpen, setIsQuizEditorOpen] = useState(false);
+  const [editingModule, setEditingModule] = useState<Module | null>(null);
+  const [editingQuizModuleId, setEditingQuizModuleId] = useState<string | null>(null);
+  const [deletingModuleId, setDeletingModuleId] = useState<string | null>(null);
+  const [reorderingModuleId, setReorderingModuleId] = useState<string | null>(null);
+
+  // Buscar trilhas
+  useEffect(() => {
+    async function fetchTrails() {
+      try {
+        let query = supabase.from('trails').select('*').order('name');
+
+        // Se areaFilter presente, filtrar por área (modo gestor)
+        if (areaFilter) {
+          query = query.eq('area_id', areaFilter);
+        }
+
+        const { data: trailsData, error } = await query;
+
+        if (error) throw error;
+
+        setTrails((trailsData as Trail[]) || []);
+
+        // Selecionar primeira trilha automaticamente
+        if (trailsData && trailsData.length > 0 && !selectedTrailId) {
+          setSelectedTrailId(trailsData[0].id);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar trilhas:', error);
+        toast.error('Erro ao carregar trilhas', {
+          description: error instanceof Error ? error.message : 'Erro inesperado',
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchTrails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [areaFilter]);
+
+  // Buscar módulos quando trilha selecionada mudar
+  useEffect(() => {
+    async function loadModules() {
+      if (!selectedTrailId) {
+        setModules([]);
+        return;
+      }
+
+      try {
+        const { data: modulesData, error } = await supabase
+          .from('modules')
+          .select('*')
+          .eq('trail_id', selectedTrailId)
+          .order('sort_order', { ascending: true });
+
+        if (error) throw error;
+
+        setModules((modulesData as Module[]) || []);
+      } catch (error) {
+        console.error('Erro ao buscar módulos:', error);
+        toast.error('Erro ao carregar módulos', {
+          description: error instanceof Error ? error.message : 'Erro inesperado',
+        });
+      }
+    }
+
+    loadModules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTrailId]);
+
+  async function fetchModules() {
+    if (!selectedTrailId) return;
+
+    try {
+      const { data: modulesData, error } = await supabase
+        .from('modules')
+        .select('*')
+        .eq('trail_id', selectedTrailId)
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+
+      setModules((modulesData as Module[]) || []);
+    } catch (error) {
+      console.error('Erro ao buscar módulos:', error);
+      toast.error('Erro ao carregar módulos', {
+        description: error instanceof Error ? error.message : 'Erro inesperado',
+      });
+    }
+  }
+
+  const handleCreate = () => {
+    if (!selectedTrailId) {
+      toast.error('Selecione uma trilha primeiro');
+      return;
+    }
+    setEditingModule(null);
+    setIsFormModalOpen(true);
+  };
+
+  const handleEdit = (module: Module) => {
+    setEditingModule(module);
+    setIsFormModalOpen(true);
+  };
+
+  const handleEditQuiz = (moduleId: string) => {
+    setEditingQuizModuleId(moduleId);
+    setIsQuizEditorOpen(true);
+  };
+
+  const handleCloseFormModal = () => {
+    setIsFormModalOpen(false);
+    setEditingModule(null);
+  };
+
+  const handleCloseQuizEditor = () => {
+    setIsQuizEditorOpen(false);
+    setEditingQuizModuleId(null);
+  };
+
+  const handleFormSuccess = () => {
+    handleCloseFormModal();
+    fetchModules();
+  };
+
+  const handleDelete = async (moduleId: string) => {
+    if (!confirm('Tem certeza que deseja excluir este módulo?')) {
+      return;
+    }
+
+    try {
+      setDeletingModuleId(moduleId);
+      const { error } = await supabase.from('modules').delete().eq('id', moduleId);
+
+      if (error) throw error;
+
+      toast.success('Módulo excluído com sucesso!');
+      await fetchModules();
+    } catch (error) {
+      console.error('Erro ao excluir módulo:', error);
+      toast.error('Erro ao excluir módulo', {
+        description: error instanceof Error ? error.message : 'Erro inesperado',
+      });
+    } finally {
+      setDeletingModuleId(null);
+    }
+  };
+
+  const handleMove = async (moduleId: string, direction: 'up' | 'down') => {
+    const moduleIndex = modules.findIndex((m) => m.id === moduleId);
+    if (moduleIndex === -1) return;
+
+    const newIndex = direction === 'up' ? moduleIndex - 1 : moduleIndex + 1;
+    if (newIndex < 0 || newIndex >= modules.length) return;
+
+    const module = modules[moduleIndex];
+    const targetModule = modules[newIndex];
+
+    try {
+      setReorderingModuleId(moduleId);
+
+      // Trocar sort_order
+      const { error: error1 } = await supabase
+        .from('modules')
+        .update({ sort_order: targetModule.sort_order })
+        .eq('id', module.id);
+
+      if (error1) throw error1;
+
+      const { error: error2 } = await supabase
+        .from('modules')
+        .update({ sort_order: module.sort_order })
+        .eq('id', targetModule.id);
+
+      if (error2) throw error2;
+
+      await fetchModules();
+    } catch (error) {
+      console.error('Erro ao reordenar módulo:', error);
+      toast.error('Erro ao reordenar módulo', {
+        description: error instanceof Error ? error.message : 'Erro inesperado',
+      });
+    } finally {
+      setReorderingModuleId(null);
+    }
+  };
+
+  const getTypeBadge = (type: ModuleType) => {
+    switch (type) {
+      case 'video':
+        return <Badge color="red">Vídeo</Badge>;
+      case 'document':
+        return <Badge color="blue">Documento</Badge>;
+      case 'quiz':
+        return <Badge color="green">Quiz</Badge>;
+      default:
+        return <Badge>{type}</Badge>;
+    }
+  };
+
+  const trailOptions = trails.map((trail) => ({
+    value: trail.id,
+    label: trail.name,
+  }));
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-[#8888A0]">Carregando...</p>
+      </div>
+    );
+  }
+
+  if (trails.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-[#8888A0] mb-4">
+            {areaFilter
+              ? 'Nenhuma trilha encontrada na sua área'
+              : 'Nenhuma trilha cadastrada'}
+          </p>
+          <p className="text-sm text-[#8888A0]">
+            Crie uma trilha primeiro para adicionar módulos
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold text-[#E8E8ED]">Gerenciar Módulos</h2>
+          <p className="text-sm text-[#8888A0] mt-1">
+            {modules.length} módulo{modules.length !== 1 ? 's' : ''} na trilha selecionada
+          </p>
+        </div>
+        <Button
+          onClick={handleCreate}
+          icon={Plus}
+          disabled={!selectedTrailId}
+        >
+          Novo Módulo
+        </Button>
+      </div>
+
+      {/* Select de Trilha */}
+      <Card>
+        <CardContent className="p-4">
+          <Select
+            label="Selecione a trilha"
+            options={trailOptions}
+            value={selectedTrailId}
+            onChange={(e) => setSelectedTrailId(e.target.value)}
+            placeholder="Selecione uma trilha"
+          />
+        </CardContent>
+      </Card>
+
+      {/* Lista de Módulos */}
+      {selectedTrailId && (
+        <Card>
+          <CardContent className="p-0">
+            {modules.length === 0 ? (
+              <div className="p-12 text-center">
+                <p className="text-[#8888A0] mb-2">Nenhum módulo cadastrado nesta trilha</p>
+                <Button onClick={handleCreate} variant="secondary" size="sm" icon={Plus}>
+                  Criar primeiro módulo
+                </Button>
+              </div>
+            ) : (
+              <div className="divide-y divide-[#262630]">
+                {modules.map((module, index) => (
+                  <div
+                    key={module.id}
+                    className="p-6 hover:bg-[#0A0A0F]/50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-4 flex-1">
+                        {/* Número e controles de ordem */}
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="text-sm font-medium text-[#8888A0] w-8 text-center">
+                            {index + 1}
+                          </span>
+                          <div className="flex flex-col gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleMove(module.id, 'up')}
+                              icon={ChevronUp}
+                              className="h-6 w-6 p-0"
+                              disabled={index === 0 || reorderingModuleId === module.id}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleMove(module.id, 'down')}
+                              icon={ChevronDown}
+                              className="h-6 w-6 p-0"
+                              disabled={index === modules.length - 1 || reorderingModuleId === module.id}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Informações do módulo */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-lg font-medium text-[#E8E8ED]">
+                              {module.title}
+                            </h3>
+                            {getTypeBadge(module.type)}
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-[#8888A0]">
+                            {module.duration !== null && module.duration > 0 && (
+                              <span>Duração: {module.duration} min</span>
+                            )}
+                            {module.type === 'quiz' && (
+                              <button
+                                onClick={() => handleEditQuiz(module.id)}
+                                className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
+                              >
+                                <HelpCircle className="w-4 h-4" />
+                                Editar Questões
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Ações */}
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(module)}
+                          icon={Edit}
+                          className="h-8 w-8 p-0"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(module.id)}
+                          icon={Trash2}
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                          disabled={deletingModuleId === module.id}
+                          loading={deletingModuleId === module.id}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Modal do Formulário */}
+      <Modal
+        isOpen={isFormModalOpen}
+        onClose={handleCloseFormModal}
+        title={editingModule ? 'Editar Módulo' : 'Novo Módulo'}
+        size="lg"
+      >
+        {selectedTrailId && (
+          <ModuleForm
+            initialData={editingModule || undefined}
+            trailId={selectedTrailId}
+            onSuccess={handleFormSuccess}
+            onCancel={handleCloseFormModal}
+          />
+        )}
+      </Modal>
+
+      {/* Modal do Editor de Quiz */}
+      <Modal
+        isOpen={isQuizEditorOpen}
+        onClose={handleCloseQuizEditor}
+        title="Editor de Questões"
+        size="xl"
+      >
+        {editingQuizModuleId && (
+          <QuizEditor moduleId={editingQuizModuleId} onClose={handleCloseQuizEditor} />
+        )}
+      </Modal>
+    </div>
+  );
+}

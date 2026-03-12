@@ -1,0 +1,75 @@
+# Partners Onboarding — Cursor Rules
+
+## Stack & Convenções
+- Next.js 14 App Router + TypeScript (strict mode)
+- Tailwind CSS para toda estilização — NUNCA usar CSS inline ou CSS Modules
+- Supabase para banco, auth e storage de PDFs
+- Cloudflare R2 para storage de vídeos (S3-compatible)
+- Sempre usar Server Components por padrão. Usar "use client" SOMENTE quando necessário (hooks, interatividade, event handlers)
+- Sempre tipar com TypeScript — nunca usar `any`
+- Usar os tipos definidos em src/lib/types.ts para todas as entidades do banco
+
+## Estrutura de Arquivos
+- Componentes de página vão em src/app/
+- Componentes reutilizáveis vão em src/components/ organizados por domínio
+- Lógica do Supabase vai em src/lib/supabase/
+- Hooks customizados vão em src/hooks/
+- API Routes vão em src/app/api/
+
+## Supabase
+- SEMPRE usar createClient de src/lib/supabase/client.ts (browser) ou src/lib/supabase/server.ts (server)
+- NUNCA instanciar supabase client diretamente nos componentes
+- Usar Row Level Security — nunca confiar apenas no frontend para controle de acesso
+- Para queries server-side, usar createServerClient com cookies
+- Tipos do banco: usar os types gerados ou definidos em src/lib/types.ts
+
+## Autenticação & Roles
+- Supabase Auth com email/senha e magic link
+- Middleware em src/middleware.ts protege todas as rotas exceto /login
+- 3 roles: colaborador, gestor, admin
+- Role check via coluna "role" na tabela users
+- Usar hook useAuth() para acessar sessão, role e areaId no client
+- REGRA DE ESCOPO POR ÁREA:
+  * Gestor lê/escreve trilhas, módulos e progresso APENAS da area_id dele
+  * Admin lê/escreve TUDO sem filtro de área
+  * Colaborador lê trilhas (conforme visibilidade) e escreve apenas seu progresso
+- Gestor tem acesso a CRUD de trilhas/módulos (filtrado pela área dele)
+- Upload de vídeos/PDFs liberado para gestor E admin
+
+## Tipos de Trilha (IMPORTANTE)
+- obrigatoria_global: area_id = NULL, visível para TODOS, obrigatória
+- obrigatoria_area: area_id = uuid, visível SOMENTE para users daquela área, obrigatória para eles
+- optativa: area_id = NULL, visível para TODOS, opcional
+- Query do catálogo: WHERE (type = 'obrigatoria_global') OR (type = 'obrigatoria_area' AND area_id = user.area_id) OR (type = 'optativa')
+
+## Componentes UI
+- Usar lucide-react para ícones — NUNCA SVGs inline
+- Usar framer-motion para animações de entrada e transições
+- Usar sonner para toasts/notificações
+- Usar react-hook-form + zod para formulários com validação
+- Cards com rounded-xl (border-radius 14px), bg-[#13131A], border border-[#262630]
+
+## Storage
+- Vídeos → Cloudflare R2 via @aws-sdk/client-s3 com signed URLs
+- PDFs e imagens → Supabase Storage (bucket privado) com signed URLs
+- Upload feito via API Route (não direto do client)
+- Upload permitido para admin (qualquer área) e gestor (área dele)
+
+## Padrões de Código
+- Funções async/await — nunca .then() chains
+- Error handling com try/catch em toda operação do Supabase
+- Loading states com skeleton ou spinner em toda operação assíncrona
+- Variáveis de ambiente: NEXT_PUBLIC_ para client, sem prefixo para server
+- Nomes em inglês no código, textos da UI em português (pt-BR)
+
+## Performance
+- Usar React Suspense + loading.tsx para carregamento de páginas
+- Imagens com next/image e propriedade priority para LCP
+- Lazy load de componentes pesados (player de vídeo, gráficos)
+
+## Segurança
+- Quiz corrigido no server (API Route), nunca no client
+- Signed URLs com expiração para vídeos e PDFs
+- RLS ativo em TODAS as tabelas
+- Validação com zod no server antes de qualquer mutação
+- Gestor só manipula dados da própria área — RLS garante isso
