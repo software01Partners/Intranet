@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     if (!attemptsError && attemptsCount !== null) {
       attemptCount = attemptsCount;
-    } else if (existingProgress?.score !== null && !existingProgress.completed) {
+    } else if (existingProgress && existingProgress.score !== null && !existingProgress.completed) {
       // Se a tabela não existir, usar lógica alternativa:
       // Se já existe um registro com score não-nulo e completed: false, já tentou antes
       // Como não temos histórico exato, vamos assumir que já tentou pelo menos 1 vez

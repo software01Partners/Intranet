@@ -16,10 +16,10 @@ export async function TeamStats({ areaId }: TeamStatsProps) {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#8888A0] mb-1">
+              <p className="text-sm text-[#6B7194] dark:text-[#8888A0] mb-1">
                 Colaboradores na Área
               </p>
-              <p className="text-2xl font-semibold text-[#E8E8ED]">
+              <p className="text-2xl font-semibold text-[#1A1D2E] dark:text-[#E8E8ED]">
                 {stats.totalMembers}
               </p>
             </div>
@@ -32,7 +32,7 @@ export async function TeamStats({ areaId }: TeamStatsProps) {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#8888A0] mb-1">Progresso Médio</p>
+              <p className="text-sm text-[#6B7194] dark:text-[#8888A0] mb-1">Progresso Médio</p>
               <div className="mt-2">
                 <ProgressRing value={stats.averageProgress} size={60} />
               </div>
@@ -45,10 +45,10 @@ export async function TeamStats({ areaId }: TeamStatsProps) {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#8888A0] mb-1">
+              <p className="text-sm text-[#6B7194] dark:text-[#8888A0] mb-1">
                 Trilhas Concluídas
               </p>
-              <p className="text-2xl font-semibold text-[#E8E8ED]">
+              <p className="text-2xl font-semibold text-[#1A1D2E] dark:text-[#E8E8ED]">
                 {stats.trailsCompleted}
               </p>
             </div>
@@ -61,8 +61,8 @@ export async function TeamStats({ areaId }: TeamStatsProps) {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#8888A0] mb-1">Atrasados</p>
-              <p className="text-2xl font-semibold text-[#E8E8ED]">
+              <p className="text-sm text-[#6B7194] dark:text-[#8888A0] mb-1">Atrasados</p>
+              <p className="text-2xl font-semibold text-[#1A1D2E] dark:text-[#E8E8ED]">
                 {stats.delayedMembers}
               </p>
             </div>

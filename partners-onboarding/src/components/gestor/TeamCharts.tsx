@@ -22,7 +22,7 @@ interface TeamChartsProps {
 }
 
 const COLORS = {
-  accent: '#E8580C',
+  primary: '#6B2FA0',
   green: '#10B981',
   blue: '#3B82F6',
   red: '#EF4444',
@@ -70,26 +70,27 @@ export async function TeamCharts({ areaId }: TeamChartsProps) {
               layout="vertical"
               margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#262630" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E5F1" />
               <XAxis
                 type="number"
                 domain={[0, 100]}
-                stroke="#8888A0"
-                tick={{ fill: '#8888A0' }}
+                stroke="#6B7194"
+                tick={{ fill: '#6B7194' }}
               />
               <YAxis
                 type="category"
                 dataKey="name"
-                stroke="#8888A0"
-                tick={{ fill: '#8888A0' }}
+                stroke="#6B7194"
+                tick={{ fill: '#6B7194' }}
                 width={90}
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#13131A',
-                  border: '1px solid #262630',
-                  borderRadius: '8px',
-                  color: '#E8E8ED',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E2E5F1',
+                  borderRadius: '12px',
+                  color: '#1A1D2E',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                 }}
                 formatter={(value: number, name: string, props: any) => [
                   `${value}%`,
@@ -106,7 +107,7 @@ export async function TeamCharts({ areaId }: TeamChartsProps) {
                     fill={
                       entry.type === 'optativa'
                         ? COLORS.green
-                        : COLORS.accent
+                        : COLORS.primary
                     }
                   />
                 ))}
@@ -142,16 +143,17 @@ export async function TeamCharts({ areaId }: TeamChartsProps) {
               </Pie>
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#13131A',
-                  border: '1px solid #262630',
-                  borderRadius: '8px',
-                  color: '#E8E8ED',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E2E5F1',
+                  borderRadius: '12px',
+                  color: '#1A1D2E',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                 }}
               />
               <Legend
-                wrapperStyle={{ color: '#E8E8ED' }}
+                wrapperStyle={{ color: 'currentColor' }}
                 formatter={(value) => (
-                  <span style={{ color: '#E8E8ED' }}>{value}</span>
+                  <span className="text-[#1A1D2E] dark:text-[#E8E8ED]">{value}</span>
                 )}
               />
             </PieChart>

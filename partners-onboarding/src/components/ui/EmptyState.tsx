@@ -41,16 +41,20 @@ export function EmptyState({
     >
       <div
         className={cn(
-          'mb-4 text-[#8888A0]',
+          'mb-4 text-[#9CA3C4] dark:text-[#8888A0]',
           iconSizes[iconSize],
           iconClassName
         )}
       >
         <Icon className="w-full h-full" />
       </div>
-      <h3 className="text-lg font-semibold text-[#E8E8ED] mb-2">{title}</h3>
+      <h3 className="text-lg font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-2">
+        {title}
+      </h3>
       {description && (
-        <p className="text-sm text-[#8888A0] max-w-md mb-6">{description}</p>
+        <p className="text-sm text-[#6B7194] dark:text-[#8888A0] max-w-md mb-6">
+          {description}
+        </p>
       )}
       {actionLabel && onAction && (
         <Button onClick={onAction} variant="primary">

@@ -15,24 +15,22 @@ export interface ProgressRingProps {
   className?: string;
 }
 
+const defaultGradient = 'url(#progress-ring-gradient)';
+
 export function ProgressRing({
   value,
   size = 120,
   strokeWidth = 8,
-  color = '#E8580C',
-  backgroundColor = '#262630',
   showLabel = true,
   labelSize = 'md',
   className,
 }: ProgressRingProps) {
   const [animatedValue, setAnimatedValue] = useState(0);
 
-  // Clamp value between 0 and 100
   const clampedValue = Math.max(0, Math.min(100, value));
 
   useEffect(() => {
-    // Animate value change
-    const duration = 1000; // 1 second
+    const duration = 1000;
     const steps = 60;
     const increment = clampedValue / steps;
     let current = 0;
@@ -64,19 +62,22 @@ export function ProgressRing({
 
   return (
     <div className={cn('relative inline-flex items-center justify-center', className)}>
-      <svg
-        width={size}
-        height={size}
-        className="transform -rotate-90"
-      >
+      <svg width={size} height={size} className="transform -rotate-90">
+        <defs>
+          <linearGradient id="progress-ring-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#6B2FA0" />
+            <stop offset="100%" stopColor="#8B5CF6" />
+          </linearGradient>
+        </defs>
         {/* Background circle */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={backgroundColor}
+          stroke="currentColor"
           strokeWidth={strokeWidth}
+          className="text-[#E2E5F1] dark:text-[#2D2D4A]"
         />
         {/* Progress circle */}
         <motion.circle
@@ -84,7 +85,7 @@ export function ProgressRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={color}
+          stroke={defaultGradient}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -98,7 +99,7 @@ export function ProgressRing({
         <div className="absolute inset-0 flex items-center justify-center">
           <span
             className={cn(
-              'font-semibold text-[#E8E8ED]',
+              'font-bold text-[#1A1D2E] dark:text-[#E8E8ED]',
               labelSizes[labelSize]
             )}
           >

@@ -18,12 +18,13 @@ export const Skeleton = forwardRef<HTMLDivElement, SkeletonProps>(
     },
     ref
   ) => {
-    const baseStyles = 'bg-[#1A1A24] animate-pulse';
+    const baseStyles =
+      'bg-[#E2E5F1] dark:bg-[#2D2D4A] animate-pulse';
 
     const variants = {
       line: 'h-4 rounded-lg',
       circle: 'rounded-full',
-      card: 'h-32 rounded-xl',
+      card: 'h-32 rounded-2xl',
     };
 
     const style: React.CSSProperties = {};

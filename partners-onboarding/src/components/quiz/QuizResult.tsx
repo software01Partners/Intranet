@@ -54,23 +54,20 @@ export function QuizResult({ result, trailId, onRetry }: QuizResultProps) {
       className="w-full max-w-3xl mx-auto"
     >
       {/* Resultado principal */}
-      <div className="bg-[#13131A] border border-[#262630] rounded-xl p-8 mb-6 text-center">
+      <div className="bg-white dark:bg-[#1A1A2E] border border-[#E2E5F1] dark:border-[#2D2D4A] rounded-2xl p-8 mb-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <div className="flex flex-col items-center gap-6">
-          {/* ProgressRing com nota */}
           <div className="relative">
             <ProgressRing
               value={result.percentage}
               size={160}
               strokeWidth={12}
-              color={result.passed ? '#10B981' : '#F59E0B'}
-              backgroundColor="#262630"
               showLabel={false}
             />
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="text-4xl font-bold text-[#E8E8ED]">
+              <div className="text-4xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED]">
                 {result.score}/{result.total}
               </div>
-              <div className="text-lg text-[#8888A0] mt-1">
+              <div className="text-lg text-[#6B7194] dark:text-[#8888A0] mt-1">
                 {result.percentage.toFixed(0)}%
               </div>
             </div>
@@ -86,7 +83,7 @@ export function QuizResult({ result, trailId, onRetry }: QuizResultProps) {
                     Parabéns! Você foi aprovado!
                   </h2>
                 </div>
-                <p className="text-[#8888A0]">
+                <p className="text-[#6B7194] dark:text-[#8888A0]">
                   Você atingiu a nota mínima de {result.minimumScore}% e
                   concluiu este módulo com sucesso.
                 </p>
@@ -99,7 +96,7 @@ export function QuizResult({ result, trailId, onRetry }: QuizResultProps) {
                     Nota mínima não atingida
                   </h2>
                 </div>
-                <p className="text-[#8888A0]">
+                <p className="text-[#6B7194] dark:text-[#8888A0]">
                   Você precisa de pelo menos {result.minimumScore}% para ser
                   aprovado. Sua nota foi {result.percentage.toFixed(0)}%.
                 </p>
@@ -144,7 +141,7 @@ export function QuizResult({ result, trailId, onRetry }: QuizResultProps) {
 
       {/* Feedback das questões */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-[#E8E8ED] mb-4">
+        <h3 className="text-lg font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-4">
           Revisão das Questões
         </h3>
 
@@ -169,7 +166,7 @@ export function QuizResult({ result, trailId, onRetry }: QuizResultProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: questionIndex * 0.1 }}
               className={cn(
-                'bg-[#13131A] border rounded-xl p-6',
+                'bg-white dark:bg-[#1A1A2E] border border-[#E2E5F1] dark:border-[#2D2D4A] rounded-2xl p-6',
                 isCorrect
                   ? 'border-[#10B981]/30 bg-[#10B981]/5'
                   : 'border-[#EF4444]/30 bg-[#EF4444]/5'
@@ -182,14 +179,14 @@ export function QuizResult({ result, trailId, onRetry }: QuizResultProps) {
                   <XCircle className="w-5 h-5 text-[#EF4444] flex-shrink-0 mt-0.5" />
                 )}
                 <div className="flex-1">
-                  <h4 className="text-base font-medium text-[#E8E8ED] mb-2">
+                  <h4 className="text-base font-medium text-[#1A1D2E] dark:text-[#E8E8ED] mb-2">
                     Questão {questionIndex + 1}
                   </h4>
-                  <p className="text-[#8888A0] mb-4">{question.question}</p>
+                  <p className="text-[#6B7194] dark:text-[#8888A0] mb-4">{question.question}</p>
 
                   {/* Resposta correta */}
                   <div className="mb-2">
-                    <span className="text-sm text-[#8888A0]">
+                    <span className="text-sm text-[#6B7194] dark:text-[#8888A0]">
                       Resposta correta:{' '}
                     </span>
                     <span className="text-sm font-medium text-[#10B981]">
@@ -200,7 +197,7 @@ export function QuizResult({ result, trailId, onRetry }: QuizResultProps) {
                   {/* Resposta selecionada (se errou) */}
                   {!isCorrect && selectedOption && (
                     <div>
-                      <span className="text-sm text-[#8888A0]">
+                      <span className="text-sm text-[#6B7194] dark:text-[#8888A0]">
                         Sua resposta:{' '}
                       </span>
                       <span className="text-sm font-medium text-[#EF4444]">

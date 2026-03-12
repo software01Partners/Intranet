@@ -114,8 +114,8 @@ export function QuizClient({
   if (isSubmitting) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <Loader2 className="w-12 h-12 animate-spin text-[#E8580C] mb-4" />
-        <p className="text-[#8888A0]">Corrigindo seu quiz...</p>
+        <Loader2 className="w-12 h-12 animate-spin text-[#6B2FA0] dark:text-[#8B5CF6] mb-4" />
+        <p className="text-[#6B7194] dark:text-[#8888A0]">Corrigindo seu quiz...</p>
       </div>
     );
   }

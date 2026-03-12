@@ -5,18 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ProgressRing } from '@/components/ui/ProgressRing';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ContinueButton } from '@/components/dashboard/ContinueButton';
 import {
   BookOpen,
   CheckCircle2,
   Award,
-  Play,
   FileText,
   Video,
   HelpCircle,
-  Download,
 } from 'lucide-react';
 import { formatDateFull, calculateProgress } from '@/lib/utils';
 import Link from 'next/link';
@@ -452,57 +450,71 @@ async function StatsCards({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card>
+      <Card className="border-l-4 border-l-[#6B2FA0] dark:border-l-[#8B5CF6]">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#8888A0] mb-1">Trilhas em Andamento</p>
-              <p className="text-2xl font-semibold text-[#E8E8ED]">
+              <p className="text-xs font-medium uppercase tracking-wide text-[#9CA3C4] dark:text-[#8888A0] mb-1">
+                Trilhas em Andamento
+              </p>
+              <p className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED]">
                 {stats.trailsInProgress}
               </p>
             </div>
-            <BookOpen className="w-8 h-8 text-blue-500" />
+            <div className="w-10 h-10 rounded-full bg-[#6B2FA0]/10 dark:bg-[#8B5CF6]/15 flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-[#6B2FA0] dark:text-[#8B5CF6]" />
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-l-4 border-l-[#10B981]">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#8888A0] mb-1">Módulos Concluídos</p>
-              <p className="text-2xl font-semibold text-[#E8E8ED]">
+              <p className="text-xs font-medium uppercase tracking-wide text-[#9CA3C4] dark:text-[#8888A0] mb-1">
+                Módulos Concluídos
+              </p>
+              <p className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED]">
                 {stats.modulesCompleted}
               </p>
             </div>
-            <CheckCircle2 className="w-8 h-8 text-green-500" />
+            <div className="w-10 h-10 rounded-full bg-[#10B981]/10 flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-l-4 border-l-[#3B82F6]">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#8888A0] mb-1">Progresso Geral</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-[#9CA3C4] dark:text-[#8888A0] mb-1">
+                Progresso Geral
+              </p>
               <div className="mt-2">
-                <ProgressRing value={stats.overallProgress} size={60} />
+                <ProgressRing value={stats.overallProgress} size={56} />
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-l-4 border-l-[#F5A623]">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#8888A0] mb-1">Certificados</p>
-              <p className="text-2xl font-semibold text-[#E8E8ED]">
+              <p className="text-xs font-medium uppercase tracking-wide text-[#9CA3C4] dark:text-[#8888A0] mb-1">
+                Certificados
+              </p>
+              <p className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED]">
                 {stats.certificates}
               </p>
             </div>
-            <Award className="w-8 h-8 text-yellow-500" />
+            <div className="w-10 h-10 rounded-full bg-[#F5A623]/10 flex items-center justify-center">
+              <Award className="w-5 h-5 text-[#F5A623]" />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -583,16 +595,16 @@ async function LastModuleCard({ userId }: { userId: string }) {
 
   const getTypeColor = (
     type: string
-  ): 'accent' | 'blue' | 'green' | 'yellow' => {
+  ): 'blue' | 'purple' | 'yellow' | 'green' => {
     switch (type) {
       case 'video':
         return 'blue';
       case 'document':
-        return 'accent';
+        return 'purple';
       case 'quiz':
         return 'yellow';
       default:
-        return 'accent';
+        return 'purple';
     }
   };
 
@@ -611,28 +623,24 @@ async function LastModuleCard({ userId }: { userId: string }) {
                 <TypeIcon className="w-3 h-3 mr-1" />
                 {getTypeLabel(lastModule.type)}
               </Badge>
-              <span className="text-sm text-[#8888A0]">
+              <span className="text-sm text-[#6B7194] dark:text-[#8888A0]">
                 {lastModule.trail.name}
               </span>
             </div>
-            <h3 className="text-lg font-semibold text-[#E8E8ED] mb-1">
+            <h3 className="text-lg font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-1">
               {lastModule.title}
             </h3>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-[#8888A0]">Progresso da trilha</span>
-              <span className="text-[#E8E8ED] font-medium">
+              <span className="text-[#6B7194] dark:text-[#8888A0]">Progresso da trilha</span>
+              <span className="text-[#1A1D2E] dark:text-[#E8E8ED] font-medium">
                 {completedModules}/{totalModules} módulos
               </span>
             </div>
             <ProgressBar value={trailProgress} showLabel={false} />
           </div>
-          <Link href={`/trilhas/${lastModule.trail_id}`}>
-            <Button icon={Play} iconPosition="left">
-              Continuar
-            </Button>
-          </Link>
+          <ContinueButton trailId={lastModule.trail_id} />
         </div>
       </CardContent>
     </Card>
@@ -661,10 +669,10 @@ async function RequiredTrailsGrid({
 
   const getTypeBadge = (trail: Trail) => {
     if (trail.type === 'obrigatoria_global') {
-      return <Badge color="red">Global</Badge>;
+      return <Badge color="obrigatoria_global">Obrigatória Global</Badge>;
     }
     if (trail.type === 'obrigatoria_area') {
-      return <Badge color="blue">Da Área</Badge>;
+      return <Badge color="obrigatoria_area">Obrigatória da Área</Badge>;
     }
     return null;
   };
@@ -673,14 +681,14 @@ async function RequiredTrailsGrid({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {trails.map((trail) => (
         <Link key={trail.id} href={`/trilhas/${trail.id}`}>
-          <Card className="hover:border-[#E8580C]/50 transition-colors cursor-pointer">
+          <Card className="hover:border-[#6B2FA0]/30 dark:hover:border-[#8B5CF6]/30 transition-colors cursor-pointer">
             <CardHeader>
               <div className="flex items-start justify-between mb-2">
                 <CardTitle className="text-lg">{trail.name}</CardTitle>
                 {getTypeBadge(trail)}
               </div>
               {trail.description && (
-                <p className="text-sm text-[#8888A0] line-clamp-2">
+                <p className="text-sm text-[#6B7194] dark:text-[#8888A0] line-clamp-2">
                   {trail.description}
                 </p>
               )}
@@ -688,8 +696,8 @@ async function RequiredTrailsGrid({
             <CardContent>
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[#8888A0]">Progresso</span>
-                  <span className="text-[#E8E8ED] font-medium">
+                  <span className="text-[#6B7194] dark:text-[#8888A0]">Progresso</span>
+                  <span className="text-[#1A1D2E] dark:text-[#E8E8ED] font-medium">
                     {trail.completedModules}/{trail.totalModules} módulos
                   </span>
                 </div>
@@ -715,14 +723,14 @@ async function OptionalTrailsGrid({ userId }: { userId: string }) {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {trails.map((trail) => (
         <Link key={trail.id} href={`/trilhas/${trail.id}`}>
-          <Card className="hover:border-[#E8580C]/50 transition-colors cursor-pointer">
+          <Card className="hover:border-[#6B2FA0]/30 dark:hover:border-[#8B5CF6]/30 transition-colors cursor-pointer">
             <CardHeader>
               <div className="flex items-start justify-between mb-2">
                 <CardTitle className="text-lg">{trail.name}</CardTitle>
-                <Badge color="green">Optativa</Badge>
+                <Badge color="optativa">Optativa</Badge>
               </div>
               {trail.description && (
-                <p className="text-sm text-[#8888A0] line-clamp-2">
+                <p className="text-sm text-[#6B7194] dark:text-[#8888A0] line-clamp-2">
                   {trail.description}
                 </p>
               )}
@@ -730,8 +738,8 @@ async function OptionalTrailsGrid({ userId }: { userId: string }) {
             <CardContent>
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[#8888A0]">Progresso</span>
-                  <span className="text-[#E8E8ED] font-medium">
+                  <span className="text-[#6B7194] dark:text-[#8888A0]">Progresso</span>
+                  <span className="text-[#1A1D2E] dark:text-[#E8E8ED] font-medium">
                     {trail.completedModules}/{trail.totalModules} módulos
                   </span>
                 </div>
@@ -752,7 +760,7 @@ export default async function DashboardPage() {
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-[#8888A0]">Erro ao carregar dados do usuário.</p>
+        <p className="text-[#6B7194] dark:text-[#8888A0]">Erro ao carregar dados do usuário.</p>
       </div>
     );
   }
@@ -764,10 +772,10 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-[#E8E8ED] mb-1">
+        <h1 className="text-3xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-1">
           Olá, {userName}!
         </h1>
-        <p className="text-[#8888A0] capitalize">{currentDate}</p>
+        <p className="text-[#6B7194] dark:text-[#8888A0] capitalize">{currentDate}</p>
       </div>
 
       {/* Stats Cards */}
@@ -782,7 +790,7 @@ export default async function DashboardPage() {
 
       {/* Trilhas Obrigatórias */}
       <div>
-        <h2 className="text-2xl font-semibold text-[#E8E8ED] mb-4">
+        <h2 className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-4">
           Trilhas Obrigatórias
         </h2>
         <Suspense fallback={<TrailsSkeleton />}>
@@ -813,7 +821,7 @@ async function OptionalTrailsSection({ userId }: { userId: string }) {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold text-[#E8E8ED] mb-4">
+      <h2 className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-4">
         Trilhas Optativas
       </h2>
       <OptionalTrailsGrid userId={userId} />
@@ -831,7 +839,7 @@ async function CertificatesSection({ userId }: { userId: string }) {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold text-[#E8E8ED] mb-4">
+      <h2 className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-4">
         Meus Certificados
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -840,9 +848,11 @@ async function CertificatesSection({ userId }: { userId: string }) {
             <CardHeader>
               <div className="flex items-start justify-between mb-2">
                 <CardTitle className="text-lg">{cert.trail_name}</CardTitle>
-                <Award className="w-5 h-5 text-yellow-500 flex-shrink-0" />
+                <div className="w-8 h-8 rounded-full bg-[#F5A623]/10 flex items-center justify-center flex-shrink-0">
+                  <Award className="w-4 h-4 text-[#F5A623]" />
+                </div>
               </div>
-              <p className="text-sm text-[#8888A0]">
+              <p className="text-sm text-[#6B7194] dark:text-[#8888A0]">
                 Emitido em {formatDateFull(new Date(cert.issued_at))}
               </p>
             </CardHeader>

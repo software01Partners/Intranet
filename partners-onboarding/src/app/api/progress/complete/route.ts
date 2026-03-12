@@ -62,11 +62,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar se todos os módulos da trilha foram concluídos
+    // Verificar se todos os módulos da trilha foram concluídos (buscar TODOS ordenados)
     const { data: allModules } = await supabase
       .from('modules')
       .select('id')
-      .eq('trail_id', module.trail_id);
+      .eq('trail_id', module.trail_id)
+      .order('sort_order', { ascending: true });
 
     if (!allModules || allModules.length === 0) {
       return NextResponse.json({ success: true, progress });
@@ -81,8 +82,16 @@ export async function POST(request: NextRequest) {
       .eq('completed', true)
       .in('module_id', moduleIds);
 
-    const completedCount = completedProgress?.length || 0;
+    const completedIds = new Set(
+      (completedProgress ?? []).map((p) => p.module_id)
+    );
+    const completedCount = completedIds.size;
     const isTrailComplete = completedCount === allModules.length;
+
+    // Primeiro módulo ainda não concluído (para avançar automaticamente)
+    const nextModuleId = isTrailComplete
+      ? undefined
+      : allModules.find((m) => !completedIds.has(m.id))?.id;
 
     // Se a trilha foi concluída, criar notificações (certificado será gerado sob demanda)
     if (isTrailComplete) {
@@ -150,6 +159,7 @@ export async function POST(request: NextRequest) {
       progress,
       trailComplete: isTrailComplete,
       trailId: isTrailComplete ? module.trail_id : undefined,
+      nextModuleId: nextModuleId ?? undefined,
     });
   } catch (error) {
     console.error('Erro ao completar módulo:', error);

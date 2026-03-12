@@ -29,9 +29,9 @@ export function AreasManager() {
     fetchAreas();
   }, []);
 
-  async function fetchAreas() {
+  async function fetchAreas(silent = false) {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
 
       // Buscar todas as áreas
       const { data: areasData, error: areasError } = await supabase
@@ -43,7 +43,7 @@ export function AreasManager() {
 
       if (!areasData || areasData.length === 0) {
         setAreas([]);
-        setLoading(false);
+        if (!silent) setLoading(false);
         return;
       }
 
@@ -95,7 +95,7 @@ export function AreasManager() {
         description: error instanceof Error ? error.message : 'Erro inesperado',
       });
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
@@ -114,9 +114,9 @@ export function AreasManager() {
     setEditingArea(null);
   };
 
-  const handleFormSuccess = () => {
+  const handleFormSuccess = async () => {
     handleCloseModal();
-    fetchAreas();
+    await fetchAreas(true);
   };
 
   const handleDelete = async (areaId: string) => {
@@ -138,7 +138,8 @@ export function AreasManager() {
       if (error) throw error;
 
       toast.success('Área excluída com sucesso!');
-      fetchAreas();
+      // Atualização otimista: remove a área da lista imediatamente (evita depender do refetch)
+      setAreas((prev) => prev.filter((a) => a.id !== areaId));
     } catch (error) {
       console.error('Erro ao excluir área:', error);
       toast.error('Erro ao excluir área', {
@@ -164,10 +165,10 @@ export function AreasManager() {
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl font-semibold text-[#E8E8ED]">
+              <h2 className="text-xl font-bold text-[#1A1D2E] dark:text-[#1A1D2E] dark:text-[#E8E8ED]">
                 Áreas Cadastradas
               </h2>
-              <p className="text-sm text-[#8888A0] mt-1">
+              <p className="text-sm text-[#6B7194] dark:text-[#6B7194] dark:text-[#8888A0] mt-1">
                 {areas.length} {areas.length === 1 ? 'área' : 'áreas'} cadastrada{areas.length === 1 ? '' : 's'}
               </p>
             </div>
@@ -178,7 +179,7 @@ export function AreasManager() {
 
           {areas.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-[#8888A0] mb-4">Nenhuma área cadastrada</p>
+              <p className="text-[#6B7194] dark:text-[#6B7194] dark:text-[#8888A0] mb-4">Nenhuma área cadastrada</p>
               <Button onClick={handleOpenCreateModal} icon={Plus}>
                 Criar Primeira Área
               </Button>
@@ -187,23 +188,23 @@ export function AreasManager() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-[#262630]">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-[#8888A0]">
+                  <tr className="border-b border-[#E2E5F1] dark:border-[#2D2D4A]">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
                       Cor
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-[#8888A0]">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
                       Nome
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-[#8888A0]">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
                       Abreviação
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-[#8888A0]">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
                       Colaboradores
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-[#8888A0]">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
                       Trilhas
                     </th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-[#8888A0]">
+                    <th className="text-right py-3 px-4 text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
                       Ações
                     </th>
                   </tr>
@@ -212,27 +213,27 @@ export function AreasManager() {
                   {areas.map((area) => (
                     <tr
                       key={area.id}
-                      className="border-b border-[#262630] hover:bg-[#13131A] transition-colors"
+                      className="border-b border-[#E2E5F1] dark:border-[#2D2D4A] hover:bg-[#F8F9FC] dark:hover:bg-[#2D2D4A] transition-colors"
                     >
                       <td className="py-3 px-4">
                         <div
-                          className="w-6 h-6 rounded-full border border-[#262630]"
+                          className="w-6 h-6 rounded-full border border-[#E2E5F1] dark:border-[#2D2D4A]"
                           style={{ backgroundColor: area.color }}
                         />
                       </td>
                       <td className="py-3 px-4">
-                        <span className="text-[#E8E8ED] font-medium">
+                        <span className="text-[#1A1D2E] dark:text-[#E8E8ED] font-medium">
                           {area.name}
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="text-[#8888A0]">{area.abbreviation}</span>
+                        <span className="text-[#6B7194] dark:text-[#8888A0]">{area.abbreviation}</span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="text-[#E8E8ED]">{area.usersCount}</span>
+                        <span className="text-[#1A1D2E] dark:text-[#E8E8ED]">{area.usersCount}</span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="text-[#E8E8ED]">{area.trailsCount}</span>
+                        <span className="text-[#1A1D2E] dark:text-[#E8E8ED]">{area.trailsCount}</span>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center justify-end gap-2">

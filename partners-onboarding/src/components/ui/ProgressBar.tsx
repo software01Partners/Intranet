@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 
 export interface ProgressBarProps extends HTMLAttributes<HTMLDivElement> {
   value: number; // 0-100
-  color?: string;
   size?: 'sm' | 'md';
   showLabel?: boolean;
 }
@@ -15,7 +14,6 @@ export const ProgressBar = forwardRef<HTMLDivElement, ProgressBarProps>(
   (
     {
       value,
-      color = '#E8580C',
       size = 'md',
       showLabel = false,
       className,
@@ -34,7 +32,7 @@ export const ProgressBar = forwardRef<HTMLDivElement, ProgressBarProps>(
       <div ref={ref} className={cn('w-full', className)} {...props}>
         <div
           className={cn(
-            'w-full bg-[#262630] rounded-full overflow-hidden',
+            'w-full bg-[#E2E5F1] dark:bg-[#2D2D4A] rounded-full overflow-hidden',
             sizes[size]
           )}
         >
@@ -42,14 +40,15 @@ export const ProgressBar = forwardRef<HTMLDivElement, ProgressBarProps>(
             initial={{ width: 0 }}
             animate={{ width: `${clampedValue}%` }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
-            className="h-full rounded-full"
-            style={{ backgroundColor: color }}
+            className="h-full rounded-full bg-gradient-to-r from-[#6B2FA0] to-[#8B5CF6]"
           />
         </div>
         {showLabel && (
           <div className="mt-1.5 flex justify-between items-center">
-            <span className="text-xs text-[#8888A0]">Progresso</span>
-            <span className="text-xs font-medium text-[#E8E8ED]">
+            <span className="text-xs text-[#9CA3C4] dark:text-[#8888A0]">
+              Progresso
+            </span>
+            <span className="text-xs font-medium text-[#1A1D2E] dark:text-[#E8E8ED]">
               {Math.round(clampedValue)}%
             </span>
           </div>

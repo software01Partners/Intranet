@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'accent';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   icon?: LucideIcon;
@@ -29,17 +29,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      'inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0A0A0F] disabled:opacity-50 disabled:cursor-not-allowed';
+      'inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed focus:ring-offset-[#F8F9FC] dark:focus:ring-offset-[#0F0F1A]';
 
     const variants = {
       primary:
-        'bg-[#E8580C] text-white hover:bg-[#E8580C]/90 focus:ring-[#E8580C] active:bg-[#E8580C]/80',
+        'bg-[#6B2FA0] text-white hover:bg-[#5A2788] focus:ring-[#6B2FA0]/30 dark:bg-[#8B5CF6] dark:hover:bg-[#7C3AED] dark:focus:ring-[#8B5CF6]/30',
       secondary:
-        'bg-[#262630] text-[#E8E8ED] hover:bg-[#2A2A35] focus:ring-[#262630] active:bg-[#2F2F3A]',
+        'bg-[#F1F3F8] text-[#1A1D2E] hover:bg-[#E2E5F1] focus:ring-[#E2E5F1] dark:bg-[#2D2D4A] dark:text-[#E8E8ED] dark:hover:bg-[#3D3D5C] dark:focus:ring-[#2D2D4A]',
       ghost:
-        'text-[#8888A0] hover:text-[#E8E8ED] hover:bg-[#13131A] focus:ring-[#262630] active:bg-[#1A1A24]',
+        'text-[#6B7194] hover:bg-[#F1F3F8] hover:text-[#1A1D2E] focus:ring-[#E2E5F1] dark:text-[#8888A0] dark:hover:bg-[#2D2D4A] dark:hover:text-[#E8E8ED] dark:focus:ring-[#2D2D4A]',
       danger:
-        'bg-red-600 text-white hover:bg-red-700 focus:ring-red-600 active:bg-red-800',
+        'bg-[#EF4444] text-white hover:bg-[#DC2626] focus:ring-[#EF4444]/30',
+      accent:
+        'bg-[#F5A623] text-white hover:bg-[#E0951F] focus:ring-[#F5A623]/30',
     };
 
     const sizes = {

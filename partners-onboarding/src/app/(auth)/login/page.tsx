@@ -9,18 +9,15 @@ import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { X } from 'lucide-react';
 
-// Schema de validação para Email/Senha
 const emailPasswordSchema = z.object({
   email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
 });
 
-// Schema de validação para Magic Link
 const magicLinkSchema = z.object({
   email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
 });
 
-// Schema de validação para recuperação de senha
 const resetPasswordSchema = z.object({
   email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
 });
@@ -38,7 +35,6 @@ export default function LoginPage() {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const supabase = createClient();
 
-  // Formulário Email/Senha
   const {
     register: registerEmailPassword,
     handleSubmit: handleSubmitEmailPassword,
@@ -47,7 +43,6 @@ export default function LoginPage() {
     resolver: zodResolver(emailPasswordSchema),
   });
 
-  // Formulário Magic Link
   const {
     register: registerMagicLink,
     handleSubmit: handleSubmitMagicLink,
@@ -56,7 +51,6 @@ export default function LoginPage() {
     resolver: zodResolver(magicLinkSchema),
   });
 
-  // Formulário Reset Password
   const {
     register: registerResetPassword,
     handleSubmit: handleSubmitResetPassword,
@@ -151,24 +145,31 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-b from-[#F8F9FC] to-[#6B2FA0]/5 dark:from-[#0F0F1A] dark:to-[#1A1A2E] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Partners</h1>
+          <div className="inline-flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#6B2FA0] to-[#F5A623] flex items-center justify-center">
+              <span className="text-white font-bold text-xl">P</span>
+            </div>
+            <h1 className="text-3xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED]">
+              Partners
+            </h1>
+          </div>
         </div>
 
         {/* Card de Login */}
-        <div className="bg-[#13131A] border border-[#262630] rounded-xl p-6">
+        <div className="bg-white dark:bg-[#1A1A2E] border border-[#E2E5F1] dark:border-[#2D2D4A] rounded-2xl p-6 shadow-lg">
           {/* Tabs */}
           <div className="flex gap-2 mb-6">
             <button
               type="button"
               onClick={() => setActiveTab('email')}
-              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${
                 activeTab === 'email'
-                  ? 'bg-[#E8580C] text-white'
-                  : 'bg-[#0A0A0F] text-gray-400 hover:text-white'
+                  ? 'bg-[#6B2FA0] dark:bg-[#8B5CF6] text-white'
+                  : 'bg-[#F8F9FC] dark:bg-[#0F0F1A] text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED]'
               }`}
             >
               Email/Senha
@@ -176,55 +177,67 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setActiveTab('magic')}
-              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${
                 activeTab === 'magic'
-                  ? 'bg-[#E8580C] text-white'
-                  : 'bg-[#0A0A0F] text-gray-400 hover:text-white'
+                  ? 'bg-[#6B2FA0] dark:bg-[#8B5CF6] text-white'
+                  : 'bg-[#F8F9FC] dark:bg-[#0F0F1A] text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED]'
               }`}
             >
               Magic Link
             </button>
           </div>
 
-          {/* Formulário Email/Senha */}
           {activeTab === 'email' && (
-            <form onSubmit={handleSubmitEmailPassword(onSubmitEmailPassword)} className="space-y-4">
+            <form
+              onSubmit={handleSubmitEmailPassword(onSubmitEmailPassword)}
+              className="space-y-4"
+            >
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED] mb-2"
+                >
                   Email
                 </label>
                 <input
                   id="email"
                   type="email"
                   {...registerEmailPassword('email')}
-                  className="w-full px-4 py-2 bg-[#0A0A0F] border border-[#262630] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#E8580C] focus:border-transparent"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#0F0F1A] border border-[#E2E5F1] dark:border-[#2D2D4A] text-[#1A1D2E] dark:text-[#E8E8ED] placeholder-[#9CA3C4] dark:placeholder-[#6B7194] focus:outline-none focus:ring-2 focus:ring-[#6B2FA0]/30 dark:focus:ring-[#8B5CF6]/30 focus:border-[#6B2FA0] dark:focus:border-[#8B5CF6]"
                   placeholder="seu@email.com"
                 />
                 {errorsEmailPassword.email && (
-                  <p className="mt-1 text-sm text-red-400">{errorsEmailPassword.email.message}</p>
+                  <p className="mt-1 text-sm text-[#EF4444]">
+                    {errorsEmailPassword.email.message}
+                  </p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED] mb-2"
+                >
                   Senha
                 </label>
                 <input
                   id="password"
                   type="password"
                   {...registerEmailPassword('password')}
-                  className="w-full px-4 py-2 bg-[#0A0A0F] border border-[#262630] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#E8580C] focus:border-transparent"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#0F0F1A] border border-[#E2E5F1] dark:border-[#2D2D4A] text-[#1A1D2E] dark:text-[#E8E8ED] placeholder-[#9CA3C4] dark:placeholder-[#6B7194] focus:outline-none focus:ring-2 focus:ring-[#6B2FA0]/30 dark:focus:ring-[#8B5CF6]/30 focus:border-[#6B2FA0] dark:focus:border-[#8B5CF6]"
                   placeholder="••••••••"
                 />
                 {errorsEmailPassword.password && (
-                  <p className="mt-1 text-sm text-red-400">{errorsEmailPassword.password.message}</p>
+                  <p className="mt-1 text-sm text-[#EF4444]">
+                    {errorsEmailPassword.password.message}
+                  </p>
                 )}
               </div>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-2.5 px-4 bg-[#E8580C] text-white rounded-lg font-medium hover:bg-[#D14A0A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-2.5 px-4 bg-[#6B2FA0] dark:bg-[#8B5CF6] text-white rounded-xl font-semibold hover:bg-[#5A2788] dark:hover:bg-[#7C3AED] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Entrando...' : 'Entrar'}
               </button>
@@ -233,7 +246,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowResetPassword(true)}
-                  className="text-sm text-[#E8580C] hover:text-[#D14A0A] transition-colors"
+                  className="text-sm text-[#6B2FA0] dark:text-[#8B5CF6] hover:text-[#5A2788] dark:hover:text-[#7C3AED] transition-colors"
                 >
                   Esqueci minha senha
                 </button>
@@ -241,29 +254,36 @@ export default function LoginPage() {
             </form>
           )}
 
-          {/* Formulário Magic Link */}
           {activeTab === 'magic' && (
-            <form onSubmit={handleSubmitMagicLink(onSubmitMagicLink)} className="space-y-4">
+            <form
+              onSubmit={handleSubmitMagicLink(onSubmitMagicLink)}
+              className="space-y-4"
+            >
               <div>
-                <label htmlFor="magic-email" className="block text-sm font-medium text-gray-300 mb-2">
+                <label
+                  htmlFor="magic-email"
+                  className="block text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED] mb-2"
+                >
                   Email
                 </label>
                 <input
                   id="magic-email"
                   type="email"
                   {...registerMagicLink('email')}
-                  className="w-full px-4 py-2 bg-[#0A0A0F] border border-[#262630] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#E8580C] focus:border-transparent"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#0F0F1A] border border-[#E2E5F1] dark:border-[#2D2D4A] text-[#1A1D2E] dark:text-[#E8E8ED] placeholder-[#9CA3C4] dark:placeholder-[#6B7194] focus:outline-none focus:ring-2 focus:ring-[#6B2FA0]/30 dark:focus:ring-[#8B5CF6]/30 focus:border-[#6B2FA0] dark:focus:border-[#8B5CF6]"
                   placeholder="seu@email.com"
                 />
                 {errorsMagicLink.email && (
-                  <p className="mt-1 text-sm text-red-400">{errorsMagicLink.email.message}</p>
+                  <p className="mt-1 text-sm text-[#EF4444]">
+                    {errorsMagicLink.email.message}
+                  </p>
                 )}
               </div>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-2.5 px-4 bg-[#E8580C] text-white rounded-lg font-medium hover:bg-[#D14A0A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-2.5 px-4 bg-[#6B2FA0] dark:bg-[#8B5CF6] text-white rounded-xl font-semibold hover:bg-[#5A2788] dark:hover:bg-[#7C3AED] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Enviando...' : 'Enviar link de acesso'}
               </button>
@@ -274,36 +294,46 @@ export default function LoginPage() {
 
       {/* Modal de Recuperação de Senha */}
       {showResetPassword && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#13131A] border border-[#262630] rounded-xl p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-[#1A1D2E]/50 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-[#1A1A2E] border border-[#E2E5F1] dark:border-[#2D2D4A] rounded-2xl p-6 w-full max-w-md shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-white">Recuperar Senha</h2>
+              <h2 className="text-xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED]">
+                Recuperar Senha
+              </h2>
               <button
                 type="button"
                 onClick={() => {
                   setShowResetPassword(false);
                   resetResetPassword();
                 }}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED] transition-colors"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmitResetPassword(onSubmitResetPassword)} className="space-y-4">
+            <form
+              onSubmit={handleSubmitResetPassword(onSubmitResetPassword)}
+              className="space-y-4"
+            >
               <div>
-                <label htmlFor="reset-email" className="block text-sm font-medium text-gray-300 mb-2">
+                <label
+                  htmlFor="reset-email"
+                  className="block text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED] mb-2"
+                >
                   Email
                 </label>
                 <input
                   id="reset-email"
                   type="email"
                   {...registerResetPassword('email')}
-                  className="w-full px-4 py-2 bg-[#0A0A0F] border border-[#262630] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#E8580C] focus:border-transparent"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#0F0F1A] border border-[#E2E5F1] dark:border-[#2D2D4A] text-[#1A1D2E] dark:text-[#E8E8ED] placeholder-[#9CA3C4] dark:placeholder-[#6B7194] focus:outline-none focus:ring-2 focus:ring-[#6B2FA0]/30 dark:focus:ring-[#8B5CF6]/30 focus:border-[#6B2FA0] dark:focus:border-[#8B5CF6]"
                   placeholder="seu@email.com"
                 />
                 {errorsResetPassword.email && (
-                  <p className="mt-1 text-sm text-red-400">{errorsResetPassword.email.message}</p>
+                  <p className="mt-1 text-sm text-[#EF4444]">
+                    {errorsResetPassword.email.message}
+                  </p>
                 )}
               </div>
 
@@ -314,14 +344,14 @@ export default function LoginPage() {
                     setShowResetPassword(false);
                     resetResetPassword();
                   }}
-                  className="flex-1 py-2.5 px-4 bg-[#0A0A0F] border border-[#262630] text-white rounded-lg font-medium hover:bg-[#1A1A1F] transition-colors"
+                  className="flex-1 py-2.5 px-4 bg-[#F1F3F8] dark:bg-[#2D2D4A] border border-[#E2E5F1] dark:border-[#2D2D4A] text-[#1A1D2E] dark:text-[#E8E8ED] rounded-xl font-medium hover:bg-[#E2E5F1] dark:hover:bg-[#3D3D5C] transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 py-2.5 px-4 bg-[#E8580C] text-white rounded-lg font-medium hover:bg-[#D14A0A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 py-2.5 px-4 bg-[#6B2FA0] dark:bg-[#8B5CF6] text-white rounded-xl font-semibold hover:bg-[#5A2788] dark:hover:bg-[#7C3AED] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? 'Enviando...' : 'Enviar'}
                 </button>

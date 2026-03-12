@@ -97,11 +97,11 @@ export function ModuleForm({
         }
       }
 
-      // Validar tamanho (50MB)
-      const maxSize = 50 * 1024 * 1024;
+      // Validar tamanho (500MB)
+      const maxSize = 500 * 1024 * 1024;
       if (file.size > maxSize) {
         toast.error('Arquivo muito grande', {
-          description: 'O tamanho máximo é 50MB',
+          description: 'O tamanho máximo é 500MB',
         });
         return;
       }
@@ -121,7 +121,7 @@ export function ModuleForm({
 
       let contentUrl = initialData?.content_url || null;
 
-      // Upload de arquivo se necessário
+      // Upload de arquivo se necessário (POST com FormData: file, type, trailId)
       if ((data.type === 'video' || data.type === 'document') && data.file) {
         setIsUploading(true);
         setUploadProgress(0);
@@ -142,21 +142,37 @@ export function ModuleForm({
           });
         }, 200);
 
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
+        // Enviar FormData sem definir Content-Type (o browser define multipart/form-data; boundary=... automaticamente)
+        let response: Response;
+        try {
+          response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+            // Não passar headers: { 'Content-Type': '...' } — quebra o boundary e causa "Failed to parse body as FormData"
+          });
+        } finally {
+          clearInterval(progressInterval);
+        }
 
-        clearInterval(progressInterval);
         setUploadProgress(100);
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Erro ao fazer upload');
+          let errorMessage = 'Erro ao fazer upload';
+          try {
+            const errorData = await response.json();
+            if (errorData?.error) errorMessage = errorData.error;
+          } catch {
+            // resposta não é JSON
+          }
+          setIsUploading(false);
+          setUploadProgress(0);
+          toast.error('Erro no upload', { description: errorMessage });
+          return;
         }
 
         const uploadData = await response.json();
-        contentUrl = uploadData.url;
+        // Salvar o path/key no banco (não a signed URL), para que a página gere signed URLs na hora
+        contentUrl = uploadData?.key ?? uploadData?.url ?? contentUrl;
       }
 
       const payload = {
@@ -266,8 +282,8 @@ export function ModuleForm({
 
       {(selectedType === 'video' || selectedType === 'document') && (
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-[#E8E8ED]">
-            Arquivo {selectedType === 'video' ? '(MP4, MOV - máx. 50MB)' : '(PDF - máx. 50MB)'}
+          <label className="block text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED]">
+            Arquivo {selectedType === 'video' ? '(MP4, MOV - máx. 500MB)' : '(PDF - máx. 500MB)'}
             {!isEditMode && <span className="text-red-500 ml-1">*</span>}
           </label>
           <div className="relative">
@@ -281,21 +297,21 @@ export function ModuleForm({
             />
             <label
               htmlFor="module-file-input"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#0A0A0F] border border-[#262630] cursor-pointer hover:border-[#E8580C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#F8F9FC] dark:bg-[#0F0F1A] border border-[#E2E5F1] dark:border-[#2D2D4A] cursor-pointer hover:border-[#6B2FA0] dark:hover:border-[#8B5CF6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {selectedType === 'video' ? (
-                <FileVideo className="w-5 h-5 text-[#8888A0]" />
+                <FileVideo className="w-5 h-5 text-[#9CA3C4] dark:text-[#8888A0]" />
               ) : (
-                <FileText className="w-5 h-5 text-[#8888A0]" />
+                <FileText className="w-5 h-5 text-[#9CA3C4] dark:text-[#8888A0]" />
               )}
-              <span className="text-sm text-[#E8E8ED] flex-1">
+              <span className="text-sm text-[#1A1D2E] dark:text-[#E8E8ED] flex-1">
                 {selectedFile
                   ? selectedFile.name
                   : initialData?.content_url
                   ? 'Arquivo já carregado (clique para substituir)'
                   : 'Selecione um arquivo'}
               </span>
-              <Upload className="w-4 h-4 text-[#8888A0]" />
+              <Upload className="w-4 h-4 text-[#9CA3C4] dark:text-[#8888A0]" />
             </label>
           </div>
           {errors.file && (
@@ -303,13 +319,13 @@ export function ModuleForm({
           )}
           {isUploading && (
             <div className="space-y-1">
-              <div className="w-full bg-[#0A0A0F] rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-[#E2E5F1] dark:bg-[#2D2D4A] rounded-full h-2 overflow-hidden">
                 <div
-                  className="bg-[#E8580C] h-2 transition-all duration-300"
+                  className="bg-gradient-to-r from-[#6B2FA0] to-[#8B5CF6] h-2 transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
-              <p className="text-xs text-[#8888A0] text-center">
+              <p className="text-xs text-[#6B7194] dark:text-[#8888A0] text-center">
                 {uploadProgress}% - Enviando arquivo...
               </p>
             </div>

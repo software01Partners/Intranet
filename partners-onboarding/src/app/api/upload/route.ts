@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { uploadToR2, getSignedVideoUrl } from '@/lib/r2';
 import type { UserRole } from '@/lib/types';
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB (alinhado ao proxyClientMaxBodySize no next.config)
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,11 +42,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Parse do FormData
-    const formData = await request.formData();
+    // Parse do FormData (não usar bodyParser nem config de body; o browser envia multipart com boundary automático)
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch (parseError) {
+      console.error('Erro ao fazer parse do FormData:', parseError);
+      const msg =
+        parseError instanceof Error
+          ? parseError.message
+          : 'Failed to parse body as FormData. Envie com FormData e sem definir Content-Type no fetch.';
+      return NextResponse.json(
+        { error: msg },
+        { status: 400 }
+      );
+    }
+
     const file = formData.get('file') as File | null;
     const type = formData.get('type') as string | null;
     const trailId = formData.get('trailId') as string | null;
+
+    console.log('Upload recebido:', type, file?.name, file?.size);
 
     // Validações
     if (!file) {
@@ -73,7 +89,7 @@ export async function POST(request: NextRequest) {
     // Verificar tamanho do arquivo
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: 'Arquivo muito grande. Limite: 50MB' },
+        { error: 'Arquivo muito grande. Limite: 500MB' },
         { status: 400 }
       );
     }
@@ -105,7 +121,7 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now();
     const filename = file.name.replace(/[^a-zA-Z0-9.-]/g, '_'); // Sanitizar nome
 
-    // Converter arquivo para Buffer
+    // Converter File para Buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
@@ -113,12 +129,27 @@ export async function POST(request: NextRequest) {
     let key: string;
 
     if (type === 'video') {
-      // Upload para R2 com key: videos/{trailId}/{timestamp}-{filename}
-      const fileKey = `videos/${trailId}/${timestamp}-${filename}`;
-      await uploadToR2(buffer, fileKey, file.type);
-      // Gerar presigned URL
-      url = await getSignedVideoUrl(fileKey);
-      key = fileKey;
+      // Garantir que variáveis R2 existem (bucket "partners-videos", endpoint R2)
+      if (!process.env.R2_ACCOUNT_ID || !process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY) {
+        return NextResponse.json(
+          { error: 'Configuração R2 incompleta (R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY)' },
+          { status: 500 }
+        );
+      }
+      try {
+        // Upload para R2 (S3Client R2, bucket partners-videos, endpoint https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com)
+        const fileKey = `videos/${trailId}/${timestamp}-${filename}`;
+        await uploadToR2(buffer, fileKey, file.type);
+        url = await getSignedVideoUrl(fileKey);
+        key = fileKey;
+      } catch (r2Error) {
+        console.error('Erro R2 upload/signedUrl:', r2Error);
+        const message = r2Error instanceof Error ? r2Error.message : 'Erro ao enviar vídeo para R2';
+        return NextResponse.json(
+          { error: `R2: ${message}` },
+          { status: 500 }
+        );
+      }
     } else {
       // Upload para Supabase Storage com path: {trailId}/{timestamp}-{filename}
       const filePath = `${trailId}/${timestamp}-${filename}`;
@@ -159,8 +190,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Erro no upload:', error);
+    const message = error instanceof Error ? error.message : 'Erro interno do servidor';
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: message },
       { status: 500 }
     );
   }

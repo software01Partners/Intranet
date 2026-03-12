@@ -84,16 +84,59 @@ async function getTrailData(
     if (module.content_url) {
       try {
         if (module.type === 'video') {
-          // Para vídeos, content_url é a chave no R2
-          signedUrl = await getSignedVideoUrl(module.content_url);
+          // content_url pode ser: (1) key do R2 (ex: videos/trailId/arquivo.mp4) ou (2) URL antiga (signed URL salva por engano)
+          let key: string | null = null;
+          if (module.content_url.startsWith('http')) {
+            // Extrair key do path da URL (ex: .../videos/trailId/arquivo.mp4?X-Amz-... → videos/trailId/arquivo.mp4)
+            try {
+              const pathname = new URL(module.content_url).pathname;
+              const extracted = pathname ? pathname.replace(/^\//, '') : '';
+              if (extracted && extracted.startsWith('videos/')) {
+                key = extracted;
+                if (process.env.NODE_ENV === 'development') {
+                  console.log('Video content_url (URL antiga); key extraída:', key);
+                }
+              }
+            } catch {
+              // URL inválida, key permanece null
+            }
+          } else {
+            key = module.content_url;
+          }
+          if (key) {
+            signedUrl = await getSignedVideoUrl(key);
+            if (process.env.NODE_ENV === 'development') {
+              console.log('Video content_url/key:', key);
+              console.log('Video signed URL:', signedUrl ? `${signedUrl.slice(0, 80)}...` : 'vazio');
+            }
+          }
         } else if (module.type === 'document') {
-          // Para documentos, content_url é o path no Supabase Storage
-          const { data: signedUrlData } = await supabase.storage
-            .from('documents')
-            .createSignedUrl(module.content_url, 3600); // 1 hora
+          // Para documentos, content_url deve ser o path no bucket (ex: "trailId/timestamp-file.pdf")
+          const path = module.content_url?.startsWith('http')
+            ? null
+            : module.content_url;
+          if (path) {
+            const { data: signedUrlData, error: signedError } = await supabase.storage
+              .from('documents')
+              .createSignedUrl(path, 3600); // 1 hora
 
-          if (signedUrlData) {
-            signedUrl = signedUrlData.signedUrl;
+            if (signedError) {
+              console.error(
+                `[trilhas] createSignedUrl documento módulo ${module.id}:`,
+                signedError.message,
+                'path:',
+                path
+              );
+            } else if (signedUrlData?.signedUrl) {
+              signedUrl = signedUrlData.signedUrl;
+            }
+          } else {
+            // content_url é URL antiga (salva por engano); usar como signedUrl para compatibilidade
+            signedUrl = module.content_url || undefined;
+          }
+          // Debug (servidor)
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[trilhas] Módulo document', module.id, 'content_url:', module.content_url, 'signedUrl:', signedUrl ? 'ok' : 'vazio');
           }
         }
       } catch (error) {
@@ -176,7 +219,7 @@ export default async function TrailPlayerPage({
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
-          <p className="text-[#8888A0]">Esta trilha ainda não possui módulos.</p>
+          <p className="text-[#6B7194] dark:text-[#8888A0]">Esta trilha ainda não possui módulos.</p>
         </div>
       </div>
     );

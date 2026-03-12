@@ -1,28 +1,59 @@
 @import "tailwindcss";
 
+/* Dark mode por classe (toggle) em vez de prefers-color-scheme */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ===== PARTNERS DESIGN SYSTEM ===== */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Light (default) */
+  --bg-main: #F8F9FC;
+  --bg-card: #FFFFFF;
+  --bg-secondary: #F1F3F8;
+  --border: #E2E5F1;
+  --primary: #6B2FA0;
+  --primary-hover: #5A2788;
+  --primary-light: rgba(107, 47, 160, 0.08);
+  --accent: #F5A623;
+  --accent-light: rgba(245, 166, 35, 0.1);
+  --text: #1A1D2E;
+  --text-secondary: #6B7194;
+  --text-muted: #9CA3C4;
+  --success: #10B981;
+  --error: #EF4444;
+  --warning: #F59E0B;
+  --info: #3B82F6;
+}
+
+.dark {
+  --bg-main: #0F0F1A;
+  --bg-card: #1A1A2E;
+  --bg-secondary: #1A1A2E;
+  --border: #2D2D4A;
+  --primary: #8B5CF6;
+  --primary-hover: #7C3AED;
+  --primary-light: rgba(139, 92, 246, 0.15);
+  --accent: #F5A623;
+  --accent-light: rgba(245, 166, 35, 0.15);
+  --text: #E8E8ED;
+  --text-secondary: #8888A0;
+  --text-muted: #6B7194;
+  --success: #10B981;
+  --error: #EF4444;
+  --warning: #F59E0B;
+  --info: #3B82F6;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-background: var(--bg-main);
+  --color-foreground: var(--text);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-main);
+  color: var(--text);
+  font-family: var(--font-inter), system-ui, sans-serif;
 }
 
 @keyframes shimmer {

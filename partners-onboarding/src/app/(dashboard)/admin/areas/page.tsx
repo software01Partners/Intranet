@@ -38,10 +38,10 @@ export default async function AreasPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-[#E8E8ED] mb-1">
+        <h1 className="text-3xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-1">
           Gestão de Áreas
         </h1>
-        <p className="text-[#8888A0]">
+        <p className="text-[#6B7194] dark:text-[#8888A0]">
           Gerencie as áreas do sistema e seus colaboradores
         </p>
       </div>

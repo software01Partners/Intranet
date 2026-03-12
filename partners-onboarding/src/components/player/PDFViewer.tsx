@@ -6,12 +6,17 @@ import { CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CertificateModal } from '@/components/certificate/CertificateModal';
 
+interface CompletePayload {
+  trailComplete?: boolean;
+  nextModuleId?: string;
+}
+
 interface PDFViewerProps {
   pdfUrl: string;
   moduleId: string;
   trailId: string;
   trailName?: string;
-  onComplete: () => void;
+  onComplete: (payload?: CompletePayload) => void;
 }
 
 export function PDFViewer({
@@ -49,7 +54,10 @@ export function PDFViewer({
         setShowCertificateModal(true);
       }
       
-      onComplete();
+      onComplete({
+        trailComplete: data.trailComplete,
+        nextModuleId: data.nextModuleId,
+      });
     } catch (error) {
       console.error('Erro ao completar módulo:', error);
       toast.error(

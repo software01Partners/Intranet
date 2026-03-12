@@ -34,7 +34,7 @@ export default async function DashboardLayout({
   const role = await getUserRole();
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] flex">
+    <div className="min-h-screen bg-[#F8F9FC] dark:bg-[#0F0F1A] flex">
       <DashboardLayoutClient role={role}>
         {children}
       </DashboardLayoutClient>

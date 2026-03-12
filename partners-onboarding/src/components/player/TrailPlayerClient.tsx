@@ -47,6 +47,13 @@ export function TrailPlayerClient({
 
   const currentModule = modules.find((m) => m.id === currentModuleId);
 
+  // Debug: módulo tipo document ou video
+  if (currentModule?.type === 'document' || currentModule?.type === 'video') {
+    console.log('Módulo atual (tipo):', currentModule?.type, currentModule?.id);
+    console.log('Content URL:', currentModule?.content_url);
+    console.log('Signed URL:', currentModule?.signedUrl ? 'ok' : 'vazio');
+  }
+
   useEffect(() => {
     // Verificar se há módulo na query string
     const moduleParam = searchParams.get('modulo');
@@ -55,19 +62,32 @@ export function TrailPlayerClient({
     }
   }, [searchParams, modules]);
 
-  const handleModuleComplete = () => {
-    // Encontrar o próximo módulo não concluído
+  type CompletePayload = {
+    trailComplete?: boolean;
+    nextModuleId?: string;
+  };
+
+  const handleModuleComplete = (payload?: CompletePayload) => {
+    // Usar resposta da API quando disponível (fonte de verdade após marcar concluído)
+    if (payload?.trailComplete === true) {
+      setIsLastModule(true);
+      setShowCompletionModal(true);
+      return;
+    }
+    if (payload?.nextModuleId) {
+      router.push(`/trilhas/${trail.id}?modulo=${payload.nextModuleId}`);
+      setCurrentModuleId(payload.nextModuleId);
+      return;
+    }
+    // Fallback: usar lista de módulos (pode estar desatualizada até refresh)
     const currentIndex = modules.findIndex((m) => m.id === currentModuleId);
     const nextModule = modules
       .slice(currentIndex + 1)
       .find((m) => m.isUnlocked && !m.progress?.completed);
-
     if (nextModule) {
-      // Avançar para o próximo módulo
       router.push(`/trilhas/${trail.id}?modulo=${nextModule.id}`);
       setCurrentModuleId(nextModule.id);
     } else {
-      // Era o último módulo
       setIsLastModule(true);
       setShowCompletionModal(true);
     }
@@ -91,21 +111,21 @@ export function TrailPlayerClient({
     }
   };
 
-  const getTrailTypeColor = (type: TrailType): 'accent' | 'blue' | 'purple' => {
+  const getTrailTypeColor = (type: TrailType): 'obrigatoria_global' | 'obrigatoria_area' | 'optativa' => {
     switch (type) {
       case 'obrigatoria_global':
-        return 'accent';
+        return 'obrigatoria_global';
       case 'obrigatoria_area':
-        return 'blue';
+        return 'obrigatoria_area';
       case 'optativa':
-        return 'purple';
+        return 'optativa';
     }
   };
 
   if (!currentModule) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-[#8888A0]">Módulo não encontrado</p>
+        <p className="text-[#6B7194] dark:text-[#8888A0]">Módulo não encontrado</p>
       </div>
     );
   }
@@ -126,6 +146,14 @@ export function TrailPlayerClient({
             />
           )}
 
+          {currentModule.type === 'video' && !currentModule.signedUrl && (
+            <div className="w-full aspect-video bg-[#0F0F1A] dark:bg-[#1A1A2E] rounded-2xl border border-[#E2E5F1] dark:border-[#2D2D4A] flex items-center justify-center">
+              <p className="text-[#6B7194] dark:text-[#8888A0]">
+                Vídeo indisponível. Verifique se o arquivo está no R2 e se content_url é a chave (ex: videos/trailId/arquivo.mp4).
+              </p>
+            </div>
+          )}
+
           {currentModule.type === 'document' && currentModule.signedUrl && (
             <PDFViewer
               pdfUrl={currentModule.signedUrl}
@@ -140,30 +168,40 @@ export function TrailPlayerClient({
             <Card>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg bg-[#E8580C]/10 flex items-center justify-center">
-                    <HelpCircle className="w-6 h-6 text-[#E8580C]" />
+                  <div className="w-12 h-12 rounded-lg bg-[#F5A623]/10 dark:bg-[#F5A623]/15 flex items-center justify-center">
+                    <HelpCircle className="w-6 h-6 text-[#F5A623]" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-[#E8E8ED]">
+                    <h3 className="text-lg font-bold text-[#1A1D2E] dark:text-[#E8E8ED]">
                       Quiz
                     </h3>
-                    <p className="text-sm text-[#8888A0]">
+                    <p className="text-sm text-[#6B7194] dark:text-[#8888A0]">
                       Responda as questões para concluir este módulo
                     </p>
                   </div>
                 </div>
-                <Link href={`/quiz/${currentModule.id}`}>
-                  <Button size="lg" className="w-full">
-                    Iniciar Quiz
+                {currentModule.progress?.completed ? (
+                  <Button size="lg" className="w-full" disabled>
+                    Quiz já concluído
                   </Button>
-                </Link>
+                ) : !currentModule.isUnlocked ? (
+                  <Button size="lg" className="w-full" disabled>
+                    Módulo bloqueado
+                  </Button>
+                ) : (
+                  <Link href={`/quiz/${currentModule.id}`}>
+                    <Button size="lg" className="w-full">
+                      Iniciar Quiz
+                    </Button>
+                  </Link>
+                )}
               </div>
             </Card>
           )}
 
           {/* Informações do módulo */}
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-[#E8E8ED]">
+            <h1 className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED]">
               {currentModule.title}
             </h1>
             <div className="flex items-center gap-2">
@@ -175,7 +213,7 @@ export function TrailPlayerClient({
                     : 'Quiz'}
               </Badge>
               {currentModule.duration && (
-                <span className="text-sm text-[#8888A0]">
+                <span className="text-sm text-[#6B7194] dark:text-[#8888A0]">
                   {formatDuration(currentModule.duration)}
                 </span>
               )}
@@ -188,7 +226,7 @@ export function TrailPlayerClient({
           <Card className="p-6">
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-[#E8E8ED] mb-2">
+                <h2 className="text-lg font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-2">
                   {trail.name}
                 </h2>
                 <Badge
@@ -202,8 +240,8 @@ export function TrailPlayerClient({
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-[#8888A0]">Progresso</span>
-                  <span className="text-sm font-medium text-[#E8E8ED]">
+                  <span className="text-sm text-[#6B7194] dark:text-[#8888A0]">Progresso</span>
+                  <span className="text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED]">
                     {trailProgress}%
                   </span>
                 </div>
@@ -213,7 +251,7 @@ export function TrailPlayerClient({
           </Card>
 
           <Card className="p-6">
-            <h3 className="text-base font-semibold text-[#E8E8ED] mb-4">
+            <h3 className="text-base font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-4">
               Módulos
             </h3>
             <ModuleList
@@ -233,7 +271,7 @@ export function TrailPlayerClient({
         size="md"
       >
         <div className="space-y-4">
-          <p className="text-[#E8E8ED]">
+          <p className="text-[#1A1D2E] dark:text-[#E8E8ED]">
             Você concluiu todos os módulos desta trilha!
           </p>
           <div className="flex gap-3">

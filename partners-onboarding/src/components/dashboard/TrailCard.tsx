@@ -26,19 +26,19 @@ export function TrailCard({ trail }: TrailCardProps) {
       case 'obrigatoria_global':
         return {
           label: 'Obrigatória Global',
-          color: 'accent' as const,
+          color: 'obrigatoria_global' as const,
         };
       case 'obrigatoria_area':
         return {
           label: trail.areaName
             ? `Obrigatória - ${trail.areaName}`
             : 'Obrigatória da Área',
-          color: 'purple' as const,
+          color: 'obrigatoria_area' as const,
         };
       case 'optativa':
         return {
           label: 'Optativa',
-          color: 'green' as const,
+          color: 'optativa' as const,
         };
       default:
         return {
@@ -81,9 +81,8 @@ export function TrailCard({ trail }: TrailCardProps) {
       onClick={handleCardClick}
     >
       <div className="flex-1 space-y-4">
-        {/* Header com badge */}
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-lg font-semibold text-[#E8E8ED] flex-1">
+          <h3 className="text-lg font-bold text-[#1A1D2E] dark:text-[#E8E8ED] flex-1">
             {trail.name}
           </h3>
           <Badge variant="soft" color={badgeConfig.color}>
@@ -91,15 +90,13 @@ export function TrailCard({ trail }: TrailCardProps) {
           </Badge>
         </div>
 
-        {/* Descrição */}
         {trail.description && (
-          <p className="text-sm text-[#8888A0] line-clamp-2">
+          <p className="text-sm text-[#6B7194] dark:text-[#8888A0] line-clamp-2">
             {trail.description}
           </p>
         )}
 
-        {/* Informações */}
-        <div className="flex items-center gap-4 text-sm text-[#8888A0]">
+        <div className="flex items-center gap-4 text-sm text-[#6B7194] dark:text-[#8888A0]">
           {trail.duration && trail.duration > 0 && (
             <div className="flex items-center gap-1.5">
               <Clock className="w-4 h-4" />
@@ -112,20 +109,18 @@ export function TrailCard({ trail }: TrailCardProps) {
           </div>
         </div>
 
-        {/* Progress Bar */}
         <div className="space-y-1.5">
           <ProgressBar value={trail.progress} size="sm" />
           <div className="flex justify-between items-center text-xs">
-            <span className="text-[#8888A0]">Progresso</span>
-            <span className="text-[#E8E8ED] font-medium">
+            <span className="text-[#9CA3C4] dark:text-[#8888A0]">Progresso</span>
+            <span className="text-[#1A1D2E] dark:text-[#E8E8ED] font-medium">
               {Math.round(trail.progress)}%
             </span>
           </div>
         </div>
       </div>
 
-      {/* Botão de ação */}
-      <div className="mt-4 pt-4 border-t border-[#262630]">
+      <div className="mt-4 pt-4 border-t border-[#E2E5F1] dark:border-[#2D2D4A]">
         <Link href={`/trilhas/${trail.id}`} onClick={(e) => e.stopPropagation()}>
           <Button
             variant={trail.progress === 100 ? 'secondary' : 'primary'}

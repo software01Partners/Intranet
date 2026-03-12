@@ -234,7 +234,7 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-[#8888A0]">Carregando...</p>
+        <p className="text-[#6B7194] dark:text-[#8888A0]">Carregando...</p>
       </div>
     );
   }
@@ -243,7 +243,7 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <p className="text-[#8888A0] mb-4">
+          <p className="text-[#6B7194] dark:text-[#8888A0] mb-4">
             {areaFilter
               ? 'Nenhuma trilha encontrada na sua área'
               : 'Nenhuma trilha cadastrada'}

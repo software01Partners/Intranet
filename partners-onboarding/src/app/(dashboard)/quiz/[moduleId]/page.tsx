@@ -79,6 +79,23 @@ export default async function QuizPage({ params }: PageProps) {
     notFound();
   }
 
+  // Bloquear acesso se o quiz já foi concluído
+  const { data: existingProgress, error: progressError } = await supabase
+    .from('user_progress')
+    .select('completed')
+    .eq('user_id', user.id)
+    .eq('module_id', moduleId)
+    .single();
+
+  // Ignorar "no rows" (usuário nunca fez) e só logar erros reais
+  if (progressError && progressError.code !== 'PGRST116') {
+    console.error('Erro ao buscar progresso do quiz:', progressError);
+  }
+
+  if (existingProgress?.completed) {
+    redirect(`/trilhas/${data.module.trail_id}?modulo=${moduleId}`);
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">

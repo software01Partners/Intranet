@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { cn } from '@/lib/utils';
@@ -22,15 +21,14 @@ export function TrailFilters({
 }: TrailFiltersProps) {
   return (
     <div className="space-y-4">
-      {/* Tabs */}
-      <div className="flex gap-2 border-b border-[#262630]">
+      <div className="flex gap-2 border-b border-[#E2E5F1] dark:border-[#2D2D4A]">
         <button
           onClick={() => onFilterTypeChange('all')}
           className={cn(
-            'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-[1px]',
+            'px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px]',
             filterType === 'all'
-              ? 'text-[#E8580C] border-[#E8580C]'
-              : 'text-[#8888A0] border-transparent hover:text-[#E8E8ED]'
+              ? 'text-[#6B2FA0] dark:text-[#8B5CF6] border-[#6B2FA0] dark:border-[#8B5CF6]'
+              : 'text-[#6B7194] dark:text-[#8888A0] border-transparent hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED]'
           )}
         >
           Todas
@@ -38,10 +36,10 @@ export function TrailFilters({
         <button
           onClick={() => onFilterTypeChange('required')}
           className={cn(
-            'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-[1px]',
+            'px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px]',
             filterType === 'required'
-              ? 'text-[#E8580C] border-[#E8580C]'
-              : 'text-[#8888A0] border-transparent hover:text-[#E8E8ED]'
+              ? 'text-[#6B2FA0] dark:text-[#8B5CF6] border-[#6B2FA0] dark:border-[#8B5CF6]'
+              : 'text-[#6B7194] dark:text-[#8888A0] border-transparent hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED]'
           )}
         >
           Obrigatórias
@@ -49,17 +47,16 @@ export function TrailFilters({
         <button
           onClick={() => onFilterTypeChange('optional')}
           className={cn(
-            'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-[1px]',
+            'px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px]',
             filterType === 'optional'
-              ? 'text-[#E8580C] border-[#E8580C]'
-              : 'text-[#8888A0] border-transparent hover:text-[#E8E8ED]'
+              ? 'text-[#6B2FA0] dark:text-[#8B5CF6] border-[#6B2FA0] dark:border-[#8B5CF6]'
+              : 'text-[#6B7194] dark:text-[#8888A0] border-transparent hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED]'
           )}
         >
           Optativas
         </button>
       </div>
 
-      {/* Campo de busca */}
       <Input
         icon={Search}
         placeholder="Buscar por nome ou descrição..."

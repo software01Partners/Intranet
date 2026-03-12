@@ -8,14 +8,14 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 export const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ hover = false, className, children, ...props }, ref) => {
     const baseStyles =
-      'rounded-xl bg-[#13131A] border border-[#262630] p-6 transition-all duration-200';
+      'rounded-2xl bg-white dark:bg-[#1A1A2E] border border-[#E2E5F1] dark:border-[#2D2D4A] p-6 transition-all duration-200 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]';
 
     return (
       <div
         ref={ref}
         className={cn(
           baseStyles,
-          hover && 'hover:bg-[#1A1A24] hover:border-[#2A2A35]',
+          hover && 'hover:shadow-[0_4px_12px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.04)] dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.2)]',
           className
         )}
         {...props}
@@ -51,7 +51,7 @@ export const CardTitle = forwardRef<
     <h3
       ref={ref}
       className={cn(
-        'text-xl font-semibold leading-none tracking-tight text-[#E8E8ED]',
+        'text-xl font-bold leading-none tracking-tight text-[#1A1D2E] dark:text-[#E8E8ED]',
         className
       )}
       {...props}
@@ -68,7 +68,7 @@ export const CardDescription = forwardRef<
   return (
     <p
       ref={ref}
-      className={cn('text-sm text-[#8888A0]', className)}
+      className={cn('text-sm text-[#6B7194] dark:text-[#8888A0]', className)}
       {...props}
     />
   );
@@ -80,9 +80,7 @@ export const CardContent = forwardRef<
   HTMLDivElement,
   HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
-  return (
-    <div ref={ref} className={cn('p-6 pt-0', className)} {...props} />
-  );
+  return <div ref={ref} className={cn('p-6 pt-0', className)} {...props} />;
 });
 
 CardContent.displayName = 'CardContent';

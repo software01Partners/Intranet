@@ -19,6 +19,10 @@ const BUCKET_NAME = process.env.R2_BUCKET_NAME || 'partners-videos';
  * @returns URL assinada válida por 1 hora
  */
 export async function getSignedVideoUrl(key: string): Promise<string> {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[r2] getSignedVideoUrl key:', key);
+  }
+
   const command = new GetObjectCommand({
     Bucket: BUCKET_NAME,
     Key: key,
@@ -27,6 +31,10 @@ export async function getSignedVideoUrl(key: string): Promise<string> {
   const signedUrl = await getSignedUrl(r2Client, command, {
     expiresIn: 3600, // 1 hora
   });
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[r2] signed URL gerada:', signedUrl ? `${signedUrl.slice(0, 80)}...` : 'vazio');
+  }
 
   return signedUrl;
 }
