@@ -376,9 +376,9 @@ function StatsSkeleton() {
 export default async function GestorPage({
   searchParams,
 }: {
-  searchParams: { area?: string };
+  searchParams: Promise<{ area?: string }>;
 }) {
-  const user = await getUserData();
+  const [user, { area }] = await Promise.all([getUserData(), searchParams]);
 
   if (!user) {
     redirect('/login');
@@ -393,8 +393,8 @@ export default async function GestorPage({
   let selectedAreaId: string | null = null;
   if (user.role === 'gestor') {
     selectedAreaId = user.area_id;
-  } else if (user.role === 'admin' && searchParams.area) {
-    selectedAreaId = searchParams.area === 'all' ? null : searchParams.area;
+  } else if (user.role === 'admin' && area) {
+    selectedAreaId = area === 'all' ? null : area;
   }
 
   // Buscar áreas para o seletor (apenas admin)

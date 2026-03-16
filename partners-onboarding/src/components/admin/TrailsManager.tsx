@@ -214,9 +214,14 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
 
     try {
       setDeletingTrailId(trailId);
-      const { error } = await supabase.from('trails').delete().eq('id', trailId);
+      const response = await fetch(`/api/admin/trails?id=${trailId}`, {
+        method: 'DELETE',
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Erro ao excluir trilha');
+      }
 
       toast.success('Trilha excluída com sucesso!');
       await fetchTrails();

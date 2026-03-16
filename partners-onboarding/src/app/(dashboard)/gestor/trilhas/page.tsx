@@ -35,8 +35,8 @@ export default async function GestorTrilhasPage() {
     return null;
   }
 
-  // Verificar se é gestor
-  if (user.role !== 'gestor') {
+  // Verificar se é gestor ou admin
+  if (user.role !== 'gestor' && user.role !== 'admin') {
     redirect('/');
     return null;
   }

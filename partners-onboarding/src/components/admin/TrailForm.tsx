@@ -101,110 +101,73 @@ export function TrailForm({
 
   const onSubmit = async (data: TrailFormData) => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session?.user) {
-        toast.error('Erro', { description: 'Usuário não autenticado' });
-        return;
-      }
-
       const payload = {
+        ...(isEditMode && initialData ? { id: initialData.id } : {}),
         name: data.name,
         description: data.description || null,
         type: data.type,
         area_id: data.area_id,
         duration: data.duration || 0,
-        created_by: sessionData.session.user.id,
       };
 
-      if (isEditMode && initialData) {
-        // Update
-        const { error } = await supabase
-          .from('trails')
-          .update(payload)
-          .eq('id', initialData.id);
+      const response = await fetch('/api/admin/trails', {
+        method: isEditMode ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-        if (error) throw error;
+      const result = await response.json();
 
-        toast.success('Trilha atualizada com sucesso!');
-      } else {
-        // Insert
-        const { data: newTrail, error } = await supabase
-          .from('trails')
-          .insert(payload)
-          .select()
-          .single();
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro ao salvar trilha');
+      }
 
-        if (error) throw error;
+      toast.success(isEditMode ? 'Trilha atualizada com sucesso!' : 'Trilha criada com sucesso!');
 
-        toast.success('Trilha criada com sucesso!');
+      // Criar notificações para usuários relevantes (apenas ao criar)
+      if (!isEditMode && result.id) {
+        try {
+          let targetUserIds: string[] = [];
 
-        // Criar notificações para usuários relevantes
-        if (newTrail) {
-          try {
-            // Buscar usuários que devem ser notificados
-            let targetUserIds: string[] = [];
-
-            if (data.type === 'obrigatoria_global') {
-              // Notificar todos os colaboradores
-              const { data: allUsers } = await supabase
-                .from('users')
-                .select('id')
-                .eq('role', 'colaborador');
-
-              if (allUsers) {
-                targetUserIds = allUsers.map((u) => u.id);
-              }
-            } else if (data.type === 'obrigatoria_area' && data.area_id) {
-              // Notificar colaboradores da área
-              const { data: areaUsers } = await supabase
-                .from('users')
-                .select('id')
-                .eq('role', 'colaborador')
-                .eq('area_id', data.area_id);
-
-              if (areaUsers) {
-                targetUserIds = areaUsers.map((u) => u.id);
-              }
-            } else if (data.type === 'optativa') {
-              // Notificar todos os colaboradores
-              const { data: allUsers } = await supabase
-                .from('users')
-                .select('id')
-                .eq('role', 'colaborador');
-
-              if (allUsers) {
-                targetUserIds = allUsers.map((u) => u.id);
-              }
-            }
-
-            // Criar notificações via API
-            if (targetUserIds.length > 0) {
-              await fetch('/api/notifications', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  userIds: targetUserIds,
-                  type: 'nova_trilha',
-                  message: `Nova trilha disponível: ${data.name}`,
-                }),
-              });
-            }
-          } catch (notifError) {
-            // Não falhar a criação da trilha se a notificação falhar
-            console.error('Erro ao criar notificações:', notifError);
+          if (data.type === 'obrigatoria_global' || data.type === 'optativa') {
+            const { data: allUsers } = await supabase
+              .from('users')
+              .select('id')
+              .eq('role', 'colaborador');
+            if (allUsers) targetUserIds = allUsers.map((u) => u.id);
+          } else if (data.type === 'obrigatoria_area' && data.area_id) {
+            const { data: areaUsers } = await supabase
+              .from('users')
+              .select('id')
+              .eq('role', 'colaborador')
+              .eq('area_id', data.area_id);
+            if (areaUsers) targetUserIds = areaUsers.map((u) => u.id);
           }
+
+          if (targetUserIds.length > 0) {
+            await fetch('/api/notifications', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userIds: targetUserIds,
+                type: 'nova_trilha',
+                message: `Nova trilha disponível: ${data.name}`,
+              }),
+            });
+          }
+        } catch (notifError) {
+          console.error('Erro ao criar notificações:', notifError);
         }
       }
 
       onSuccess();
     } catch (error: unknown) {
-      console.error('Erro ao salvar trilha:', error);
-      toast.error('Erro ao salvar trilha', {
-        description:
-          error instanceof Error ? error.message : 'Ocorreu um erro inesperado',
-      });
+      const msg =
+        error instanceof Error
+          ? error.message
+          : (error as { message?: string })?.message ?? JSON.stringify(error);
+      console.error('Erro ao salvar trilha:', msg);
+      toast.error('Erro ao salvar trilha', { description: msg });
     }
   };
 

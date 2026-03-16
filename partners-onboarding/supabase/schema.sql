@@ -120,7 +120,33 @@ CREATE TABLE notifications (
 );
 
 -- ============================================
--- 3. FUNÇÃO PARA ATUALIZAR updated_at
+-- 3. FUNÇÕES AUXILIARES (SECURITY DEFINER)
+-- ============================================
+
+-- Retorna o role do usuário atual sem acionar RLS da tabela users
+CREATE OR REPLACE FUNCTION get_user_role()
+RETURNS TEXT
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT role FROM users WHERE id = auth.uid();
+$$;
+
+-- Retorna a area_id do usuário atual sem acionar RLS da tabela users
+CREATE OR REPLACE FUNCTION get_user_area_id()
+RETURNS UUID
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT area_id FROM users WHERE id = auth.uid();
+$$;
+
+-- ============================================
+-- 4. FUNÇÃO PARA ATUALIZAR updated_at
 -- ============================================
 
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -282,32 +308,26 @@ CREATE POLICY "Trilhas são visíveis para usuários autenticados"
   ON trails FOR SELECT
   USING (auth.role() = 'authenticated');
 
--- Escrita: apenas admin
-CREATE POLICY "Apenas admin pode criar trilhas"
+-- Escrita: admin (qualquer trilha) ou gestor (somente trilhas da própria área)
+CREATE POLICY "Admin ou gestor pode criar trilhas"
   ON trails FOR INSERT
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM users
-      WHERE users.id = auth.uid() AND users.role = 'admin'
-    )
+    get_user_role() = 'admin'
+    OR (get_user_role() = 'gestor' AND get_user_area_id() = area_id)
   );
 
-CREATE POLICY "Apenas admin pode atualizar trilhas"
+CREATE POLICY "Admin ou gestor pode atualizar trilhas"
   ON trails FOR UPDATE
   USING (
-    EXISTS (
-      SELECT 1 FROM users
-      WHERE users.id = auth.uid() AND users.role = 'admin'
-    )
+    get_user_role() = 'admin'
+    OR (get_user_role() = 'gestor' AND get_user_area_id() = area_id)
   );
 
-CREATE POLICY "Apenas admin pode deletar trilhas"
+CREATE POLICY "Admin ou gestor pode deletar trilhas"
   ON trails FOR DELETE
   USING (
-    EXISTS (
-      SELECT 1 FROM users
-      WHERE users.id = auth.uid() AND users.role = 'admin'
-    )
+    get_user_role() = 'admin'
+    OR (get_user_role() = 'gestor' AND get_user_area_id() = area_id)
   );
 
 -- ============================================
