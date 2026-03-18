@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -29,6 +29,7 @@ export function VideoPlayer({
   const [videoFinished, setVideoFinished] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
+  const startTimeRef = useRef<number>(Date.now());
 
   const handleEnded = () => {
     setVideoFinished(true);
@@ -43,7 +44,10 @@ export function VideoPlayer({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ module_id: moduleId }),
+        body: JSON.stringify({
+          module_id: moduleId,
+          time_spent: Math.round((Date.now() - startTimeRef.current) / 1000),
+        }),
       });
 
       const data = await response.json();

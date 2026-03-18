@@ -96,7 +96,7 @@ export function TeamChartsClient({ trailData, teamMembers }: TeamChartsClientPro
                 {barData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={entry.type === 'optativa' ? COLORS.green : COLORS.primary}
+                    fill={entry.type === 'optativa_global' || entry.type === 'optativa_area' ? COLORS.green : COLORS.primary}
                   />
                 ))}
               </Bar>

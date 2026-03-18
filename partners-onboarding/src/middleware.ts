@@ -15,6 +15,9 @@ export async function middleware(request: NextRequest) {
   // Rotas de API de autenticação
   const isAuthApiRoute = pathname.startsWith('/api/auth');
 
+  // Rotas de cron (protegidas por CRON_SECRET, não por sessão)
+  const isCronRoute = pathname.startsWith('/api/cron');
+
   // Atualiza a sessão usando o helper
   let supabaseResponse = await updateSession(request);
 
@@ -45,7 +48,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Se for rota pública, do Next.js ou API de auth, permite acesso
-  if (isPublicRoute || isNextRoute || isAuthApiRoute) {
+  if (isPublicRoute || isNextRoute || isAuthApiRoute || isCronRoute) {
     // Se estiver autenticado e tentando acessar /login, redireciona para /
     if (pathname === '/login' && user) {
       return NextResponse.redirect(new URL('/', request.url));

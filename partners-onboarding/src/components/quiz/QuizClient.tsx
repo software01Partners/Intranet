@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { QuizQuestion, QuizQuestionData } from './QuizQuestion';
 import { QuizResult, QuizResultData } from './QuizResult';
 import { Button } from '@/components/ui/Button';
@@ -20,16 +20,25 @@ export function QuizClient({
 }: QuizClientProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [displayAnswers, setDisplayAnswers] = useState<Record<string, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<QuizResultData | null>(null);
+  const startTimeRef = useRef<number>(Date.now());
 
   const currentQuestion = questions[currentIndex];
-  const selectedAnswer = answers[currentQuestion.id] ?? null;
+  const selectedAnswer = displayAnswers[currentQuestion.id] ?? null;
 
   const handleSelectAnswer = (optionIndex: number) => {
-    setAnswers((prev) => ({
+    // Guardar índice visual para highlight
+    setDisplayAnswers((prev) => ({
       ...prev,
       [currentQuestion.id]: optionIndex,
+    }));
+    // Mapear o índice embaralhado de volta ao índice original do banco
+    const originalIndex = currentQuestion.originalIndices[optionIndex];
+    setAnswers((prev) => ({
+      ...prev,
+      [currentQuestion.id]: originalIndex,
     }));
   };
 
@@ -65,6 +74,7 @@ export function QuizClient({
         body: JSON.stringify({
           moduleId,
           answers: answersArray,
+          time_spent: Math.round((Date.now() - startTimeRef.current) / 1000),
         }),
       });
 
@@ -81,6 +91,7 @@ export function QuizClient({
           id: q.id,
           question: q.question,
           options: q.options,
+          originalIndices: q.originalIndices,
         })),
         trailComplete: data.trailComplete || false,
         trailId: data.trailId,
@@ -102,6 +113,7 @@ export function QuizClient({
   const handleRetry = () => {
     setCurrentIndex(0);
     setAnswers({});
+    setDisplayAnswers({});
     setResult(null);
   };
 

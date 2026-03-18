@@ -322,15 +322,21 @@ async function getUserCertificates(userId: string): Promise<
 
 // Função para buscar trilhas optativas com progresso
 async function getOptionalTrails(
-  userId: string
+  userId: string,
+  areaId: string | null
 ): Promise<TrailWithProgress[]> {
   const supabase = await createClient();
 
-  // Buscar trilhas optativas
-  const { data: trailsData } = await supabase
+  // Buscar todas as trilhas e filtrar optativas visíveis
+  const { data: allTrails } = await supabase
     .from('trails')
-    .select('*')
-    .eq('type', 'optativa');
+    .select('*');
+
+  const trailsData = allTrails?.filter(
+    (trail) =>
+      trail.type === 'optativa_global' ||
+      (trail.type === 'optativa_area' && trail.area_id === areaId)
+  ) || null;
 
   if (!trailsData || trailsData.length === 0) {
     return [];
@@ -712,8 +718,8 @@ async function RequiredTrailsGrid({
 }
 
 // Componente para exibir trilhas optativas
-async function OptionalTrailsGrid({ userId }: { userId: string }) {
-  const trails = await getOptionalTrails(userId);
+async function OptionalTrailsGrid({ userId, areaId }: { userId: string; areaId: string | null }) {
+  const trails = await getOptionalTrails(userId, areaId);
 
   if (trails.length === 0) {
     return null; // Não renderizar seção se não houver optativas
@@ -727,7 +733,9 @@ async function OptionalTrailsGrid({ userId }: { userId: string }) {
             <CardHeader>
               <div className="flex items-start justify-between mb-2">
                 <CardTitle className="text-lg">{trail.name}</CardTitle>
-                <Badge color="optativa">Optativa</Badge>
+                <Badge color={trail.type === 'optativa_area' ? 'optativa_area' : 'optativa_global'}>
+                  {trail.type === 'optativa_area' ? 'Optativa da Área' : 'Optativa Global'}
+                </Badge>
               </div>
               {trail.description && (
                 <p className="text-sm text-[#6B7194] dark:text-[#8888A0] line-clamp-2">
@@ -800,7 +808,7 @@ export default async function DashboardPage() {
 
       {/* Trilhas Optativas */}
       <Suspense fallback={null}>
-        <OptionalTrailsSection userId={user.id} />
+        <OptionalTrailsSection userId={user.id} areaId={user.area_id} />
       </Suspense>
 
       {/* Meus Certificados */}
@@ -812,8 +820,8 @@ export default async function DashboardPage() {
 }
 
 // Componente wrapper para trilhas optativas (para poder usar Suspense)
-async function OptionalTrailsSection({ userId }: { userId: string }) {
-  const trails = await getOptionalTrails(userId);
+async function OptionalTrailsSection({ userId, areaId }: { userId: string; areaId: string | null }) {
+  const trails = await getOptionalTrails(userId, areaId);
 
   if (trails.length === 0) {
     return null;
@@ -824,7 +832,7 @@ async function OptionalTrailsSection({ userId }: { userId: string }) {
       <h2 className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-4">
         Trilhas Optativas
       </h2>
-      <OptionalTrailsGrid userId={userId} />
+      <OptionalTrailsGrid userId={userId} areaId={areaId} />
     </div>
   );
 }

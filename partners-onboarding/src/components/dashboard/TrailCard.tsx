@@ -1,11 +1,11 @@
 'use client';
 
-import { Clock, Layers, CheckCircle2, Play, ArrowRight } from 'lucide-react';
+import { Clock, Layers, CheckCircle2, Play, ArrowRight, CalendarClock } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Button } from '@/components/ui/Button';
-import { formatDuration } from '@/lib/utils';
+import { formatDuration, formatDeadline, getDeadlineStatus } from '@/lib/utils';
 import { Trail } from '@/lib/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -35,10 +35,17 @@ export function TrailCard({ trail }: TrailCardProps) {
             : 'Obrigatória da Área',
           color: 'obrigatoria_area' as const,
         };
-      case 'optativa':
+      case 'optativa_global':
         return {
-          label: 'Optativa',
-          color: 'optativa' as const,
+          label: 'Optativa Global',
+          color: 'optativa_global' as const,
+        };
+      case 'optativa_area':
+        return {
+          label: trail.areaName
+            ? `Optativa - ${trail.areaName}`
+            : 'Optativa da Área',
+          color: 'optativa_area' as const,
         };
       default:
         return {
@@ -108,6 +115,21 @@ export function TrailCard({ trail }: TrailCardProps) {
             <span>{trail.totalModules} módulos</span>
           </div>
         </div>
+
+        {trail.deadline && trail.progress < 100 && (() => {
+          const status = getDeadlineStatus(trail.deadline);
+          const deadlineColorClass =
+            status === 'overdue' ? 'text-red-500' :
+            status === 'urgent' ? 'text-orange-500' :
+            status === 'warning' ? 'text-yellow-600 dark:text-yellow-400' :
+            'text-[#6B7194] dark:text-[#8888A0]';
+          return (
+            <div className={`flex items-center gap-1.5 text-sm ${deadlineColorClass}`}>
+              <CalendarClock className="w-4 h-4" />
+              <span className="font-medium">{formatDeadline(trail.deadline)}</span>
+            </div>
+          );
+        })()}
 
         <div className="space-y-1.5">
           <ProgressBar value={trail.progress} size="sm" />

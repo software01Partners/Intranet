@@ -7,7 +7,7 @@
 -- ============================================
 
 -- Tipo de trilha
-CREATE TYPE trail_type AS ENUM ('obrigatoria', 'comum', 'optativa');
+CREATE TYPE trail_type AS ENUM ('obrigatoria_global', 'obrigatoria_area', 'optativa_global', 'optativa_area');
 
 -- Tipo de módulo
 CREATE TYPE module_type AS ENUM ('video', 'document', 'quiz');

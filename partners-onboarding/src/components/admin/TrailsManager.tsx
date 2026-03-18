@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { TrailForm } from './TrailForm';
 import { Card, CardContent } from '@/components/ui/Card';
+import { formatDeadline, getDeadlineStatus } from '@/lib/utils';
 import type { Trail, TrailType, Area, User } from '@/lib/types';
 
 interface TrailWithCounts extends Trail {
@@ -208,14 +209,16 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
 
   // Excluir trilha
   const handleDelete = async (trailId: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta trilha?')) {
+    if (!confirm('Tem certeza que deseja mover esta trilha para a lixeira?')) {
       return;
     }
 
     try {
       setDeletingTrailId(trailId);
-      const response = await fetch(`/api/admin/trails?id=${trailId}`, {
-        method: 'DELETE',
+      const response = await fetch('/api/admin/soft-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: trailId, entity_type: 'trail' }),
       });
 
       if (!response.ok) {
@@ -223,7 +226,7 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
         throw new Error(result.error || 'Erro ao excluir trilha');
       }
 
-      toast.success('Trilha excluída com sucesso!');
+      toast.success('Trilha movida para a lixeira!');
       await fetchTrails();
     } catch (error) {
       console.error('Erro ao excluir trilha:', error);
@@ -242,8 +245,10 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
         return <Badge color="red">Obrigatória Global</Badge>;
       case 'obrigatoria_area':
         return <Badge color="blue">Obrigatória da Área</Badge>;
-      case 'optativa':
-        return <Badge color="green">Optativa</Badge>;
+      case 'optativa_global':
+        return <Badge color="green">Optativa Global</Badge>;
+      case 'optativa_area':
+        return <Badge color="green">Optativa da Área</Badge>;
       default:
         return <Badge>{type}</Badge>;
     }
@@ -253,7 +258,8 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
     { value: 'all', label: 'Todos os tipos' },
     { value: 'obrigatoria_global', label: 'Obrigatória Global' },
     { value: 'obrigatoria_area', label: 'Obrigatória da Área' },
-    { value: 'optativa', label: 'Optativa' },
+    { value: 'optativa_global', label: 'Optativa Global' },
+    { value: 'optativa_area', label: 'Optativa da Área' },
   ];
 
   if (loading) {
@@ -326,6 +332,9 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
                     Módulos
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[#8888A0] uppercase tracking-wider">
+                    Prazo
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#8888A0] uppercase tracking-wider">
                     Criado por
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-[#8888A0] uppercase tracking-wider">
@@ -336,7 +345,7 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
               <tbody className="divide-y divide-[#262630]">
                 {filteredTrails.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center">
+                    <td colSpan={7} className="px-6 py-12 text-center">
                       <p className="text-[#8888A0]">
                         {searchTerm || typeFilter !== 'all'
                           ? 'Nenhuma trilha encontrada com os filtros aplicados'
@@ -368,6 +377,23 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-sm text-[#E8E8ED]">{trail.modulesCount}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {trail.deadline ? (() => {
+                          const status = getDeadlineStatus(trail.deadline);
+                          const colorClass =
+                            status === 'overdue' ? 'text-red-500' :
+                            status === 'urgent' ? 'text-orange-500' :
+                            status === 'warning' ? 'text-yellow-400' :
+                            'text-[#E8E8ED]';
+                          return (
+                            <span className={`text-sm font-medium ${colorClass}`}>
+                              {formatDeadline(trail.deadline)}
+                            </span>
+                          );
+                        })() : (
+                          <span className="text-sm text-[#8888A0]">Sem prazo</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-sm text-[#8888A0]">

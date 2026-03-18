@@ -152,17 +152,24 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
   };
 
   const handleDelete = async (moduleId: string) => {
-    if (!confirm('Tem certeza que deseja excluir este módulo?')) {
+    if (!confirm('Tem certeza que deseja mover este módulo para a lixeira?')) {
       return;
     }
 
     try {
       setDeletingModuleId(moduleId);
-      const { error } = await supabase.from('modules').delete().eq('id', moduleId);
+      const response = await fetch('/api/admin/soft-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: moduleId, entity_type: 'module' }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Erro ao excluir módulo');
+      }
 
-      toast.success('Módulo excluído com sucesso!');
+      toast.success('Módulo movido para a lixeira!');
       await fetchModules();
     } catch (error) {
       console.error('Erro ao excluir módulo:', error);

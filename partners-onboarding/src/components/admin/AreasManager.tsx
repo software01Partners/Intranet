@@ -133,11 +133,18 @@ export function AreasManager() {
         return;
       }
 
-      const { error } = await supabase.from('areas').delete().eq('id', areaId);
+      const response = await fetch('/api/admin/soft-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: areaId, entity_type: 'area' }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Erro ao excluir área');
+      }
 
-      toast.success('Área excluída com sucesso!');
+      toast.success('Área movida para a lixeira!');
       // Atualização otimista: remove a área da lista imediatamente (evita depender do refetch)
       setAreas((prev) => prev.filter((a) => a.id !== areaId));
     } catch (error) {
@@ -250,7 +257,7 @@ export function AreasManager() {
                             onClick={() => {
                               if (
                                 window.confirm(
-                                  `Tem certeza que deseja excluir a área "${area.name}"?`
+                                  `Tem certeza que deseja mover a área "${area.name}" para a lixeira?`
                                 )
                               ) {
                                 setDeletingAreaId(area.id);

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { logAuditAction } from '@/lib/audit';
 
 // POST — criar trilha
 export async function POST(request: Request) {
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const { data: userData, error: userError } = await admin
       .from('users')
-      .select('role, area_id')
+      .select('name, role, area_id')
       .eq('id', authUser.id)
       .single();
 
@@ -31,13 +32,14 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, description, type, area_id, duration } = body;
+    const { name, description, type, area_id, duration, deadline } = body;
 
     // Gestor só pode criar trilhas da própria área
     if (userData.role === 'gestor') {
-      if (type !== 'obrigatoria_area' || area_id !== userData.area_id) {
+      const isAreaType = type === 'obrigatoria_area' || type === 'optativa_area';
+      if (!isAreaType || area_id !== userData.area_id) {
         return NextResponse.json(
-          { error: 'Gestor só pode criar trilhas obrigatórias da própria área' },
+          { error: 'Gestor só pode criar trilhas da própria área' },
           { status: 403 }
         );
       }
@@ -51,6 +53,7 @@ export async function POST(request: Request) {
         type,
         area_id: area_id || null,
         duration: duration || 0,
+        deadline: deadline || null,
         created_by: authUser.id,
       })
       .select()
@@ -60,6 +63,17 @@ export async function POST(request: Request) {
       console.error('Erro ao criar trilha:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    await logAuditAction({
+      userId: authUser.id,
+      userName: userData.name,
+      userRole: userData.role as 'admin' | 'gestor',
+      action: 'create',
+      entityType: 'trail',
+      entityId: trail.id,
+      entityName: name,
+      details: { type, area_id: area_id || null },
+    });
 
     return NextResponse.json(trail);
   } catch (error) {
@@ -83,7 +97,7 @@ export async function PUT(request: Request) {
     const admin = createAdminClient();
     const { data: userData, error: userError } = await admin
       .from('users')
-      .select('role, area_id')
+      .select('name, role, area_id')
       .eq('id', authUser.id)
       .single();
 
@@ -96,7 +110,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { id, name, description, type, area_id, duration } = body;
+    const { id, name, description, type, area_id, duration, deadline } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'ID da trilha é obrigatório' }, { status: 400 });
@@ -123,6 +137,7 @@ export async function PUT(request: Request) {
         type,
         area_id: area_id || null,
         duration: duration || 0,
+        deadline: deadline || null,
       })
       .eq('id', id)
       .select()
@@ -132,6 +147,17 @@ export async function PUT(request: Request) {
       console.error('Erro ao atualizar trilha:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    await logAuditAction({
+      userId: authUser.id,
+      userName: userData.name,
+      userRole: userData.role as 'admin' | 'gestor',
+      action: 'update',
+      entityType: 'trail',
+      entityId: id,
+      entityName: name,
+      details: { type, area_id: area_id || null },
+    });
 
     return NextResponse.json(trail);
   } catch (error) {
@@ -155,7 +181,7 @@ export async function DELETE(request: Request) {
     const admin = createAdminClient();
     const { data: userData, error: userError } = await admin
       .from('users')
-      .select('role, area_id')
+      .select('name, role, area_id')
       .eq('id', authUser.id)
       .single();
 
@@ -174,25 +200,39 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'ID da trilha é obrigatório' }, { status: 400 });
     }
 
+    // Buscar nome da trilha antes de deletar (para o log)
+    const { data: trailData } = await admin
+      .from('trails')
+      .select('name, area_id')
+      .eq('id', id)
+      .single();
+
     // Gestor só pode deletar trilhas da própria área
     if (userData.role === 'gestor') {
-      const { data: existingTrail } = await admin
-        .from('trails')
-        .select('area_id')
-        .eq('id', id)
-        .single();
-
-      if (!existingTrail || existingTrail.area_id !== userData.area_id) {
+      if (!trailData || trailData.area_id !== userData.area_id) {
         return NextResponse.json({ error: 'Sem permissão para excluir esta trilha' }, { status: 403 });
       }
     }
 
-    const { error } = await admin.from('trails').delete().eq('id', id);
+    const { error } = await admin
+      .from('trails')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id);
 
     if (error) {
       console.error('Erro ao excluir trilha:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    await logAuditAction({
+      userId: authUser.id,
+      userName: userData.name,
+      userRole: userData.role as 'admin' | 'gestor',
+      action: 'delete',
+      entityType: 'trail',
+      entityId: id,
+      entityName: trailData?.name || 'Trilha removida',
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

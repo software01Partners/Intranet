@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -28,6 +28,7 @@ export function PDFViewer({
 }: PDFViewerProps) {
   const [isCompleting, setIsCompleting] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
+  const startTimeRef = useRef<number>(Date.now());
 
   const handleMarkAsCompleted = async () => {
     setIsCompleting(true);
@@ -38,7 +39,10 @@ export function PDFViewer({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ module_id: moduleId }),
+        body: JSON.stringify({
+          module_id: moduleId,
+          time_spent: Math.round((Date.now() - startTimeRef.current) / 1000),
+        }),
       });
 
       const data = await response.json();
@@ -48,7 +52,7 @@ export function PDFViewer({
       }
 
       toast.success('Módulo marcado como concluído!');
-      
+
       // Se a trilha foi concluída, mostrar modal de certificado
       if (data.trailComplete && data.trailId) {
         setShowCertificateModal(true);

@@ -33,7 +33,9 @@ export function TrailCatalogClient({ trails }: TrailCatalogClientProps) {
           trail.type === 'obrigatoria_area'
       );
     } else if (filterType === 'optional') {
-      filtered = filtered.filter((trail) => trail.type === 'optativa');
+      filtered = filtered.filter(
+        (trail) => trail.type === 'optativa_global' || trail.type === 'optativa_area'
+      );
     }
 
     // Filtro por busca

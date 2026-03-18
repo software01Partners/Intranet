@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Plus, Trash2, Save } from 'lucide-react';
 import type { QuizQuestion } from '@/lib/types';
+import { logAction } from '@/lib/audit-client';
 
 interface QuestionForm {
   id?: string;
@@ -206,6 +207,14 @@ export function QuizEditor({ moduleId, onClose }: QuizEditorProps) {
           if (error) throw error;
         }
       }
+
+      logAction({
+        action: 'update',
+        entityType: 'quiz_question',
+        entityId: moduleId,
+        entityName: `Quiz do módulo`,
+        details: { total_questoes: questionsToSave.length, deletadas: idsToDelete.length },
+      });
 
       toast.success('Questões salvas com sucesso!');
       onClose();

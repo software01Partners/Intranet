@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { UserPlus, Search, ChevronLeft, ChevronRight, Edit2, X } from 'lucide-react';
 import { formatDate, calculateProgress } from '@/lib/utils';
 import type { User, Area, UserRole } from '@/lib/types';
+import { logAction } from '@/lib/audit-client';
 import Image from 'next/image';
 
 interface UserWithProgress extends User {
@@ -194,9 +195,18 @@ export function UserTable() {
 
       if (error) throw error;
 
+      const targetUser = users.find((u) => u.id === userId);
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
       );
+
+      logAction({
+        action: 'update',
+        entityType: 'user',
+        entityId: userId,
+        entityName: targetUser?.name || 'Usuário',
+        details: { campo: 'role', novo_valor: newRole },
+      });
 
       toast.success('Role atualizada com sucesso!');
     } catch (error) {
@@ -221,9 +231,18 @@ export function UserTable() {
         ? areas.find((a) => a.id === newAreaId) || null
         : null;
 
+      const targetUser = users.find((u) => u.id === userId);
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, area_id: newAreaId, area: newArea } : u))
       );
+
+      logAction({
+        action: 'update',
+        entityType: 'user',
+        entityId: userId,
+        entityName: targetUser?.name || 'Usuário',
+        details: { campo: 'area', nova_area: newArea?.name || 'Nenhuma' },
+      });
 
       toast.success('Área atualizada com sucesso!');
     } catch (error) {

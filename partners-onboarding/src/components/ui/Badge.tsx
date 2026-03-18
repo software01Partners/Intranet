@@ -14,7 +14,8 @@ export type BadgeColor =
   | 'colaborador'
   | 'obrigatoria_global'
   | 'obrigatoria_area'
-  | 'optativa';
+  | 'optativa_global'
+  | 'optativa_area';
 
 export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
   variant?: 'solid' | 'soft';
@@ -73,9 +74,13 @@ const badgeColorMap: Record<
     solid: 'bg-[#3B82F6] text-white',
     soft: 'bg-[#3B82F6]/10 text-[#3B82F6] dark:bg-[#3B82F6]/15 dark:text-[#60A5FA]',
   },
-  optativa: {
+  optativa_global: {
     solid: 'bg-[#10B981] text-white',
     soft: 'bg-[#10B981]/10 text-[#10B981] dark:bg-[#10B981]/15 dark:text-[#34D399]',
+  },
+  optativa_area: {
+    solid: 'bg-[#14B8A6] text-white',
+    soft: 'bg-[#14B8A6]/10 text-[#14B8A6] dark:bg-[#14B8A6]/15 dark:text-[#2DD4BF]',
   },
 };
 

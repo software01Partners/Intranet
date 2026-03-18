@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getSignedVideoUrl } from '@/lib/r2';
 import { TrailPlayerClient } from '@/components/player/TrailPlayerClient';
 import { Module, UserProgress, Trail, TrailType } from '@/lib/types';
-import { calculateProgress } from '@/lib/utils';
+import { calculateProgress, isExternalVideoUrl } from '@/lib/utils';
 
 interface ModuleWithProgress extends Module {
   progress: UserProgress | null;
@@ -83,7 +83,10 @@ async function getTrailData(
     // Gerar signed URL se necessário
     if (module.content_url) {
       try {
-        if (module.type === 'video') {
+        if (module.type === 'video' && isExternalVideoUrl(module.content_url)) {
+          // URL externa (YouTube ou Google Drive) — usar diretamente, sem signed URL
+          signedUrl = module.content_url;
+        } else if (module.type === 'video') {
           // content_url pode ser: (1) key do R2 (ex: videos/trailId/arquivo.mp4) ou (2) URL antiga (signed URL salva por engano)
           let key: string | null = null;
           if (module.content_url.startsWith('http')) {
@@ -232,6 +235,7 @@ export default async function TrailPlayerPage({
           id: trail.id,
           name: trail.name,
           type: trail.type,
+          deadline: trail.deadline,
         }}
         modules={modules}
         initialModuleId={initialModuleId}

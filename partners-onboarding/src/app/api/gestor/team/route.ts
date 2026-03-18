@@ -90,8 +90,9 @@ export async function GET(request: Request) {
       const visible = allTrails.filter(
         (trail) =>
           trail.type === 'obrigatoria_global' ||
-          trail.type === 'optativa' ||
-          (trail.type === 'obrigatoria_area' && trail.area_id === member.area_id)
+          trail.type === 'optativa_global' ||
+          (trail.type === 'obrigatoria_area' && trail.area_id === member.area_id) ||
+          (trail.type === 'optativa_area' && trail.area_id === member.area_id)
       );
       visibleTrailsByMember.set(member.id, visible.map((t) => t.id));
     });

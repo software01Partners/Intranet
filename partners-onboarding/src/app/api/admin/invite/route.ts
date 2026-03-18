@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { logAuditAction } from '@/lib/audit';
 import type { UserRole } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
     // Verificar role do usuário
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('role')
+      .select('name, role')
       .eq('id', authUser.id)
       .single();
 
@@ -129,6 +130,17 @@ export async function POST(request: NextRequest) {
       // Não é crítico, apenas log - o usuário já foi criado
       console.warn('Erro ao gerar link de recuperação:', inviteError);
     }
+
+    await logAuditAction({
+      userId: authUser.id,
+      userName: userData.name,
+      userRole: 'admin',
+      action: 'create',
+      entityType: 'user',
+      entityId: newAuthUser.user.id,
+      entityName: name,
+      details: { email, role, area_id },
+    });
 
     return NextResponse.json({
       success: true,

@@ -14,6 +14,8 @@ import {
   Building2,
   LogOut,
   X,
+  ScrollText,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import type { UserRole } from '@/lib/types';
@@ -67,11 +69,11 @@ const menuItems: MenuItem[] = [
     section: 'gestor',
   },
   {
-    label: 'Dashboard Admin',
+    label: 'Métricas',
     href: '/admin',
     icon: BarChart3,
-    roles: ['admin'],
-    section: 'admin',
+    roles: ['gestor', 'admin'],
+    section: 'gestor',
   },
   {
     label: 'Todas as Trilhas',
@@ -98,6 +100,20 @@ const menuItems: MenuItem[] = [
     label: 'Usuários',
     href: '/admin/usuarios',
     icon: UserCog,
+    roles: ['admin'],
+    section: 'admin',
+  },
+  {
+    label: 'Logs',
+    href: '/admin/logs',
+    icon: ScrollText,
+    roles: ['admin'],
+    section: 'admin',
+  },
+  {
+    label: 'Lixeira',
+    href: '/admin/lixeira',
+    icon: Trash2,
     roles: ['admin'],
     section: 'admin',
   },

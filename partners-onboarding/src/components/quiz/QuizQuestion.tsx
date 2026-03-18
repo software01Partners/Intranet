@@ -9,6 +9,7 @@ export interface QuizQuestionData {
   id: string;
   question: string;
   options: string[];
+  originalIndices: number[];
 }
 
 interface QuizQuestionProps {

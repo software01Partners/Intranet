@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 const completeModuleSchema = z.object({
   module_id: z.string().uuid(),
+  time_spent: z.number().int().min(0).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     // Validar body
     const body = await request.json();
-    const { module_id } = completeModuleSchema.parse(body);
+    const { module_id, time_spent } = completeModuleSchema.parse(body);
 
     // Verificar se o módulo existe e se o usuário tem acesso
     const { data: module, error: moduleError } = await supabase
@@ -38,19 +39,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Fazer upsert do progresso
+    const upsertData: Record<string, unknown> = {
+      user_id: user.id,
+      module_id,
+      completed: true,
+      completed_at: new Date().toISOString(),
+    };
+    if (time_spent != null) {
+      upsertData.time_spent = time_spent;
+    }
+
     const { data: progress, error: progressError } = await supabase
       .from('user_progress')
-      .upsert(
-        {
-          user_id: user.id,
-          module_id,
-          completed: true,
-          completed_at: new Date().toISOString(),
-        },
-        {
-          onConflict: 'user_id,module_id',
-        }
-      )
+      .upsert(upsertData, {
+        onConflict: 'user_id,module_id',
+      })
       .select()
       .single();
 

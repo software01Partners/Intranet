@@ -23,7 +23,7 @@ export interface QuizResultData {
   passed: boolean;
   minimumScore: number;
   feedback: QuizFeedback[];
-  questions: Array<{ id: string; question: string; options: string[] }>;
+  questions: Array<{ id: string; question: string; options: string[]; originalIndices: number[] }>;
   trailComplete?: boolean;
   trailId?: string;
 }
@@ -153,10 +153,16 @@ export function QuizResult({ result, trailId, onRetry }: QuizResultProps) {
           if (!feedback) return null;
 
           const isCorrect = feedback.correct;
-          const correctOption = question.options[feedback.correctAnswer];
-          const selectedOption =
+          // Mapear índice original → posição embaralhada para exibir o texto correto
+          const correctShuffledIdx = question.originalIndices.indexOf(feedback.correctAnswer);
+          const correctOption = question.options[correctShuffledIdx];
+          const selectedShuffledIdx =
             feedback.selectedAnswer !== null
-              ? question.options[feedback.selectedAnswer]
+              ? question.originalIndices.indexOf(feedback.selectedAnswer)
+              : null;
+          const selectedOption =
+            selectedShuffledIdx !== null
+              ? question.options[selectedShuffledIdx]
               : null;
 
           return (

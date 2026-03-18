@@ -31,12 +31,25 @@ async function getModuleData(moduleId: string) {
     return null;
   }
 
-  // Garantir que options seja um array de strings (sem is_correct)
-  const sanitizedQuestions = questions.map((q) => ({
-    id: q.id,
-    question: q.question,
-    options: Array.isArray(q.options) ? q.options : [],
-  }));
+  // Embaralhar ordem das perguntas (Fisher-Yates shuffle)
+  const shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
+
+  // Embaralhar opções de cada pergunta e guardar mapeamento dos índices originais
+  const sanitizedQuestions = shuffledQuestions.map((q) => {
+    const options: string[] = Array.isArray(q.options) ? q.options : [];
+    // Criar array de índices e embaralhar
+    const indices = options.map((_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return {
+      id: q.id,
+      question: q.question,
+      options: indices.map((i) => options[i]),
+      originalIndices: indices,
+    };
+  });
 
   return {
     module: {

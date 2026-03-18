@@ -3,17 +3,19 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { VideoPlayer } from './VideoPlayer';
+import { ExternalVideoPlayer } from './ExternalVideoPlayer';
 import { PDFViewer } from './PDFViewer';
 import { ModuleList } from './ModuleList';
 import { Module, UserProgress, TrailType } from '@/lib/types';
+import { isExternalVideoUrl } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Card, CardContent } from '@/components/ui/Card';
-import { formatDuration } from '@/lib/utils';
+import { formatDuration, formatDeadline, getDeadlineStatus } from '@/lib/utils';
 import { calculateProgress } from '@/lib/utils';
-import { Play, Award, HelpCircle } from 'lucide-react';
+import { Play, Award, HelpCircle, CalendarClock } from 'lucide-react';
 import Link from 'next/link';
 
 interface ModuleWithProgress extends Module {
@@ -27,6 +29,7 @@ interface TrailPlayerClientProps {
     id: string;
     name: string;
     type: TrailType;
+    deadline: string | null;
   };
   modules: ModuleWithProgress[];
   initialModuleId: string;
@@ -104,21 +107,25 @@ export function TrailPlayerClient({
         return 'Obrigatória Global';
       case 'obrigatoria_area':
         return 'Obrigatória da Área';
-      case 'optativa':
-        return 'Optativa';
+      case 'optativa_global':
+        return 'Optativa Global';
+      case 'optativa_area':
+        return 'Optativa da Área';
       default:
         return type;
     }
   };
 
-  const getTrailTypeColor = (type: TrailType): 'obrigatoria_global' | 'obrigatoria_area' | 'optativa' => {
+  const getTrailTypeColor = (type: TrailType): 'obrigatoria_global' | 'obrigatoria_area' | 'optativa_global' | 'optativa_area' => {
     switch (type) {
       case 'obrigatoria_global':
         return 'obrigatoria_global';
       case 'obrigatoria_area':
         return 'obrigatoria_area';
-      case 'optativa':
-        return 'optativa';
+      case 'optativa_global':
+        return 'optativa_global';
+      case 'optativa_area':
+        return 'optativa_area';
     }
   };
 
@@ -136,7 +143,17 @@ export function TrailPlayerClient({
         {/* Coluna Esquerda - Player */}
         <div className="space-y-6">
           {/* Player baseado no tipo */}
-          {currentModule.type === 'video' && currentModule.signedUrl && (
+          {currentModule.type === 'video' && currentModule.signedUrl && isExternalVideoUrl(currentModule.signedUrl) && (
+            <ExternalVideoPlayer
+              videoUrl={currentModule.signedUrl}
+              moduleId={currentModule.id}
+              trailId={trail.id}
+              trailName={trail.name}
+              onComplete={handleModuleComplete}
+            />
+          )}
+
+          {currentModule.type === 'video' && currentModule.signedUrl && !isExternalVideoUrl(currentModule.signedUrl) && (
             <VideoPlayer
               videoUrl={currentModule.signedUrl}
               moduleId={currentModule.id}
@@ -237,6 +254,21 @@ export function TrailPlayerClient({
                   {getTrailTypeLabel(trail.type)}
                 </Badge>
               </div>
+
+              {trail.deadline && trailProgress < 100 && (() => {
+                const status = getDeadlineStatus(trail.deadline);
+                const deadlineColorClass =
+                  status === 'overdue' ? 'text-red-500' :
+                  status === 'urgent' ? 'text-orange-500' :
+                  status === 'warning' ? 'text-yellow-600 dark:text-yellow-400' :
+                  'text-[#6B7194] dark:text-[#8888A0]';
+                return (
+                  <div className={`flex items-center gap-2 text-sm ${deadlineColorClass} pb-2`}>
+                    <CalendarClock className="w-4 h-4 flex-shrink-0" />
+                    <span className="font-medium">{formatDeadline(trail.deadline)}</span>
+                  </div>
+                );
+              })()}
 
               <div>
                 <div className="flex items-center justify-between mb-2">

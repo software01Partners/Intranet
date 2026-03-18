@@ -38,7 +38,7 @@ export interface TrailProgressData {
   trailId: string;
   trailName: string;
   averageProgress: number;
-  trailType: 'obrigatoria_global' | 'obrigatoria_area' | 'optativa';
+  trailType: 'obrigatoria_global' | 'obrigatoria_area' | 'optativa_global' | 'optativa_area';
 }
 
 // Função para buscar dados do usuário
@@ -128,8 +128,9 @@ export async function getTeamMembers(areaId: string | null): Promise<TeamMember[
     const visible = allTrails.filter(
       (trail) =>
         trail.type === 'obrigatoria_global' ||
-        trail.type === 'optativa' ||
-        (trail.type === 'obrigatoria_area' && trail.area_id === member.area_id)
+        trail.type === 'optativa_global' ||
+        (trail.type === 'obrigatoria_area' && trail.area_id === member.area_id) ||
+        (trail.type === 'optativa_area' && trail.area_id === member.area_id)
     );
     visibleTrailsByMember.set(member.id, visible.map((t) => t.id));
   });
@@ -294,8 +295,9 @@ export async function getTrailProgressData(
     if (areaId) {
       return (
         trail.type === 'obrigatoria_global' ||
-        trail.type === 'optativa' ||
-        (trail.type === 'obrigatoria_area' && trail.area_id === areaId)
+        trail.type === 'optativa_global' ||
+        (trail.type === 'obrigatoria_area' && trail.area_id === areaId) ||
+        (trail.type === 'optativa_area' && trail.area_id === areaId)
       );
     }
     return true; // Admin vê todas

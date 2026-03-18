@@ -9,8 +9,10 @@ import { createClient } from '@/lib/supabase/client';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
-import { Upload, FileVideo, FileText, HelpCircle } from 'lucide-react';
+import { Upload, FileVideo, FileText, HelpCircle, Link2, Youtube } from 'lucide-react';
 import type { Module, ModuleType, Trail } from '@/lib/types';
+import { isYoutubeUrl, isGoogleDriveUrl } from '@/lib/utils';
+import { logAction } from '@/lib/audit-client';
 
 // Schema de validação dinâmico baseado no modo de edição
 const createModuleFormSchema = (hasExistingContent: boolean) =>
@@ -20,18 +22,38 @@ const createModuleFormSchema = (hasExistingContent: boolean) =>
       type: z.enum(['video', 'document', 'quiz']),
       duration: z.number().min(0, 'Duração deve ser maior ou igual a 0').optional(),
       file: z.instanceof(File).optional(),
+      contentSource: z.enum(['upload', 'link']).optional(),
+      externalUrl: z.string().optional(),
     })
     .refine(
       (data) => {
-        // Se tipo é video ou document, arquivo é obrigatório apenas se não tiver content_url existente
+        // Se tipo é video com link externo, URL é obrigatória
+        if (data.type === 'video' && data.contentSource === 'link') {
+          return !!data.externalUrl && data.externalUrl.trim().length > 0;
+        }
+        // Se tipo é video ou document com upload, arquivo é obrigatório (se não tiver content_url existente)
         if ((data.type === 'video' || data.type === 'document') && !data.file && !hasExistingContent) {
           return false;
         }
         return true;
       },
       {
-        message: 'Arquivo é obrigatório para vídeo e documento',
+        message: 'Arquivo ou link é obrigatório',
         path: ['file'],
+      }
+    )
+    .refine(
+      (data) => {
+        // Validar que a URL é do YouTube ou Google Drive
+        if (data.type === 'video' && data.contentSource === 'link' && data.externalUrl) {
+          const url = data.externalUrl.trim();
+          return isYoutubeUrl(url) || isGoogleDriveUrl(url);
+        }
+        return true;
+      },
+      {
+        message: 'Insira um link válido do YouTube ou Google Drive',
+        path: ['externalUrl'],
       }
     );
 
@@ -56,6 +78,15 @@ export function ModuleForm({
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  // Detectar se conteúdo existente é link externo
+  const existingIsExternal = !!(
+    initialData?.content_url &&
+    (isYoutubeUrl(initialData.content_url) || isGoogleDriveUrl(initialData.content_url))
+  );
+  const [contentSource, setContentSource] = useState<'upload' | 'link'>(
+    existingIsExternal ? 'link' : 'upload'
+  );
+
   const hasExistingContent = !!(isEditMode && initialData?.content_url);
 
   const {
@@ -70,6 +101,8 @@ export function ModuleForm({
       title: initialData?.title || '',
       type: (initialData?.type as ModuleType) || 'video',
       duration: initialData?.duration || 0,
+      contentSource: existingIsExternal ? 'link' : 'upload',
+      externalUrl: existingIsExternal ? initialData?.content_url || '' : '',
     },
   });
 
@@ -121,8 +154,13 @@ export function ModuleForm({
 
       let contentUrl = initialData?.content_url || null;
 
+      // Se vídeo com link externo, salvar URL diretamente (sem upload)
+      if (data.type === 'video' && data.contentSource === 'link' && data.externalUrl) {
+        contentUrl = data.externalUrl.trim();
+      }
+
       // Upload de arquivo se necessário (POST com FormData: file, type, trailId)
-      if ((data.type === 'video' || data.type === 'document') && data.file) {
+      if ((data.type === 'video' || data.type === 'document') && data.contentSource !== 'link' && data.file) {
         setIsUploading(true);
         setUploadProgress(0);
 
@@ -193,6 +231,14 @@ export function ModuleForm({
 
         if (error) throw error;
 
+        logAction({
+          action: 'update',
+          entityType: 'module',
+          entityId: initialData.id,
+          entityName: data.title,
+          details: { type: data.type, trail_id: trailId },
+        });
+
         toast.success('Módulo atualizado com sucesso!');
       } else {
         // Insert - buscar próximo sort_order
@@ -214,6 +260,14 @@ export function ModuleForm({
           .single();
 
         if (error) throw error;
+
+        logAction({
+          action: 'create',
+          entityType: 'module',
+          entityId: newModule?.id,
+          entityName: data.title,
+          details: { type: data.type, trail_id: trailId },
+        });
 
         toast.success('Módulo criado com sucesso!');
 
@@ -280,7 +334,82 @@ export function ModuleForm({
         disabled={isSubmitting || isUploading}
       />
 
-      {(selectedType === 'video' || selectedType === 'document') && (
+      {/* Toggle Upload / Link externo (só para vídeo) */}
+      {selectedType === 'video' && (
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED]">
+            Origem do conteúdo
+          </label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setContentSource('upload');
+                setValue('contentSource', 'upload');
+                setValue('externalUrl', '');
+              }}
+              disabled={isSubmitting || isUploading}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                contentSource === 'upload'
+                  ? 'bg-[#6B2FA0] text-white'
+                  : 'bg-[#F8F9FC] dark:bg-[#0F0F1A] text-[#6B7194] dark:text-[#8888A0] border border-[#E2E5F1] dark:border-[#2D2D4A] hover:border-[#6B2FA0] dark:hover:border-[#8B5CF6]'
+              }`}
+            >
+              <Upload className="w-4 h-4" />
+              Upload de arquivo
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setContentSource('link');
+                setValue('contentSource', 'link');
+                setSelectedFile(null);
+                setValue('file', undefined as any);
+              }}
+              disabled={isSubmitting || isUploading}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                contentSource === 'link'
+                  ? 'bg-[#6B2FA0] text-white'
+                  : 'bg-[#F8F9FC] dark:bg-[#0F0F1A] text-[#6B7194] dark:text-[#8888A0] border border-[#E2E5F1] dark:border-[#2D2D4A] hover:border-[#6B2FA0] dark:hover:border-[#8B5CF6]'
+              }`}
+            >
+              <Link2 className="w-4 h-4" />
+              Link externo
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Input de link externo (YouTube / Google Drive) */}
+      {selectedType === 'video' && contentSource === 'link' && (
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED]">
+            Link do vídeo (YouTube ou Google Drive)
+            {!isEditMode && <span className="text-red-500 ml-1">*</span>}
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Youtube className="w-5 h-5 text-[#9CA3C4] dark:text-[#8888A0]" />
+            </div>
+            <input
+              type="url"
+              {...register('externalUrl')}
+              placeholder="https://www.youtube.com/watch?v=... ou https://drive.google.com/file/d/..."
+              disabled={isSubmitting || isUploading}
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8F9FC] dark:bg-[#0F0F1A] border border-[#E2E5F1] dark:border-[#2D2D4A] text-sm text-[#1A1D2E] dark:text-[#E8E8ED] placeholder-[#9CA3C4] dark:placeholder-[#8888A0] focus:outline-none focus:border-[#6B2FA0] dark:focus:border-[#8B5CF6] transition-colors"
+            />
+          </div>
+          {errors.externalUrl && (
+            <p className="text-sm text-red-500">{errors.externalUrl.message}</p>
+          )}
+          <p className="text-xs text-[#6B7194] dark:text-[#8888A0]">
+            Cole o link do YouTube ou do Google Drive. Para Google Drive, certifique-se de que o compartilhamento está habilitado.
+          </p>
+        </div>
+      )}
+
+      {/* Upload de arquivo (vídeo com upload ou documento) */}
+      {((selectedType === 'video' && contentSource === 'upload') || selectedType === 'document') && (
         <div className="space-y-2">
           <label className="block text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED]">
             Arquivo {selectedType === 'video' ? '(MP4, MOV - máx. 500MB)' : '(PDF - máx. 500MB)'}
@@ -307,7 +436,7 @@ export function ModuleForm({
               <span className="text-sm text-[#1A1D2E] dark:text-[#E8E8ED] flex-1">
                 {selectedFile
                   ? selectedFile.name
-                  : initialData?.content_url
+                  : initialData?.content_url && !existingIsExternal
                   ? 'Arquivo já carregado (clique para substituir)'
                   : 'Selecione um arquivo'}
               </span>

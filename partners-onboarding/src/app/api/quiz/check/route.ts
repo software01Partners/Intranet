@@ -10,6 +10,7 @@ const checkQuizSchema = z.object({
       selectedOption: z.number().int().min(0),
     })
   ),
+  time_spent: z.number().int().min(0).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     // Validar body
     const body = await request.json();
-    const { moduleId, answers } = checkQuizSchema.parse(body);
+    const { moduleId, answers, time_spent } = checkQuizSchema.parse(body);
 
     // Verificar se o módulo existe e é do tipo quiz
     const { data: module, error: moduleError } = await supabase
@@ -156,25 +157,21 @@ export async function POST(request: NextRequest) {
     const total = questions.length;
     const score = correctCount;
     const percentage = (score / total) * 100;
-    const minimumScore = 70;
+    const minimumScore = 80;
     const passed = percentage >= minimumScore;
 
     // Salvar progresso
-    const progressData: {
-      user_id: string;
-      module_id: string;
-      completed: boolean;
-      score: number;
-      completed_at?: string;
-    } = {
+    const progressData: Record<string, unknown> = {
       user_id: user.id,
       module_id: moduleId,
       completed: passed,
-      score: percentage,
     };
 
     if (passed) {
       progressData.completed_at = new Date().toISOString();
+    }
+    if (time_spent != null) {
+      progressData.time_spent = time_spent;
     }
 
     const { error: upsertError } = await supabase

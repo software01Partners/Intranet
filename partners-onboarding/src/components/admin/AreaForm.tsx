@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import type { Area } from '@/lib/types';
+import { logAction } from '@/lib/audit-client';
 
 // Schema de validação
 const areaFormSchema = z.object({
@@ -65,18 +66,36 @@ export function AreaForm({ initialData, onSuccess, onCancel }: AreaFormProps) {
           throw error;
         }
 
+        logAction({
+          action: 'update',
+          entityType: 'area',
+          entityId: initialData.id,
+          entityName: data.name,
+        });
+
         toast.success('Área atualizada com sucesso!');
       } else {
         // Criar nova área
-        const { error } = await supabase.from('areas').insert({
-          name: data.name,
-          abbreviation: data.abbreviation,
-          color: data.color,
-        });
+        const { data: newArea, error } = await supabase
+          .from('areas')
+          .insert({
+            name: data.name,
+            abbreviation: data.abbreviation,
+            color: data.color,
+          })
+          .select()
+          .single();
 
         if (error) {
           throw error;
         }
+
+        logAction({
+          action: 'create',
+          entityType: 'area',
+          entityId: newArea?.id,
+          entityName: data.name,
+        });
 
         toast.success('Área criada com sucesso!');
       }

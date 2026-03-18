@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,21 +17,22 @@ const trailFormSchema = z
   .object({
     name: z.string().min(1, 'Nome é obrigatório'),
     description: z.string().optional(),
-    type: z.enum(['obrigatoria_global', 'obrigatoria_area', 'optativa']),
+    type: z.enum(['obrigatoria_global', 'obrigatoria_area', 'optativa_global', 'optativa_area']),
     area_id: z.string().uuid().nullable(),
     duration: z.number().min(0, 'Duração deve ser maior ou igual a 0').optional(),
+    deadline: z.string().nullable(),
   })
   .refine(
     (data) => {
-      // Se tipo é obrigatoria_area, area_id deve ser obrigatório
-      if (data.type === 'obrigatoria_area') {
+      // Se tipo é _area, area_id deve ser obrigatório
+      if (data.type === 'obrigatoria_area' || data.type === 'optativa_area') {
         return data.area_id !== null;
       }
-      // Se tipo é obrigatoria_global ou optativa, area_id deve ser null
+      // Se tipo é _global, area_id deve ser null
       return data.area_id === null;
     },
     {
-      message: 'Área é obrigatória para trilhas obrigatórias da área',
+      message: 'Área é obrigatória para trilhas da área',
       path: ['area_id'],
     }
   );
@@ -59,9 +60,21 @@ export function TrailForm({
   const isEditMode = !!initialData;
   const isGestor = userRole === 'gestor';
 
+  // Controle de "sem prazo"
+  const [hasDeadline, setHasDeadline] = useState(!!initialData?.deadline);
+
   // Se gestor, tipo fixo em obrigatoria_area e área fixa
   const defaultType = isGestor ? 'obrigatoria_area' : undefined;
   const defaultAreaId = isGestor ? userAreaId : null;
+
+  // Converter deadline para formato date input (YYYY-MM-DD)
+  const deadlineToDateInput = (deadline: string | null | undefined): string => {
+    if (!deadline) return '';
+    // Se já está no formato YYYY-MM-DD, usar direto
+    if (/^\d{4}-\d{2}-\d{2}$/.test(deadline)) return deadline;
+    // Se vier como ISO com timezone, extrair só a parte da data
+    return deadline.split('T')[0];
+  };
 
   const {
     register,
@@ -77,30 +90,39 @@ export function TrailForm({
       type: (initialData?.type as TrailType) || defaultType || 'obrigatoria_global',
       area_id: initialData?.area_id || defaultAreaId,
       duration: initialData?.duration || 0,
+      deadline: deadlineToDateInput(initialData?.deadline),
     },
   });
 
   const selectedType = watch('type');
 
-  // Se gestor, travar tipo e área
+  // Se gestor, travar área (tipo pode ser obrigatoria_area ou optativa_area)
   useEffect(() => {
     if (isGestor) {
-      setValue('type', 'obrigatoria_area');
+      if (selectedType !== 'obrigatoria_area' && selectedType !== 'optativa_area') {
+        setValue('type', 'obrigatoria_area');
+      }
       if (userAreaId) {
         setValue('area_id', userAreaId);
       }
     }
-  }, [isGestor, userAreaId, setValue]);
+  }, [isGestor, userAreaId, selectedType, setValue]);
 
-  // Limpar area_id quando tipo não for obrigatoria_area
+  // Limpar area_id quando tipo não for _area
   useEffect(() => {
-    if (selectedType !== 'obrigatoria_area') {
+    if (selectedType !== 'obrigatoria_area' && selectedType !== 'optativa_area') {
       setValue('area_id', null);
     }
   }, [selectedType, setValue]);
 
   const onSubmit = async (data: TrailFormData) => {
     try {
+      // Salvar deadline como data pura (YYYY-MM-DD) sem conversão de fuso
+      let deadlineValue: string | null = null;
+      if (hasDeadline && data.deadline) {
+        deadlineValue = data.deadline;
+      }
+
       const payload = {
         ...(isEditMode && initialData ? { id: initialData.id } : {}),
         name: data.name,
@@ -108,6 +130,7 @@ export function TrailForm({
         type: data.type,
         area_id: data.area_id,
         duration: data.duration || 0,
+        deadline: deadlineValue,
       };
 
       const response = await fetch('/api/admin/trails', {
@@ -129,13 +152,13 @@ export function TrailForm({
         try {
           let targetUserIds: string[] = [];
 
-          if (data.type === 'obrigatoria_global' || data.type === 'optativa') {
+          if (data.type === 'obrigatoria_global' || data.type === 'optativa_global') {
             const { data: allUsers } = await supabase
               .from('users')
               .select('id')
               .eq('role', 'colaborador');
             if (allUsers) targetUserIds = allUsers.map((u) => u.id);
-          } else if (data.type === 'obrigatoria_area' && data.area_id) {
+          } else if ((data.type === 'obrigatoria_area' || data.type === 'optativa_area') && data.area_id) {
             const { data: areaUsers } = await supabase
               .from('users')
               .select('id')
@@ -171,11 +194,17 @@ export function TrailForm({
     }
   };
 
-  const typeOptions = [
-    { value: 'obrigatoria_global', label: 'Obrigatória Global' },
-    { value: 'obrigatoria_area', label: 'Obrigatória da Área' },
-    { value: 'optativa', label: 'Optativa' },
-  ];
+  const typeOptions = isGestor
+    ? [
+        { value: 'obrigatoria_area', label: 'Obrigatória da Área' },
+        { value: 'optativa_area', label: 'Optativa da Área' },
+      ]
+    : [
+        { value: 'obrigatoria_global', label: 'Obrigatória Global' },
+        { value: 'obrigatoria_area', label: 'Obrigatória da Área' },
+        { value: 'optativa_global', label: 'Optativa Global' },
+        { value: 'optativa_area', label: 'Optativa da Área' },
+      ];
 
   const areaOptions = areas.map((area) => ({
     value: area.id,
@@ -209,11 +238,11 @@ export function TrailForm({
         value={watch('type')}
         options={typeOptions}
         error={errors.type?.message}
-        disabled={isSubmitting || isGestor}
+        disabled={isSubmitting}
         placeholder="Selecione o tipo"
       />
 
-      {selectedType === 'obrigatoria_area' && (
+      {(selectedType === 'obrigatoria_area' || selectedType === 'optativa_area') && (
         <Select
           label="Área"
           {...register('area_id', {
@@ -237,6 +266,35 @@ export function TrailForm({
         min={0}
         disabled={isSubmitting}
       />
+
+      {/* Prazo */}
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED] cursor-pointer">
+          <input
+            type="checkbox"
+            checked={hasDeadline}
+            onChange={(e) => {
+              setHasDeadline(e.target.checked);
+              if (!e.target.checked) {
+                setValue('deadline', null);
+              }
+            }}
+            className="rounded border-[#D1D5DB] dark:border-[#4A4A6A] text-[#6B2FA0] focus:ring-[#6B2FA0]"
+            disabled={isSubmitting}
+          />
+          Definir prazo para conclusão
+        </label>
+        {hasDeadline && (
+          <Input
+            label="Prazo"
+            type="date"
+            {...register('deadline')}
+            error={errors.deadline?.message}
+            min={new Date().toISOString().split('T')[0]}
+            disabled={isSubmitting}
+          />
+        )}
+      </div>
 
       <div className="flex gap-3 justify-end pt-4">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
