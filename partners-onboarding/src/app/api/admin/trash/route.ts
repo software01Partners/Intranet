@@ -106,7 +106,7 @@ export async function GET() {
     // Buscar trilhas deletadas
     const { data: trails } = await admin
       .from('trails')
-      .select('id, name, type, area_id, deleted_at')
+      .select('id, name, type, deleted_at')
       .not('deleted_at', 'is', null)
       .order('deleted_at', { ascending: false });
 
@@ -136,7 +136,7 @@ export async function GET() {
         entity_type: 'trail' as const,
         deleted_at: t.deleted_at!,
         days_remaining: calcDaysRemaining(t.deleted_at!),
-        extra: { type: t.type, area_id: t.area_id },
+        extra: { type: t.type },
       })),
       ...(modules || []).map((m) => ({
         id: m.id,

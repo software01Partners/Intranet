@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell, BookOpen, AlertTriangle, Award, X } from 'lucide-react';
+import { Bell, BookOpen, AlertTriangle, Award, Lock, X } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { formatRelativeTime } from '@/lib/utils';
 import type { NotificationType } from '@/lib/types';
@@ -39,6 +39,8 @@ export function NotificationBell() {
         return AlertTriangle;
       case 'certificado':
         return Award;
+      case 'quiz_bloqueado':
+        return Lock;
       default:
         return Bell;
     }
@@ -111,6 +113,8 @@ export function NotificationBell() {
                             ? 'text-[#F5A623]'
                             : notification.type === 'atraso'
                             ? 'text-[#F59E0B]'
+                            : notification.type === 'quiz_bloqueado'
+                            ? 'text-red-400'
                             : 'text-[#3B82F6]'
                         }`}
                       />

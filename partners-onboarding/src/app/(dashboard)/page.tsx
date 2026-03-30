@@ -17,6 +17,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { formatDateFull, calculateProgress } from '@/lib/utils';
+import { getTrailAreasMap, isTrailVisibleToArea } from '@/lib/trail-areas';
 import Link from 'next/link';
 import { CertificateDownloadButton } from '@/components/certificate/CertificateDownloadButton';
 
@@ -206,15 +207,19 @@ async function getRequiredTrails(
   const supabase = await createClient();
 
   // Buscar trilhas obrigatórias visíveis
-  // O RLS já filtra automaticamente, então buscamos todas e filtramos por tipo
   const { data: allTrails } = await supabase.from('trails').select('*');
 
-  // Filtrar apenas obrigatórias (global e da área)
-  const trailsData = allTrails?.filter(
+  if (!allTrails || allTrails.length === 0) return [];
+
+  // Buscar trail_areas para determinar visibilidade
+  const trailAreasMap = await getTrailAreasMap(supabase, allTrails.map((t) => t.id));
+
+  // Filtrar apenas obrigatórias visíveis para a área do usuário
+  const trailsData = allTrails.filter(
     (trail) =>
       trail.type === 'obrigatoria_global' ||
-      (trail.type === 'obrigatoria_area' && trail.area_id === areaId)
-  ) || [];
+      (trail.type === 'obrigatoria_area' && isTrailVisibleToArea(trail, areaId, trailAreasMap.get(trail.id) || []))
+  );
 
   if (!trailsData || trailsData.length === 0) {
     return [];
@@ -332,11 +337,15 @@ async function getOptionalTrails(
     .from('trails')
     .select('*');
 
-  const trailsData = allTrails?.filter(
+  if (!allTrails || allTrails.length === 0) return [];
+
+  const trailAreasMap = await getTrailAreasMap(supabase, allTrails.map((t) => t.id));
+
+  const trailsData = allTrails.filter(
     (trail) =>
       trail.type === 'optativa_global' ||
-      (trail.type === 'optativa_area' && trail.area_id === areaId)
-  ) || null;
+      (trail.type === 'optativa_area' && isTrailVisibleToArea(trail, areaId, trailAreasMap.get(trail.id) || []))
+  );
 
   if (!trailsData || trailsData.length === 0) {
     return [];

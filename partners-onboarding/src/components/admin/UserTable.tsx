@@ -68,7 +68,8 @@ export function UserTable() {
     }
 
     fetchAreas();
-  }, [supabase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Buscar usuários e calcular progresso
   useEffect(() => {
@@ -153,7 +154,8 @@ export function UserTable() {
     }
 
     fetchUsers();
-  }, [supabase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Filtrar usuários
   const filteredUsers = useMemo(() => {

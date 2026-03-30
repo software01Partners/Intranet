@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
@@ -26,14 +26,77 @@ export function AreasManager() {
 
   // Buscar áreas com contagens
   useEffect(() => {
-    fetchAreas();
+    let cancelled = false;
+
+    async function load() {
+      try {
+        setLoading(true);
+
+        const { data: areasData, error: areasError } = await supabase
+          .from('areas')
+          .select('*')
+          .order('name');
+
+        if (cancelled) return;
+        if (areasError) throw areasError;
+
+        if (!areasData || areasData.length === 0) {
+          setAreas([]);
+          setLoading(false);
+          return;
+        }
+
+        const areaIds = areasData.map((a) => a.id);
+        const [{ data: usersData }, { data: trailAreasData }] = await Promise.all([
+          supabase.from('users').select('area_id').in('area_id', areaIds),
+          supabase.from('trail_areas').select('area_id').in('area_id', areaIds),
+        ]);
+
+        if (cancelled) return;
+
+        const usersCountMap = new Map<string, number>();
+        if (usersData) {
+          usersData.forEach((user) => {
+            if (user.area_id) {
+              usersCountMap.set(user.area_id, (usersCountMap.get(user.area_id) || 0) + 1);
+            }
+          });
+        }
+
+        const trailsCountMap = new Map<string, number>();
+        if (trailAreasData) {
+          trailAreasData.forEach((ta) => {
+            if (ta.area_id) {
+              trailsCountMap.set(ta.area_id, (trailsCountMap.get(ta.area_id) || 0) + 1);
+            }
+          });
+        }
+
+        const areasWithCounts: AreaWithCounts[] = areasData.map((area) => ({
+          ...area,
+          usersCount: usersCountMap.get(area.id) || 0,
+          trailsCount: trailsCountMap.get(area.id) || 0,
+        }));
+
+        setAreas(areasWithCounts);
+      } catch (error) {
+        if (cancelled) return;
+        console.error('Erro ao buscar áreas:', error);
+        toast.error('Erro ao carregar áreas', {
+          description: error instanceof Error ? error.message : 'Erro inesperado',
+        });
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function fetchAreas(silent = false) {
+  async function refetchAreas() {
     try {
-      if (!silent) setLoading(true);
-
-      // Buscar todas as áreas
       const { data: areasData, error: areasError } = await supabase
         .from('areas')
         .select('*')
@@ -43,59 +106,43 @@ export function AreasManager() {
 
       if (!areasData || areasData.length === 0) {
         setAreas([]);
-        if (!silent) setLoading(false);
         return;
       }
 
-      // Buscar contagem de usuários por área
       const areaIds = areasData.map((a) => a.id);
-      const { data: usersData } = await supabase
-        .from('users')
-        .select('area_id')
-        .in('area_id', areaIds);
+      const [{ data: usersData }, { data: trailAreasData }] = await Promise.all([
+        supabase.from('users').select('area_id').in('area_id', areaIds),
+        supabase.from('trail_areas').select('area_id').in('area_id', areaIds),
+      ]);
 
-      // Buscar contagem de trilhas por área
-      const { data: trailsData } = await supabase
-        .from('trails')
-        .select('area_id')
-        .in('area_id', areaIds);
-
-      // Criar mapas de contagem
       const usersCountMap = new Map<string, number>();
       if (usersData) {
         usersData.forEach((user) => {
           if (user.area_id) {
-            const count = usersCountMap.get(user.area_id) || 0;
-            usersCountMap.set(user.area_id, count + 1);
+            usersCountMap.set(user.area_id, (usersCountMap.get(user.area_id) || 0) + 1);
           }
         });
       }
 
       const trailsCountMap = new Map<string, number>();
-      if (trailsData) {
-        trailsData.forEach((trail) => {
-          if (trail.area_id) {
-            const count = trailsCountMap.get(trail.area_id) || 0;
-            trailsCountMap.set(trail.area_id, count + 1);
+      if (trailAreasData) {
+        trailAreasData.forEach((ta) => {
+          if (ta.area_id) {
+            trailsCountMap.set(ta.area_id, (trailsCountMap.get(ta.area_id) || 0) + 1);
           }
         });
       }
 
-      // Montar áreas com contagens
-      const areasWithCounts: AreaWithCounts[] = areasData.map((area) => ({
+      setAreas(areasData.map((area) => ({
         ...area,
         usersCount: usersCountMap.get(area.id) || 0,
         trailsCount: trailsCountMap.get(area.id) || 0,
-      }));
-
-      setAreas(areasWithCounts);
+      })));
     } catch (error) {
       console.error('Erro ao buscar áreas:', error);
       toast.error('Erro ao carregar áreas', {
         description: error instanceof Error ? error.message : 'Erro inesperado',
       });
-    } finally {
-      if (!silent) setLoading(false);
     }
   }
 
@@ -116,7 +163,7 @@ export function AreasManager() {
 
   const handleFormSuccess = async () => {
     handleCloseModal();
-    await fetchAreas(true);
+    await refetchAreas();
   };
 
   const handleDelete = async (areaId: string) => {

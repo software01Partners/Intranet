@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { ProgressRing } from '@/components/ui/ProgressRing';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { calculateProgress } from '@/lib/utils';
+import { getTrailAreasMap, isTrailVisibleToArea } from '@/lib/trail-areas';
 import { MetricsDashboardClient } from '@/components/metrics/MetricsDashboardClient';
 import { MetricsAreaSelector } from '@/components/metrics/MetricsAreaSelector';
 import type {
@@ -26,7 +27,9 @@ import {
   Award,
   GraduationCap,
   AlertTriangle,
+  Lock,
 } from 'lucide-react';
+import { QuizBlockedSection } from '@/components/gestor/QuizBlockedSection';
 
 // ============================================
 // Data Fetching
@@ -73,6 +76,7 @@ async function getMetricsData(
     progressRes,
     certificatesRes,
     areasRes,
+    quizAttemptsRes,
   ] = await Promise.all([
     supabase.from('users').select('*'),
     supabase.from('trails').select('*'),
@@ -80,6 +84,7 @@ async function getMetricsData(
     supabase.from('user_progress').select('*'),
     supabase.from('certificates').select('*'),
     supabase.from('areas').select('*'),
+    supabase.from('quiz_attempts').select('user_id, module_id, cycle, passed, created_at').eq('passed', false),
   ]);
 
 
@@ -91,6 +96,9 @@ async function getMetricsData(
   const certificates = certificatesRes.data || [];
   const areas = areasRes.data || [];
 
+  // Buscar trail_areas para todas as trilhas
+  const trailAreasMap = await getTrailAreasMap(supabase, trails.map((t) => t.id));
+
   // Filtrar por área se necessário
   const filteredUsers = areaId
     ? users.filter((u) => u.area_id === areaId)
@@ -98,12 +106,8 @@ async function getMetricsData(
 
   // ── Helper: trilhas visíveis para um usuário ──
   function getVisibleTrails(userAreaId: string | null) {
-    return trails.filter(
-      (t) =>
-        t.type === 'obrigatoria_global' ||
-        t.type === 'optativa_global' ||
-        ((t.type === 'obrigatoria_area' || t.type === 'optativa_area') &&
-          t.area_id === userAreaId)
+    return trails.filter((t) =>
+      isTrailVisibleToArea(t, userAreaId, trailAreasMap.get(t.id) || [])
     );
   }
 
@@ -194,6 +198,36 @@ async function getMetricsData(
       })
     : certificates;
 
+  // Quiz blocked count
+  const LOCKOUT_HOURS = 72;
+  const quizAttempts = quizAttemptsRes.data || [];
+  const attemptGroups = new Map<string, typeof quizAttempts>();
+  quizAttempts.forEach((a) => {
+    const key = `${a.user_id}:${a.module_id}`;
+    const group = attemptGroups.get(key) || [];
+    group.push(a);
+    attemptGroups.set(key, group);
+  });
+
+  let quizBlockedCount = 0;
+  const nowDate = new Date();
+  for (const [, group] of attemptGroups) {
+    group.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const latestCycle = group[0].cycle;
+    const cycleAttempts = group.filter((a) => a.cycle === latestCycle);
+    if (cycleAttempts.length >= 3) {
+      const blockedUntil = new Date(
+        new Date(cycleAttempts[0].created_at).getTime() + LOCKOUT_HOURS * 60 * 60 * 1000
+      );
+      if (blockedUntil > nowDate) {
+        const userId = group[0].user_id;
+        if (!areaId || filteredUsers.some((u) => u.id === userId)) {
+          quizBlockedCount++;
+        }
+      }
+    }
+  }
+
   const kpis: KPIData = {
     totalUsers: filteredUsers.length,
     activeUsers,
@@ -201,6 +235,7 @@ async function getMetricsData(
     totalTrailsCompleted: totalTrailsCompleted,
     certificatesIssued: filteredCerts.length,
     overdueCount: userMetrics.filter((u) => u.status === 'atrasado').length,
+    quizBlockedCount,
   };
 
   // ── Status Distribution ──
@@ -231,13 +266,7 @@ async function getMetricsData(
 
   // ── Trail Analytics ──
   const visibleTrails = areaId
-    ? trails.filter(
-        (t) =>
-          t.type === 'obrigatoria_global' ||
-          t.type === 'optativa_global' ||
-          ((t.type === 'obrigatoria_area' || t.type === 'optativa_area') &&
-            t.area_id === areaId)
-      )
+    ? trails.filter((t) => isTrailVisibleToArea(t, areaId, trailAreasMap.get(t.id) || []))
     : trails;
 
   const trailAnalytics: TrailAnalyticsItem[] = visibleTrails.map((trail) => {
@@ -245,10 +274,11 @@ async function getMetricsData(
     const quizMods = trailMods.filter((m) => m.type === 'quiz');
 
     // Quem deveria ver essa trilha
+    const trailAreaIds = trailAreasMap.get(trail.id) || [];
     const enrolledUsers =
       trail.type === 'obrigatoria_global' || trail.type === 'optativa_global'
         ? filteredUsers
-        : filteredUsers.filter((u) => u.area_id === trail.area_id);
+        : filteredUsers.filter((u) => u.area_id && trailAreaIds.includes(u.area_id));
 
     let totalProgress = 0;
     let completedCount = 0;
@@ -346,10 +376,11 @@ async function getMetricsData(
     .filter((t) => t.deadline)
     .map((trail) => {
       const trailMods = getTrailModules(trail.id);
+      const deadlineTrailAreaIds = trailAreasMap.get(trail.id) || [];
       const enrolledUsers =
         trail.type === 'obrigatoria_global' || trail.type === 'optativa_global'
           ? filteredUsers
-          : filteredUsers.filter((u) => u.area_id === trail.area_id);
+          : filteredUsers.filter((u) => u.area_id && deadlineTrailAreaIds.includes(u.area_id));
 
       let completedUsers = 0;
       const overdueUsers: string[] = [];
@@ -605,7 +636,7 @@ export default async function AdminDashboardPage({
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
         <KPICard
           icon={<Users className="w-5 h-5" />}
           label="Colaboradores"
@@ -644,11 +675,22 @@ export default async function AdminDashboardPage({
           color="#EF4444"
           subtext={`${kpis.totalUsers > 0 ? Math.round((kpis.overdueCount / kpis.totalUsers) * 100) : 0}% do total`}
         />
+        <KPICard
+          icon={<Lock className="w-5 h-5" />}
+          label="Quizzes Bloqueados"
+          value={kpis.quizBlockedCount}
+          color="#DC2626"
+        />
       </div>
 
       {/* Dashboard com Tabs */}
       <Suspense fallback={<Skeleton className="h-[600px] w-full" />}>
         <MetricsDashboardClient data={metrics} />
+      </Suspense>
+
+      {/* Quizzes Bloqueados */}
+      <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+        <QuizBlockedSection areaId={selectedAreaId} />
       </Suspense>
     </div>
   );

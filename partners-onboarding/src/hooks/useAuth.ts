@@ -29,6 +29,8 @@ export function useAuth(): UseAuthReturn {
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
+    let cancelled = false;
+
     // Busca dados do usuário da tabela users
     const fetchUserData = async (session: Session) => {
       try {
@@ -37,6 +39,8 @@ export function useAuth(): UseAuthReturn {
           .select('name, role, area_id, avatar_url')
           .eq('id', session.user.id)
           .single();
+
+        if (cancelled) return;
 
         if (error) {
           console.error('Erro ao buscar dados do usuário:', error);
@@ -49,10 +53,11 @@ export function useAuth(): UseAuthReturn {
           });
         }
       } catch (error) {
+        if (cancelled) return;
         console.error('Erro inesperado ao buscar dados do usuário:', error);
         setUserData(null);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
@@ -62,6 +67,8 @@ export function useAuth(): UseAuthReturn {
         const {
           data: { session: initialSession },
         } = await supabase.auth.getSession();
+
+        if (cancelled) return;
 
         setSession(initialSession);
 
@@ -74,6 +81,7 @@ export function useAuth(): UseAuthReturn {
           setLoading(false);
         }
       } catch (error) {
+        if (cancelled) return;
         console.error('Erro ao buscar sessão inicial:', error);
         setUser(null);
         setSession(null);
@@ -88,6 +96,7 @@ export function useAuth(): UseAuthReturn {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      if (cancelled) return;
       setSession(newSession);
 
       if (newSession?.user) {
@@ -102,6 +111,7 @@ export function useAuth(): UseAuthReturn {
     });
 
     return () => {
+      cancelled = true;
       subscription.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

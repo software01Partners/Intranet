@@ -67,6 +67,57 @@ async function getModuleData(moduleId: string) {
   };
 }
 
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+const LOCKOUT_HOURS = 72;
+const MAX_ATTEMPTS = 3;
+
+async function getAttemptData(
+  supabase: SupabaseClient,
+  userId: string,
+  moduleId: string
+) {
+  const { data: attempts } = await supabase
+    .from('quiz_attempts')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('module_id', moduleId)
+    .order('created_at', { ascending: false });
+
+  const allAttempts = attempts || [];
+
+  if (allAttempts.length === 0) {
+    return { attemptsUsed: 0, attemptsRemaining: MAX_ATTEMPTS, blockedUntil: null, cycle: 1 };
+  }
+
+  const currentCycle = allAttempts[0].cycle;
+  const cycleAttempts = allAttempts.filter((a: { cycle: number }) => a.cycle === currentCycle);
+  let attemptsUsed = cycleAttempts.length;
+  let blockedUntil: string | null = null;
+  let effectiveCycle = currentCycle;
+
+  if (attemptsUsed >= MAX_ATTEMPTS) {
+    const latestAttempt = cycleAttempts[0];
+    const lockoutEnd = new Date(
+      new Date(latestAttempt.created_at).getTime() + LOCKOUT_HOURS * 60 * 60 * 1000
+    );
+
+    if (new Date() < lockoutEnd) {
+      blockedUntil = lockoutEnd.toISOString();
+    } else {
+      effectiveCycle = currentCycle + 1;
+      attemptsUsed = 0;
+    }
+  }
+
+  return {
+    attemptsUsed,
+    attemptsRemaining: blockedUntil ? 0 : MAX_ATTEMPTS - attemptsUsed,
+    blockedUntil,
+    cycle: effectiveCycle,
+  };
+}
+
 interface PageProps {
   params: Promise<{ moduleId: string }>;
 }
@@ -109,6 +160,9 @@ export default async function QuizPage({ params }: PageProps) {
     redirect(`/trilhas/${data.module.trail_id}?modulo=${moduleId}`);
   }
 
+  // Buscar dados de tentativas
+  const attemptData = await getAttemptData(supabase, user.id, moduleId);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
@@ -124,6 +178,10 @@ export default async function QuizPage({ params }: PageProps) {
         moduleId={moduleId}
         trailId={data.trail.id}
         questions={data.questions}
+        attemptsUsed={attemptData.attemptsUsed}
+        attemptsRemaining={attemptData.attemptsRemaining}
+        blockedUntil={attemptData.blockedUntil}
+        cycle={attemptData.cycle}
       />
     </div>
   );

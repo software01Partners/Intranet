@@ -8,11 +8,13 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Users, Award, AlertTriangle } from 'lucide-react';
 import { calculateProgress } from '@/lib/utils';
+import { getTrailAreasMap, isTrailVisibleToArea } from '@/lib/trail-areas';
 import { TeamTable } from '@/components/gestor/TeamTable';
 import { TeamStats } from '@/components/gestor/TeamStats';
 import { TeamCharts } from '@/components/gestor/TeamCharts';
 import { AlertsSection } from '@/components/gestor/AlertsSection';
 import { AreaSelector } from '@/components/gestor/AreaSelector';
+import { QuizBlockedSection } from '@/components/gestor/QuizBlockedSection';
 
 // Tipos para dados da equipe
 export interface TeamMember {
@@ -122,15 +124,14 @@ export async function getTeamMembers(areaId: string | null): Promise<TeamMember[
     }));
   }
 
+  // Buscar trail_areas
+  const trailAreasMap = await getTrailAreasMap(supabase, allTrails.map((t) => t.id));
+
   // Filtrar trilhas visíveis para cada membro (baseado na área dele)
   const visibleTrailsByMember = new Map<string, string[]>();
   members.forEach((member) => {
-    const visible = allTrails.filter(
-      (trail) =>
-        trail.type === 'obrigatoria_global' ||
-        trail.type === 'optativa_global' ||
-        (trail.type === 'obrigatoria_area' && trail.area_id === member.area_id) ||
-        (trail.type === 'optativa_area' && trail.area_id === member.area_id)
+    const visible = allTrails.filter((trail) =>
+      isTrailVisibleToArea(trail, member.area_id, trailAreasMap.get(trail.id) || [])
     );
     visibleTrailsByMember.set(member.id, visible.map((t) => t.id));
   });
@@ -290,15 +291,13 @@ export async function getTrailProgressData(
     return [];
   }
 
+  // Buscar trail_areas
+  const trailAreasMapProgress = await getTrailAreasMap(supabase, allTrails.map((t) => t.id));
+
   // Filtrar trilhas visíveis para a área (ou todas se admin)
   const visibleTrails = allTrails.filter((trail) => {
     if (areaId) {
-      return (
-        trail.type === 'obrigatoria_global' ||
-        trail.type === 'optativa_global' ||
-        (trail.type === 'obrigatoria_area' && trail.area_id === areaId) ||
-        (trail.type === 'optativa_area' && trail.area_id === areaId)
-      );
+      return isTrailVisibleToArea(trail, areaId, trailAreasMapProgress.get(trail.id) || []);
     }
     return true; // Admin vê todas
   });
@@ -446,6 +445,11 @@ export default async function GestorPage({
       {/* Alertas de Atraso */}
       <Suspense fallback={<Skeleton className="h-64 w-full" />}>
         <AlertsSection areaId={selectedAreaId} />
+      </Suspense>
+
+      {/* Quizzes Bloqueados */}
+      <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+        <QuizBlockedSection areaId={selectedAreaId} />
       </Suspense>
     </div>
   );

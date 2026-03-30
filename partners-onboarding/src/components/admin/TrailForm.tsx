@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
+import { MultiSelect } from '@/components/ui/MultiSelect';
 import { Button } from '@/components/ui/Button';
 import type { Trail, TrailType, Area } from '@/lib/types';
 
@@ -18,22 +19,20 @@ const trailFormSchema = z
     name: z.string().min(1, 'Nome é obrigatório'),
     description: z.string().optional(),
     type: z.enum(['obrigatoria_global', 'obrigatoria_area', 'optativa_global', 'optativa_area']),
-    area_id: z.string().uuid().nullable(),
+    area_ids: z.array(z.string().uuid()).optional(),
     duration: z.number().min(0, 'Duração deve ser maior ou igual a 0').optional(),
     deadline: z.string().nullable(),
   })
   .refine(
     (data) => {
-      // Se tipo é _area, area_id deve ser obrigatório
       if (data.type === 'obrigatoria_area' || data.type === 'optativa_area') {
-        return data.area_id !== null;
+        return data.area_ids && data.area_ids.length > 0;
       }
-      // Se tipo é _global, area_id deve ser null
-      return data.area_id === null;
+      return true;
     },
     {
-      message: 'Área é obrigatória para trilhas da área',
-      path: ['area_id'],
+      message: 'Selecione pelo menos uma área',
+      path: ['area_ids'],
     }
   );
 
@@ -63,16 +62,21 @@ export function TrailForm({
   // Controle de "sem prazo"
   const [hasDeadline, setHasDeadline] = useState(!!initialData?.deadline);
 
+  // Multi-select de áreas
+  const initialAreaIds = initialData?.area_ids && initialData.area_ids.length > 0
+    ? initialData.area_ids
+    : isGestor && userAreaId
+      ? [userAreaId]
+      : [];
+  const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>(initialAreaIds);
+
   // Se gestor, tipo fixo em obrigatoria_area e área fixa
   const defaultType = isGestor ? 'obrigatoria_area' : undefined;
-  const defaultAreaId = isGestor ? userAreaId : null;
 
   // Converter deadline para formato date input (YYYY-MM-DD)
   const deadlineToDateInput = (deadline: string | null | undefined): string => {
     if (!deadline) return '';
-    // Se já está no formato YYYY-MM-DD, usar direto
     if (/^\d{4}-\d{2}-\d{2}$/.test(deadline)) return deadline;
-    // Se vier como ISO com timezone, extrair só a parte da data
     return deadline.split('T')[0];
   };
 
@@ -88,7 +92,7 @@ export function TrailForm({
       name: initialData?.name || '',
       description: initialData?.description || '',
       type: (initialData?.type as TrailType) || defaultType || 'obrigatoria_global',
-      area_id: initialData?.area_id || defaultAreaId,
+      area_ids: initialAreaIds,
       duration: initialData?.duration || 0,
       deadline: deadlineToDateInput(initialData?.deadline),
     },
@@ -96,39 +100,42 @@ export function TrailForm({
 
   const selectedType = watch('type');
 
-  // Se gestor, travar área (tipo pode ser obrigatoria_area ou optativa_area)
+  // Se gestor, travar área
   useEffect(() => {
     if (isGestor) {
       if (selectedType !== 'obrigatoria_area' && selectedType !== 'optativa_area') {
         setValue('type', 'obrigatoria_area');
       }
       if (userAreaId) {
-        setValue('area_id', userAreaId);
+        setValue('area_ids', [userAreaId]);
+        setSelectedAreaIds([userAreaId]);
       }
     }
   }, [isGestor, userAreaId, selectedType, setValue]);
 
-  // Limpar area_id quando tipo não for _area
+  // Limpar area_ids quando tipo não for _area
   useEffect(() => {
     if (selectedType !== 'obrigatoria_area' && selectedType !== 'optativa_area') {
-      setValue('area_id', null);
+      setValue('area_ids', []);
+      setSelectedAreaIds([]);
     }
   }, [selectedType, setValue]);
 
   const onSubmit = async (data: TrailFormData) => {
     try {
-      // Salvar deadline como data pura (YYYY-MM-DD) sem conversão de fuso
       let deadlineValue: string | null = null;
       if (hasDeadline && data.deadline) {
         deadlineValue = data.deadline;
       }
+
+      const isAreaType = data.type === 'obrigatoria_area' || data.type === 'optativa_area';
 
       const payload = {
         ...(isEditMode && initialData ? { id: initialData.id } : {}),
         name: data.name,
         description: data.description || null,
         type: data.type,
-        area_id: data.area_id,
+        area_ids: isAreaType ? selectedAreaIds : [],
         duration: data.duration || 0,
         deadline: deadlineValue,
       };
@@ -147,40 +154,42 @@ export function TrailForm({
 
       toast.success(isEditMode ? 'Trilha atualizada com sucesso!' : 'Trilha criada com sucesso!');
 
-      // Criar notificações para usuários relevantes (apenas ao criar)
+      // Criar notificações para usuários relevantes (fire-and-forget — não bloqueia o form)
       if (!isEditMode && result.id) {
-        try {
-          let targetUserIds: string[] = [];
+        (async () => {
+          try {
+            let targetUserIds: string[] = [];
 
-          if (data.type === 'obrigatoria_global' || data.type === 'optativa_global') {
-            const { data: allUsers } = await supabase
-              .from('users')
-              .select('id')
-              .eq('role', 'colaborador');
-            if (allUsers) targetUserIds = allUsers.map((u) => u.id);
-          } else if ((data.type === 'obrigatoria_area' || data.type === 'optativa_area') && data.area_id) {
-            const { data: areaUsers } = await supabase
-              .from('users')
-              .select('id')
-              .eq('role', 'colaborador')
-              .eq('area_id', data.area_id);
-            if (areaUsers) targetUserIds = areaUsers.map((u) => u.id);
-          }
+            if (data.type === 'obrigatoria_global' || data.type === 'optativa_global') {
+              const { data: allUsers } = await supabase
+                .from('users')
+                .select('id')
+                .eq('role', 'colaborador');
+              if (allUsers) targetUserIds = allUsers.map((u) => u.id);
+            } else if (isAreaType && selectedAreaIds.length > 0) {
+              const { data: areaUsers } = await supabase
+                .from('users')
+                .select('id')
+                .eq('role', 'colaborador')
+                .in('area_id', selectedAreaIds);
+              if (areaUsers) targetUserIds = areaUsers.map((u) => u.id);
+            }
 
-          if (targetUserIds.length > 0) {
-            await fetch('/api/notifications', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                userIds: targetUserIds,
-                type: 'nova_trilha',
-                message: `Nova trilha disponível: ${data.name}`,
-              }),
-            });
+            if (targetUserIds.length > 0) {
+              await fetch('/api/notifications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  userIds: targetUserIds,
+                  type: 'nova_trilha',
+                  message: `Nova trilha disponível: ${data.name}`,
+                }),
+              });
+            }
+          } catch (notifError) {
+            console.error('Erro ao criar notificações:', notifError);
           }
-        } catch (notifError) {
-          console.error('Erro ao criar notificações:', notifError);
-        }
+        })();
       }
 
       onSuccess();
@@ -210,6 +219,8 @@ export function TrailForm({
     value: area.id,
     label: area.name,
   }));
+
+  const showAreaSelector = selectedType === 'obrigatoria_area' || selectedType === 'optativa_area';
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -242,18 +253,18 @@ export function TrailForm({
         placeholder="Selecione o tipo"
       />
 
-      {(selectedType === 'obrigatoria_area' || selectedType === 'optativa_area') && (
-        <Select
-          label="Área"
-          {...register('area_id', {
-            setValueAs: (value: string) => (value === '' ? null : value),
-            onChange: (e) => setValue('area_id', e.target.value === '' ? null : e.target.value),
-          })}
-          value={watch('area_id') || ''}
+      {showAreaSelector && (
+        <MultiSelect
+          label={isEditMode ? 'Áreas' : 'Áreas'}
           options={areaOptions}
-          error={errors.area_id?.message}
+          value={selectedAreaIds}
+          onChange={(newIds) => {
+            setSelectedAreaIds(newIds);
+            setValue('area_ids', newIds);
+          }}
+          error={errors.area_ids?.message}
           disabled={isSubmitting || isGestor}
-          placeholder="Selecione a área"
+          placeholder="Selecione uma ou mais áreas"
         />
       )}
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getTrailAreasMap } from '@/lib/trail-areas';
 
 /**
  * Cron job que verifica trilhas com prazo vencendo em até 3 dias
@@ -45,6 +46,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Nenhuma trilha com prazo próximo', notified: 0 });
     }
 
+    // Buscar trail_areas para todas as trilhas com deadline
+    const trailAreasMap = await getTrailAreasMap(admin, trails.map((t) => t.id));
+
     let totalNotifications = 0;
 
     for (const trail of trails) {
@@ -54,13 +58,14 @@ export async function GET(request: NextRequest) {
       const diffDays = Math.round((deadlineDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
 
       // Buscar usuários que devem ver essa trilha
+      const trailAreaIds = trailAreasMap.get(trail.id) || [];
       let usersQuery = admin
         .from('users')
         .select('id');
 
-      if ((trail.type === 'obrigatoria_area' || trail.type === 'optativa_area') && trail.area_id) {
-        // Trilha de área: só usuários daquela área
-        usersQuery = usersQuery.eq('area_id', trail.area_id);
+      if ((trail.type === 'obrigatoria_area' || trail.type === 'optativa_area') && trailAreaIds.length > 0) {
+        // Trilha de área: só usuários das áreas vinculadas
+        usersQuery = usersQuery.in('area_id', trailAreaIds);
       }
       // obrigatoria_global e optativa_global: todos os usuários
 

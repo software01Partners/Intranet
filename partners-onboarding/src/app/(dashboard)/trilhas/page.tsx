@@ -4,6 +4,7 @@ import { User, Trail } from '@/lib/types';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { TrailCatalogClient } from './TrailCatalogClient';
 import { Card } from '@/components/ui/Card';
+import { getTrailAreasMap, isTrailVisibleToArea } from '@/lib/trail-areas';
 
 interface TrailWithProgress extends Trail {
   totalModules: number;
@@ -53,18 +54,22 @@ async function getTrailsWithProgress(
     return [];
   }
 
-  // Buscar nomes das áreas separadamente
-  const areaIds = trailsData
-    .map((t) => t.area_id)
-    .filter((id): id is string => id !== null);
-  
+  // Buscar trail_areas para determinar áreas de cada trilha
+  const trailAreasMap = await getTrailAreasMap(supabase, trailsData.map((t) => t.id));
+
+  // Coletar todos os area_ids usados
+  const allAreaIds = new Set<string>();
+  trailAreasMap.forEach((areaIds) => {
+    areaIds.forEach((id) => allAreaIds.add(id));
+  });
+
   const areasMap = new Map<string, string>();
-  if (areaIds.length > 0) {
+  if (allAreaIds.size > 0) {
     const { data: areasData } = await supabase
       .from('areas')
       .select('id, name')
-      .in('id', areaIds);
-    
+      .in('id', Array.from(allAreaIds));
+
     if (areasData) {
       areasData.forEach((area) => {
         areasMap.set(area.id, area.name);
@@ -85,7 +90,7 @@ async function getTrailsWithProgress(
       ...(trail as Trail),
       totalModules: 0,
       progress: 0,
-      areaName: trail.area_id ? areasMap.get(trail.area_id) || null : null,
+      areaName: (trailAreasMap.get(trail.id) || []).map((aid) => areasMap.get(aid)).filter(Boolean).join(', ') || null,
     }));
   }
 
@@ -118,7 +123,7 @@ async function getTrailsWithProgress(
       ...(trail as Trail),
       totalModules,
       progress,
-      areaName: trail.area_id ? areasMap.get(trail.area_id) || null : null,
+      areaName: (trailAreasMap.get(trail.id) || []).map((aid) => areasMap.get(aid)).filter(Boolean).join(', ') || null,
     };
   });
 

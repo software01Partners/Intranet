@@ -87,9 +87,9 @@ export function TeamChartsClient({ trailData, teamMembers }: TeamChartsClientPro
                   color: '#1A1D2E',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                 }}
-                formatter={(value: number, name: string, props: any) => [
+                formatter={(value: unknown, _name: unknown, props: { payload?: { fullName?: string } }) => [
                   `${value}%`,
-                  props.payload.fullName,
+                  props.payload?.fullName ?? '',
                 ]}
               />
               <Bar dataKey="progress" radius={[0, 4, 4, 0]}>
@@ -118,8 +118,8 @@ export function TeamChartsClient({ trailData, teamMembers }: TeamChartsClientPro
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percent }) =>
-                  `${name}: ${(percent * 100).toFixed(0)}%`
+                label={({ name, percent }: { name?: string; percent?: number }) =>
+                  `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
                 }
                 outerRadius={120}
                 fill="#888888"

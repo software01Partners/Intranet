@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(curl -s http://localhost:3000/api/cron/deadline-notifications)",
+      "Bash(python3 -m json.tool)",
+      "Bash(ls \"c:/Users/arthu/OneDrive/Área de Trabalho/Intranet/partners-onboarding/src/app/\\(dashboard\\)/admin/\")",
+      "Bash(npm run:*)"
+    ]
+  }
+}

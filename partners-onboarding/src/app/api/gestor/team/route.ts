@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { TeamMember } from '@/app/(dashboard)/gestor/page';
 import { calculateProgress } from '@/lib/utils';
+import { getTrailAreasMap, isTrailVisibleToArea } from '@/lib/trail-areas';
 
 export async function GET(request: Request) {
   try {
@@ -84,15 +85,14 @@ export async function GET(request: Request) {
       );
     }
 
+    // Buscar trail_areas
+    const trailAreasMap = await getTrailAreasMap(supabase, allTrails.map((t) => t.id));
+
     // Filtrar trilhas visíveis para cada membro
     const visibleTrailsByMember = new Map<string, string[]>();
     members.forEach((member) => {
-      const visible = allTrails.filter(
-        (trail) =>
-          trail.type === 'obrigatoria_global' ||
-          trail.type === 'optativa_global' ||
-          (trail.type === 'obrigatoria_area' && trail.area_id === member.area_id) ||
-          (trail.type === 'optativa_area' && trail.area_id === member.area_id)
+      const visible = allTrails.filter((trail) =>
+        isTrailVisibleToArea(trail, member.area_id, trailAreasMap.get(trail.id) || [])
       );
       visibleTrailsByMember.set(member.id, visible.map((t) => t.id));
     });

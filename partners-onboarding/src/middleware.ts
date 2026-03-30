@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { updateSession } from './lib/supabase/middleware';
 import { createServerClient } from '@supabase/ssr';
 
 export async function middleware(request: NextRequest) {
@@ -8,20 +7,19 @@ export async function middleware(request: NextRequest) {
   // Rotas públicas que não precisam de autenticação
   const publicRoutes = ['/login', '/auth/callback'];
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
-  
+
   // Rotas do Next.js e assets estáticos
   const isNextRoute = pathname.startsWith('/_next') || pathname === '/favicon.ico';
-  
+
   // Rotas de API de autenticação
   const isAuthApiRoute = pathname.startsWith('/api/auth');
 
   // Rotas de cron (protegidas por CRON_SECRET, não por sessão)
   const isCronRoute = pathname.startsWith('/api/cron');
 
-  // Atualiza a sessão usando o helper
-  let supabaseResponse = await updateSession(request);
+  // Atualiza a sessão e verifica autenticação em uma única operação
+  let supabaseResponse = NextResponse.next({ request });
 
-  // Cria cliente para verificar autenticação
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -30,8 +28,8 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
+        setAll(cookiesToSet: Array<{ name: string; value: string; options?: Record<string, unknown> }>) {
+          cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value);
           });
           supabaseResponse = NextResponse.next({ request });
@@ -43,6 +41,7 @@ export async function middleware(request: NextRequest) {
     }
   );
 
+  // Uma única chamada auth — atualiza sessão E verifica usuário
   const {
     data: { user },
   } = await supabase.auth.getUser();

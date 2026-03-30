@@ -4,19 +4,27 @@ import { useState, useRef } from 'react';
 import { QuizQuestion, QuizQuestionData } from './QuizQuestion';
 import { QuizResult, QuizResultData } from './QuizResult';
 import { Button } from '@/components/ui/Button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Lock, Clock, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface QuizClientProps {
   moduleId: string;
   trailId: string;
   questions: QuizQuestionData[];
+  attemptsUsed: number;
+  attemptsRemaining: number;
+  blockedUntil: string | null;
+  cycle: number;
 }
 
 export function QuizClient({
   moduleId,
   trailId,
   questions,
+  attemptsUsed: initialAttemptsUsed,
+  attemptsRemaining: initialAttemptsRemaining,
+  blockedUntil: initialBlockedUntil,
+  cycle: initialCycle,
 }: QuizClientProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
@@ -25,16 +33,21 @@ export function QuizClient({
   const [result, setResult] = useState<QuizResultData | null>(null);
   const startTimeRef = useRef<number>(Date.now());
 
+  const [attemptInfo, setAttemptInfo] = useState({
+    attemptsUsed: initialAttemptsUsed,
+    attemptsRemaining: initialAttemptsRemaining,
+    blockedUntil: initialBlockedUntil,
+    cycle: initialCycle,
+  });
+
   const currentQuestion = questions[currentIndex];
   const selectedAnswer = displayAnswers[currentQuestion.id] ?? null;
 
   const handleSelectAnswer = (optionIndex: number) => {
-    // Guardar índice visual para highlight
     setDisplayAnswers((prev) => ({
       ...prev,
       [currentQuestion.id]: optionIndex,
     }));
-    // Mapear o índice embaralhado de volta ao índice original do banco
     const originalIndex = currentQuestion.originalIndices[optionIndex];
     setAnswers((prev) => ({
       ...prev,
@@ -60,7 +73,6 @@ export function QuizClient({
     setIsSubmitting(true);
 
     try {
-      // Preparar respostas no formato esperado pela API
       const answersArray = Object.entries(answers).map(([questionId, selectedOption]) => ({
         questionId,
         selectedOption,
@@ -68,9 +80,7 @@ export function QuizClient({
 
       const response = await fetch('/api/quiz/check', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           moduleId,
           answers: answersArray,
@@ -80,24 +90,41 @@ export function QuizClient({
 
       const data = await response.json();
 
+      if (response.status === 423) {
+        setAttemptInfo({
+          attemptsUsed: data.attemptsUsed,
+          attemptsRemaining: data.attemptsRemaining,
+          blockedUntil: data.blocked_until,
+          cycle: attemptInfo.cycle,
+        });
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(data.error || 'Erro ao corrigir quiz');
       }
 
-      // Adicionar questões ao resultado para exibir feedback
-      const resultWithQuestions: QuizResultData = {
-        ...data,
-        questions: questions.map((q) => ({
-          id: q.id,
-          question: q.question,
-          options: q.options,
-          originalIndices: q.originalIndices,
-        })),
+      setAttemptInfo({
+        attemptsUsed: data.attemptNumber,
+        attemptsRemaining: data.attemptsRemaining,
+        blockedUntil: data.blockedUntil,
+        cycle: data.cycle,
+      });
+
+      const resultData: QuizResultData = {
+        score: data.score,
+        total: data.total,
+        percentage: data.percentage,
+        passed: data.passed,
+        minimumScore: data.minimumScore,
+        attemptNumber: data.attemptNumber,
+        attemptsRemaining: data.attemptsRemaining,
+        blockedUntil: data.blockedUntil,
         trailComplete: data.trailComplete || false,
         trailId: data.trailId,
       };
 
-      setResult(resultWithQuestions);
+      setResult(resultData);
     } catch (error) {
       console.error('Erro ao enviar quiz:', error);
       toast.error(
@@ -115,7 +142,42 @@ export function QuizClient({
     setAnswers({});
     setDisplayAnswers({});
     setResult(null);
+    startTimeRef.current = Date.now();
   };
+
+  // Se bloqueado, mostrar tela de bloqueio
+  if (attemptInfo.blockedUntil && new Date(attemptInfo.blockedUntil) > new Date()) {
+    const blockedDate = new Date(attemptInfo.blockedUntil);
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-6">
+          <Lock className="w-8 h-8 text-red-400" />
+        </div>
+        <h2 className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-3">
+          Quiz Bloqueado
+        </h2>
+        <p className="text-[#6B7194] dark:text-[#8888A0] mb-2 max-w-md">
+          Você utilizou todas as 3 tentativas deste ciclo.
+          O quiz será desbloqueado em:
+        </p>
+        <div className="flex items-center gap-2 text-[#F59E0B] font-semibold text-lg mt-2">
+          <Clock className="w-5 h-5" />
+          <span>
+            {blockedDate.toLocaleDateString('pt-BR')} às{' '}
+            {blockedDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
+        <Button
+          variant="primary"
+          onClick={() => window.location.href = `/trilhas/${trailId}`}
+          className="mt-8"
+          icon={ArrowLeft}
+        >
+          Voltar para Trilha
+        </Button>
+      </div>
+    );
+  }
 
   // Se há resultado, mostrar QuizResult
   if (result) {
@@ -134,15 +196,23 @@ export function QuizClient({
 
   // Mostrar questão atual
   return (
-    <QuizQuestion
-      question={currentQuestion}
-      currentIndex={currentIndex}
-      totalQuestions={questions.length}
-      selectedAnswer={selectedAnswer}
-      onSelectAnswer={handleSelectAnswer}
-      onPrevious={handlePrevious}
-      onNext={handleNext}
-      isLast={currentIndex === questions.length - 1}
-    />
+    <div>
+      {/* Indicador de tentativas */}
+      <div className="flex items-center justify-between mb-4 px-1">
+        <span className="text-sm text-[#6B7194] dark:text-[#8888A0]">
+          Tentativa {attemptInfo.attemptsUsed + 1} de 3
+        </span>
+      </div>
+      <QuizQuestion
+        question={currentQuestion}
+        currentIndex={currentIndex}
+        totalQuestions={questions.length}
+        selectedAnswer={selectedAnswer}
+        onSelectAnswer={handleSelectAnswer}
+        onPrevious={handlePrevious}
+        onNext={handleNext}
+        isLast={currentIndex === questions.length - 1}
+      />
+    </div>
   );
 }

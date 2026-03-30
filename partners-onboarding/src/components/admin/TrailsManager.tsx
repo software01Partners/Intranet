@@ -17,7 +17,7 @@ import type { Trail, TrailType, Area, User } from '@/lib/types';
 interface TrailWithCounts extends Trail {
   modulesCount: number;
   creatorName: string | null;
-  areaName: string | null;
+  areaNames: string[];
 }
 
 interface TrailsManagerProps {
@@ -40,6 +40,8 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
 
   // Buscar dados iniciais
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchData() {
       try {
         setLoading(true);
@@ -48,6 +50,7 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
         const {
           data: { session },
         } = await supabase.auth.getSession();
+        if (cancelled) return;
         if (!session?.user) {
           toast.error('Erro', { description: 'Usuário não autenticado' });
           return;
@@ -59,56 +62,54 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
           .eq('id', session.user.id)
           .single();
 
+        if (cancelled) return;
+
         if (userData) {
           setCurrentUser({ id: userData.id, areaId: userData.area_id });
         }
 
-        // Buscar áreas
-        const { data: areasData, error: areasError } = await supabase
-          .from('areas')
-          .select('*')
-          .order('name');
+        // Buscar áreas e usuários em paralelo
+        const [areasResult, usersResult] = await Promise.all([
+          supabase.from('areas').select('*').order('name'),
+          supabase.from('users').select('*').order('name'),
+        ]);
 
-        if (areasError) throw areasError;
-        setAreas(areasData || []);
+        if (cancelled) return;
 
-        // Buscar usuários (para mostrar quem criou)
-        const { data: usersData, error: usersError } = await supabase
-          .from('users')
-          .select('id, name, email')
-          .order('name');
+        if (areasResult.error) throw areasResult.error;
+        if (usersResult.error) throw usersResult.error;
 
-        if (usersError) throw usersError;
-        setUsers(usersData || []);
+        const areasData = areasResult.data || [];
+        const usersData = usersResult.data || [];
+
+        setAreas(areasData);
+        setUsers(usersData);
 
         // Buscar trilhas
-        await fetchTrails(areasData || [], usersData || []);
+        await fetchTrails(areasData, usersData);
       } catch (error) {
+        if (cancelled) return;
         console.error('Erro ao buscar dados:', error);
         toast.error('Erro ao carregar dados', {
           description: error instanceof Error ? error.message : 'Erro inesperado',
         });
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     fetchData();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [areaFilter]);
 
   // Buscar trilhas
   async function fetchTrails(areasData?: Area[], usersData?: User[]) {
     try {
-      let query = supabase.from('trails').select('*');
-
-      // Se areaFilter presente, filtrar por área (modo gestor)
-      if (areaFilter) {
-        query = query.eq('area_id', areaFilter);
-      }
-
-      const { data: trailsData, error: trailsError } = await query.order('created_at', {
-        ascending: false,
-      });
+      const { data: trailsData, error: trailsError } = await supabase
+        .from('trails')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (trailsError) throw trailsError;
 
@@ -117,12 +118,44 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
         return;
       }
 
-      // Buscar contagem de módulos por trilha
       const trailIds = trailsData.map((t) => t.id);
+
+      // Buscar trail_areas para todas as trilhas
+      const { data: trailAreasData } = await supabase
+        .from('trail_areas')
+        .select('trail_id, area_id')
+        .in('trail_id', trailIds);
+
+      // Mapa: trail_id -> area_ids[]
+      const trailAreasMap = new Map<string, string[]>();
+      if (trailAreasData) {
+        trailAreasData.forEach((ta) => {
+          const existing = trailAreasMap.get(ta.trail_id) || [];
+          existing.push(ta.area_id);
+          trailAreasMap.set(ta.trail_id, existing);
+        });
+      }
+
+      // Se areaFilter presente (modo gestor), filtrar trilhas que pertencem à área
+      let filteredTrailsData = trailsData;
+      if (areaFilter) {
+        filteredTrailsData = trailsData.filter((trail) => {
+          const trailAreaIds = trailAreasMap.get(trail.id) || [];
+          return trailAreaIds.includes(areaFilter);
+        });
+      }
+
+      if (filteredTrailsData.length === 0) {
+        setTrails([]);
+        return;
+      }
+
+      // Buscar contagem de módulos por trilha
+      const filteredTrailIds = filteredTrailsData.map((t) => t.id);
       const { data: modulesData } = await supabase
         .from('modules')
         .select('trail_id')
-        .in('trail_id', trailIds);
+        .in('trail_id', filteredTrailIds);
 
       // Criar mapa de contagem de módulos
       const modulesCountMap = new Map<string, number>();
@@ -150,12 +183,19 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
       });
 
       // Montar dados completos
-      const trailsWithCounts: TrailWithCounts[] = trailsData.map((trail) => ({
-        ...(trail as Trail),
-        modulesCount: modulesCountMap.get(trail.id) || 0,
-        creatorName: usersMap.get(trail.created_by) || null,
-        areaName: trail.area_id ? areasMap.get(trail.area_id) || null : null,
-      }));
+      const trailsWithCounts: TrailWithCounts[] = filteredTrailsData.map((trail) => {
+        const areaIds = trailAreasMap.get(trail.id) || [];
+        const areaNames = areaIds
+          .map((aid) => areasMap.get(aid))
+          .filter(Boolean) as string[];
+        return {
+          ...(trail as Trail),
+          area_ids: areaIds,
+          modulesCount: modulesCountMap.get(trail.id) || 0,
+          creatorName: usersMap.get(trail.created_by) || null,
+          areaNames,
+        };
+      });
 
       setTrails(trailsWithCounts);
     } catch (error) {
@@ -370,9 +410,11 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">{getTypeBadge(trail.type)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         <span className="text-sm text-[#E8E8ED]">
-                          {trail.areaName || '-'}
+                          {trail.areaNames.length > 0
+                            ? trail.areaNames.join(', ')
+                            : '-'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

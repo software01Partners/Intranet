@@ -33,41 +33,59 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
 
   // Buscar trilhas
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchTrails() {
       try {
-        let query = supabase.from('trails').select('*').order('name');
+        const { data: trailsData, error } = await supabase
+          .from('trails')
+          .select('*')
+          .order('name');
 
-        // Se areaFilter presente, filtrar por área (modo gestor)
-        if (areaFilter) {
-          query = query.eq('area_id', areaFilter);
-        }
-
-        const { data: trailsData, error } = await query;
-
+        if (cancelled) return;
         if (error) throw error;
 
-        setTrails((trailsData as Trail[]) || []);
+        let filtered = (trailsData as Trail[]) || [];
+
+        // Se areaFilter presente, filtrar por área via trail_areas (modo gestor)
+        if (areaFilter && filtered.length > 0) {
+          const trailIds = filtered.map((t) => t.id);
+          const { data: trailAreasData } = await supabase
+            .from('trail_areas')
+            .select('trail_id')
+            .eq('area_id', areaFilter)
+            .in('trail_id', trailIds);
+          if (cancelled) return;
+          const allowedTrailIds = new Set((trailAreasData || []).map((ta) => ta.trail_id));
+          filtered = filtered.filter((t) => allowedTrailIds.has(t.id));
+        }
+
+        setTrails(filtered);
 
         // Selecionar primeira trilha automaticamente
-        if (trailsData && trailsData.length > 0 && !selectedTrailId) {
-          setSelectedTrailId(trailsData[0].id);
+        if (filtered.length > 0 && !selectedTrailId) {
+          setSelectedTrailId(filtered[0].id);
         }
       } catch (error) {
+        if (cancelled) return;
         console.error('Erro ao buscar trilhas:', error);
         toast.error('Erro ao carregar trilhas', {
           description: error instanceof Error ? error.message : 'Erro inesperado',
         });
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     fetchTrails();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [areaFilter]);
 
   // Buscar módulos quando trilha selecionada mudar
   useEffect(() => {
+    let cancelled = false;
+
     async function loadModules() {
       if (!selectedTrailId) {
         setModules([]);
@@ -81,10 +99,12 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
           .eq('trail_id', selectedTrailId)
           .order('sort_order', { ascending: true });
 
+        if (cancelled) return;
         if (error) throw error;
 
         setModules((modulesData as Module[]) || []);
       } catch (error) {
+        if (cancelled) return;
         console.error('Erro ao buscar módulos:', error);
         toast.error('Erro ao carregar módulos', {
           description: error instanceof Error ? error.message : 'Erro inesperado',
@@ -93,6 +113,7 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
     }
 
     loadModules();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTrailId]);
 

@@ -94,22 +94,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Se for gestor, verificar se a trilha pertence à área dele
+    // Se for gestor, verificar se a trilha pertence à área dele (via trail_areas)
     if (userRole === 'gestor') {
-      const { data: trail, error: trailError } = await supabase
-        .from('trails')
+      const { data: trailAreas } = await supabase
+        .from('trail_areas')
         .select('area_id')
-        .eq('id', trailId)
-        .single();
+        .eq('trail_id', trailId);
 
-      if (trailError || !trail) {
+      const trailAreaIds = (trailAreas || []).map((ta) => ta.area_id);
+
+      if (trailAreaIds.length === 0) {
         return NextResponse.json(
           { error: 'Trilha não encontrada' },
           { status: 404 }
         );
       }
 
-      if (trail.area_id !== userAreaId) {
+      if (!userAreaId || !trailAreaIds.includes(userAreaId)) {
         return NextResponse.json(
           { error: 'Acesso negado. A trilha não pertence à sua área' },
           { status: 403 }

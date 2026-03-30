@@ -39,7 +39,8 @@ export function useNotifications(): UseNotificationsReturn {
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -79,7 +80,8 @@ export function useNotifications(): UseNotificationsReturn {
         supabase.removeChannel(channel);
       }
     };
-  }, [supabase, fetchNotifications]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const markAsRead = useCallback(
     async (id: string) => {
@@ -103,7 +105,8 @@ export function useNotifications(): UseNotificationsReturn {
         console.error('Erro inesperado ao marcar notificação como lida:', error);
       }
     },
-    [supabase]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   const markAllAsRead = useCallback(async () => {
@@ -131,7 +134,8 @@ export function useNotifications(): UseNotificationsReturn {
         error
       );
     }
-  }, [supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 

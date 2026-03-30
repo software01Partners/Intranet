@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     if (entity_type === 'trail') {
       const { data: trail } = await admin
         .from('trails')
-        .select('name, area_id')
+        .select('name')
         .eq('id', id)
         .single();
 
@@ -51,9 +51,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Trilha não encontrada' }, { status: 404 });
       }
 
-      // Gestor só pode excluir trilhas da própria área
-      if (userData.role === 'gestor' && trail.area_id !== userData.area_id) {
-        return NextResponse.json({ error: 'Sem permissão para excluir esta trilha' }, { status: 403 });
+      // Gestor só pode excluir trilhas da própria área (via trail_areas)
+      if (userData.role === 'gestor') {
+        const { data: trailAreas } = await admin
+          .from('trail_areas')
+          .select('area_id')
+          .eq('trail_id', id);
+        const trailAreaIds = (trailAreas || []).map((ta) => ta.area_id);
+        if (!trailAreaIds.includes(userData.area_id)) {
+          return NextResponse.json({ error: 'Sem permissão para excluir esta trilha' }, { status: 403 });
+        }
       }
 
       entityName = trail.name;
@@ -76,15 +83,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Módulo não encontrado' }, { status: 404 });
       }
 
-      // Gestor: verificar se o módulo pertence a uma trilha da sua área
+      // Gestor: verificar se o módulo pertence a uma trilha da sua área (via trail_areas)
       if (userData.role === 'gestor') {
-        const { data: trail } = await admin
-          .from('trails')
+        const { data: trailAreas } = await admin
+          .from('trail_areas')
           .select('area_id')
-          .eq('id', module.trail_id)
-          .single();
-
-        if (!trail || trail.area_id !== userData.area_id) {
+          .eq('trail_id', module.trail_id);
+        const trailAreaIds = (trailAreas || []).map((ta) => ta.area_id);
+        if (!trailAreaIds.includes(userData.area_id)) {
           return NextResponse.json({ error: 'Sem permissão para excluir este módulo' }, { status: 403 });
         }
       }

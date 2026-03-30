@@ -2,7 +2,7 @@
 export type UserRole = 'colaborador' | 'gestor' | 'admin';
 export type TrailType = 'obrigatoria_global' | 'obrigatoria_area' | 'optativa_global' | 'optativa_area';
 export type ModuleType = 'video' | 'document' | 'quiz';
-export type NotificationType = 'atraso' | 'nova_trilha' | 'certificado';
+export type NotificationType = 'atraso' | 'nova_trilha' | 'certificado' | 'quiz_bloqueado';
 export type AuditAction = 'create' | 'update' | 'delete';
 export type AuditEntityType = 'trail' | 'module' | 'area' | 'user' | 'quiz_question';
 
@@ -32,7 +32,8 @@ export interface Trail {
   name: string;
   description: string | null;
   type: TrailType;
-  area_id: string | null;
+  area_id: string | null; // @deprecated - usar area_ids via trail_areas
+  area_ids?: string[]; // populated from trail_areas junction table
   created_by: string;
   duration: number | null; // em minutos
   deadline: string | null; // ISO timestamp ou null = sem prazo
@@ -70,6 +71,20 @@ export interface QuizQuestion {
   question: string;
   options: string[]; // array de strings com as opções
   correct_answer: number; // índice da resposta correta
+  created_at: string;
+}
+
+export interface QuizAttempt {
+  id: string;
+  user_id: string;
+  module_id: string;
+  score: number;
+  total: number;
+  percentage: number;
+  passed: boolean;
+  time_spent: number | null;
+  attempt_number: number;
+  cycle: number;
   created_at: string;
 }
 

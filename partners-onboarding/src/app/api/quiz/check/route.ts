@@ -13,11 +13,14 @@ const checkQuizSchema = z.object({
   time_spent: z.number().int().min(0).optional(),
 });
 
+const LOCKOUT_HOURS = 72;
+const MAX_ATTEMPTS_PER_CYCLE = 3;
+const MINIMUM_SCORE = 80;
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
 
-    // Verificar autenticação
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -26,29 +29,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
-    // Validar body
     const body = await request.json();
     const { moduleId, answers, time_spent } = checkQuizSchema.parse(body);
 
     // Verificar se o módulo existe e é do tipo quiz
-    const { data: module, error: moduleError } = await supabase
+    const { data: moduleData, error: moduleError } = await supabase
       .from('modules')
-      .select('id, type')
+      .select('id, type, title, trail_id')
       .eq('id', moduleId)
       .eq('type', 'quiz')
       .single();
 
-    if (moduleError || !module) {
+    if (moduleError || !moduleData) {
       return NextResponse.json(
         { error: 'Módulo não encontrado ou não é um quiz' },
         { status: 404 }
       );
     }
 
-    // Verificar tentativas anteriores
+    // Verificar se já completou
     const { data: existingProgress, error: progressError } = await supabase
       .from('user_progress')
-      .select('completed, score')
+      .select('completed')
       .eq('user_id', user.id)
       .eq('module_id', moduleId)
       .single();
@@ -57,7 +59,6 @@ export async function POST(request: NextRequest) {
       console.error('Erro ao buscar progresso:', progressError);
     }
 
-    // Se já completou, não pode tentar novamente
     if (existingProgress?.completed) {
       return NextResponse.json(
         { error: 'Você já completou este quiz' },
@@ -65,56 +66,53 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Contar tentativas anteriores
-    // Como não temos uma tabela de tentativas, vamos usar uma lógica simplificada:
-    // Vamos contar tentativas baseado em quantas vezes o score foi salvo
-    // Como temos UNIQUE(user_id, module_id), vamos usar uma abordagem diferente:
-    // Vamos criar uma tabela quiz_attempts para rastrear cada tentativa (se não existir, usar lógica alternativa)
-    
-    let attemptCount = 0;
-    
-    // Tentar buscar tentativas da tabela quiz_attempts (se existir)
-    const { data: attempts, count: attemptsCount, error: attemptsError } = await supabase
+    // Buscar tentativas anteriores ordenadas por data
+    const { data: previousAttempts } = await supabase
       .from('quiz_attempts')
-      .select('id', { count: 'exact', head: true })
+      .select('*')
       .eq('user_id', user.id)
-      .eq('module_id', moduleId);
+      .eq('module_id', moduleId)
+      .order('created_at', { ascending: false });
 
-    if (!attemptsError && attemptsCount !== null) {
-      attemptCount = attemptsCount;
-    } else if (existingProgress && existingProgress.score !== null && !existingProgress.completed) {
-      // Se a tabela não existir, usar lógica alternativa:
-      // Se já existe um registro com score não-nulo e completed: false, já tentou antes
-      // Como não temos histórico exato, vamos assumir que já tentou pelo menos 1 vez
-      // e permitir até 3 tentativas totais
-      attemptCount = 1;
+    const attempts = previousAttempts || [];
+
+    // Determinar ciclo atual e tentativas usadas
+    let currentCycle = 1;
+    let attemptsInCycle = 0;
+
+    if (attempts.length > 0) {
+      currentCycle = attempts[0].cycle;
+      attemptsInCycle = attempts.filter((a) => a.cycle === currentCycle).length;
+
+      // Se 3 tentativas no ciclo atual, verificar lockout
+      if (attemptsInCycle >= MAX_ATTEMPTS_PER_CYCLE) {
+        const latestInCycle = attempts.filter((a) => a.cycle === currentCycle)[0];
+
+        const blockedUntil = new Date(
+          new Date(latestInCycle.created_at).getTime() + LOCKOUT_HOURS * 60 * 60 * 1000
+        );
+
+        if (new Date() < blockedUntil) {
+          return NextResponse.json(
+            {
+              error: 'Quiz bloqueado. Tente novamente após o período de espera.',
+              blocked_until: blockedUntil.toISOString(),
+              attemptsUsed: MAX_ATTEMPTS_PER_CYCLE,
+              attemptsRemaining: 0,
+            },
+            { status: 423 }
+          );
+        }
+
+        // Lockout expirou, novo ciclo
+        currentCycle = currentCycle + 1;
+        attemptsInCycle = 0;
+      }
     }
 
-    // Verificar limite de 3 tentativas
-    if (attemptCount >= 3) {
-      return NextResponse.json(
-        { error: 'Limite de tentativas atingido. Você já tentou 3 vezes.' },
-        { status: 400 }
-      );
-    }
+    const attemptNumber = attemptsInCycle + 1;
 
-    // Registrar esta tentativa (se a tabela quiz_attempts existir)
-    const { error: insertAttemptError } = await supabase
-      .from('quiz_attempts')
-      .insert({
-        user_id: user.id,
-        module_id: moduleId,
-        score: null,
-        created_at: new Date().toISOString(),
-      });
-
-    // Se a tabela não existir, ignorar o erro (a tentativa será contada de forma simplificada)
-    if (insertAttemptError && insertAttemptError.code !== '42P01') {
-      // 42P01 = relation does not exist (tabela não existe)
-      console.warn('Tabela quiz_attempts não existe, usando lógica simplificada');
-    }
-
-    // Buscar questões com correct_answer (server-side apenas)
+    // Buscar questões com correct_answer (server-side)
     const { data: questions, error: questionsError } = await supabase
       .from('quiz_questions')
       .select('id, question, options, correct_answer')
@@ -127,44 +125,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Comparar respostas
+    // Corrigir respostas
     let correctCount = 0;
-    const feedback: Array<{
-      questionId: string;
-      correct: boolean;
-      correctAnswer: number;
-      selectedAnswer: number | null;
-    }> = [];
-
     questions.forEach((question) => {
       const userAnswer = answers.find((a) => a.questionId === question.id);
-      const selectedOption = userAnswer?.selectedOption ?? null;
-      const isCorrect = selectedOption === question.correct_answer;
-
-      if (isCorrect) {
+      if (userAnswer && userAnswer.selectedOption === question.correct_answer) {
         correctCount++;
       }
-
-      feedback.push({
-        questionId: question.id,
-        correct: isCorrect,
-        correctAnswer: question.correct_answer,
-        selectedAnswer: selectedOption,
-      });
     });
 
-    // Calcular score
     const total = questions.length;
     const score = correctCount;
     const percentage = (score / total) * 100;
-    const minimumScore = 80;
-    const passed = percentage >= minimumScore;
+    const passed = percentage >= MINIMUM_SCORE;
 
-    // Salvar progresso
+    // Inserir tentativa na tabela quiz_attempts
+    await supabase.from('quiz_attempts').insert({
+      user_id: user.id,
+      module_id: moduleId,
+      score,
+      total,
+      percentage,
+      passed,
+      time_spent: time_spent ?? null,
+      attempt_number: attemptNumber,
+      cycle: currentCycle,
+    });
+
+    // Upsert user_progress
     const progressData: Record<string, unknown> = {
       user_id: user.id,
       module_id: moduleId,
       completed: passed,
+      score,
     };
 
     if (passed) {
@@ -188,121 +181,128 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Atualizar score na tentativa (se a tabela quiz_attempts existir)
-    try {
-      // Buscar a tentativa mais recente (criada antes da correção)
-      const { data: latestAttempt } = await supabase
-        .from('quiz_attempts')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('module_id', moduleId)
-        .is('score', null)
-        .order('created_at', { ascending: false })
-        .limit(1)
+    // Calcular bloqueio e tentativas restantes
+    const attemptsRemaining = MAX_ATTEMPTS_PER_CYCLE - attemptNumber;
+    let blockedUntil: string | null = null;
+
+    // Se falhou na 3ª tentativa, notificar gestor(es)
+    if (!passed && attemptNumber === MAX_ATTEMPTS_PER_CYCLE) {
+      blockedUntil = new Date(
+        Date.now() + LOCKOUT_HOURS * 60 * 60 * 1000
+      ).toISOString();
+
+      const { data: userData } = await supabase
+        .from('users')
+        .select('name, area_id')
+        .eq('id', user.id)
         .single();
 
-      if (latestAttempt) {
-        await supabase
-          .from('quiz_attempts')
-          .update({ score: percentage })
-          .eq('id', latestAttempt.id);
+      const { data: trail } = await supabase
+        .from('trails')
+        .select('name')
+        .eq('id', moduleData.trail_id)
+        .single();
+
+      if (userData?.area_id && trail) {
+        const { data: gestores } = await supabase
+          .from('users')
+          .select('id')
+          .eq('area_id', userData.area_id)
+          .eq('role', 'gestor');
+
+        if (gestores && gestores.length > 0) {
+          const notifications = gestores.map((gestor) => ({
+            user_id: gestor.id,
+            type: 'quiz_bloqueado' as const,
+            message: `${userData.name || 'Um colaborador'} falhou 3 vezes no quiz "${moduleData.title}" da trilha "${trail.name}"`,
+            read: false,
+          }));
+
+          await supabase.from('notifications').insert(notifications);
+        }
       }
-    } catch (error) {
-      // Se a tabela não existir, ignorar o erro
     }
 
-    // Se passou, verificar se a trilha foi concluída e criar notificações
+    // Se passou, verificar conclusão da trilha
     let isTrailComplete = false;
     let trailIdForCertificate: string | undefined = undefined;
 
     if (passed) {
-      // Buscar trilha do módulo
-      const { data: moduleWithTrail } = await supabase
+      trailIdForCertificate = moduleData.trail_id;
+
+      const { data: allModules } = await supabase
         .from('modules')
-        .select('trail_id')
-        .eq('id', moduleId)
-        .single();
+        .select('id')
+        .eq('trail_id', moduleData.trail_id);
 
-      if (moduleWithTrail) {
-        trailIdForCertificate = moduleWithTrail.trail_id;
+      if (allModules && allModules.length > 0) {
+        const moduleIds = allModules.map((m) => m.id);
 
-        // Verificar se todos os módulos da trilha foram concluídos
-        const { data: allModules } = await supabase
-          .from('modules')
-          .select('id')
-          .eq('trail_id', moduleWithTrail.trail_id);
+        const { data: completedProgress } = await supabase
+          .from('user_progress')
+          .select('module_id')
+          .eq('user_id', user.id)
+          .eq('completed', true)
+          .in('module_id', moduleIds);
 
-        if (allModules && allModules.length > 0) {
-          const moduleIds = allModules.map((m) => m.id);
+        const completedCount = completedProgress?.length || 0;
+        isTrailComplete = completedCount === allModules.length;
 
-          const { data: completedProgress } = await supabase
-            .from('user_progress')
-            .select('module_id')
+        if (isTrailComplete) {
+          const { data: trailData } = await supabase
+            .from('trails')
+            .select('name')
+            .eq('id', moduleData.trail_id)
+            .single();
+
+          const { data: userInfo } = await supabase
+            .from('users')
+            .select('area_id, name')
+            .eq('id', user.id)
+            .single();
+
+          // Criar certificado se não existir
+          const { data: existingCertificate } = await supabase
+            .from('certificates')
+            .select('id')
             .eq('user_id', user.id)
-            .eq('completed', true)
-            .in('module_id', moduleIds);
+            .eq('trail_id', moduleData.trail_id)
+            .single();
 
-          const completedCount = completedProgress?.length || 0;
-          isTrailComplete = completedCount === allModules.length;
+          if (!existingCertificate) {
+            await supabase.from('certificates').insert({
+              user_id: user.id,
+              trail_id: moduleData.trail_id,
+            });
+          }
 
-          // Se a trilha foi concluída, criar notificações (certificado será gerado sob demanda)
-          if (isTrailComplete) {
-            // Buscar dados da trilha e do usuário
-            const { data: trail } = await supabase
-              .from('trails')
-              .select('name')
-              .eq('id', moduleWithTrail.trail_id)
-              .single();
+          // Notificar colaborador
+          if (trailData) {
+            await supabase.from('notifications').insert({
+              user_id: user.id,
+              type: 'certificado',
+              message: `Parabéns! Você concluiu a trilha "${trailData.name}" e recebeu seu certificado.`,
+              read: false,
+            });
+          }
 
-            const { data: userData } = await supabase
+          // Notificar gestor(es) da área
+          if (userInfo?.area_id) {
+            const { data: gestores } = await supabase
               .from('users')
-              .select('area_id, name')
-              .eq('id', user.id)
-              .single();
-
-            // Verificar se já existe certificado
-            const { data: existingCertificate } = await supabase
-              .from('certificates')
               .select('id')
-              .eq('user_id', user.id)
-              .eq('trail_id', moduleWithTrail.trail_id)
-              .single();
+              .eq('area_id', userInfo.area_id)
+              .eq('role', 'gestor');
 
-            // Criar certificado apenas se não existir (sem PDF ainda, será gerado sob demanda)
-            if (!existingCertificate) {
-              await supabase.from('certificates').insert({
-                user_id: user.id,
-                trail_id: moduleWithTrail.trail_id,
-              });
-            }
-
-            // Notificar o colaborador sobre o certificado
-            if (trail) {
-              await supabase.from('notifications').insert({
-                user_id: user.id,
-                type: 'certificado',
-                message: `Parabéns! Você concluiu a trilha "${trail.name}" e recebeu seu certificado.`,
+            if (gestores && gestores.length > 0 && trailData) {
+              const notifications = gestores.map((gestor) => ({
+                user_id: gestor.id,
+                type: 'nova_trilha' as const,
+                message: `${userInfo.name || 'Um colaborador'} concluiu a trilha "${trailData.name}".`,
                 read: false,
-              });
-            }
+              }));
 
-            // Notificar o gestor da área (se houver)
-            if (userData?.area_id) {
-              const { data: gestor } = await supabase
-                .from('users')
-                .select('id')
-                .eq('area_id', userData.area_id)
-                .eq('role', 'gestor')
-                .single();
-
-              if (gestor && trail) {
-                await supabase.from('notifications').insert({
-                  user_id: gestor.id,
-                  type: 'nova_trilha', // Reutilizando tipo para notificar gestor
-                  message: `${userData.name || 'Um colaborador'} concluiu a trilha "${trail.name}".`,
-                  read: false,
-                });
-              }
+              await supabase.from('notifications').insert(notifications);
             }
           }
         }
@@ -314,8 +314,11 @@ export async function POST(request: NextRequest) {
       total,
       percentage,
       passed,
-      minimumScore,
-      feedback,
+      minimumScore: MINIMUM_SCORE,
+      attemptNumber,
+      attemptsRemaining,
+      blockedUntil,
+      cycle: currentCycle,
       trailComplete: isTrailComplete,
       trailId: trailIdForCertificate,
     });
@@ -324,7 +327,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Dados inválidos', details: error.errors },
+        { error: 'Dados inválidos', details: error.issues },
         { status: 400 }
       );
     }

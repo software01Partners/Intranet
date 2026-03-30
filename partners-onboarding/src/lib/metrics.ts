@@ -23,6 +23,7 @@ export interface KPIData {
   totalTrailsCompleted: number;
   certificatesIssued: number;
   overdueCount: number;
+  quizBlockedCount: number;
 }
 
 export interface StatusDistributionItem {
@@ -92,4 +93,16 @@ export interface ContentAnalyticsData {
   }[];
   timeByType: { type: ModuleType; label: string; totalSeconds: number; avgSeconds: number }[];
   timeByUser: { userName: string; totalSeconds: number }[];
+}
+
+export interface QuizBlockedMetric {
+  userId: string;
+  userName: string;
+  moduleId: string;
+  moduleName: string;
+  trailId: string;
+  trailName: string;
+  totalAttempts: number;
+  lastScore: number;
+  blockedUntil: string;
 }

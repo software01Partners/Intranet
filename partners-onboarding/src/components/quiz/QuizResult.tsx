@@ -6,15 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { ProgressRing } from '@/components/ui/ProgressRing';
 import { CheckCircle2, XCircle, ArrowLeft, RotateCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
 import { CertificateModal } from '@/components/certificate/CertificateModal';
-
-export interface QuizFeedback {
-  questionId: string;
-  correct: boolean;
-  correctAnswer: number;
-  selectedAnswer: number | null;
-}
 
 export interface QuizResultData {
   score: number;
@@ -22,8 +14,9 @@ export interface QuizResultData {
   percentage: number;
   passed: boolean;
   minimumScore: number;
-  feedback: QuizFeedback[];
-  questions: Array<{ id: string; question: string; options: string[]; originalIndices: number[] }>;
+  attemptNumber: number;
+  attemptsRemaining: number;
+  blockedUntil: string | null;
   trailComplete?: boolean;
   trailId?: string;
 }
@@ -100,6 +93,18 @@ export function QuizResult({ result, trailId, onRetry }: QuizResultProps) {
                   Você precisa de pelo menos {result.minimumScore}% para ser
                   aprovado. Sua nota foi {result.percentage.toFixed(0)}%.
                 </p>
+                {result.attemptsRemaining > 0 ? (
+                  <p className="text-sm text-[#6B7194] dark:text-[#8888A0] mt-1">
+                    Tentativas restantes: {result.attemptsRemaining}
+                  </p>
+                ) : result.blockedUntil ? (
+                  <div className="mt-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+                    <p className="text-sm text-red-400">
+                      Quiz bloqueado por 3 dias. Tente novamente em{' '}
+                      {new Date(result.blockedUntil).toLocaleDateString('pt-BR')}.
+                    </p>
+                  </div>
+                ) : null}
               </div>
             )}
           </div>
@@ -123,9 +128,18 @@ export function QuizResult({ result, trailId, onRetry }: QuizResultProps) {
               Voltar para Trilha
             </Button>
           </>
+        ) : result.attemptsRemaining > 0 ? (
+          <>
+            <Button variant="primary" onClick={onRetry} icon={RotateCcw}>
+              Refazer Quiz
+            </Button>
+            <Button variant="secondary" onClick={handleBackToTrail} icon={ArrowLeft}>
+              Voltar para Trilha
+            </Button>
+          </>
         ) : (
-          <Button variant="primary" onClick={onRetry} icon={RotateCcw}>
-            Refazer Quiz
+          <Button variant="primary" onClick={handleBackToTrail} icon={ArrowLeft}>
+            Voltar para Trilha
           </Button>
         )}
       </div>
@@ -138,85 +152,6 @@ export function QuizResult({ result, trailId, onRetry }: QuizResultProps) {
           trailId={result.trailId}
         />
       )}
-
-      {/* Feedback das questões */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-4">
-          Revisão das Questões
-        </h3>
-
-        {result.questions.map((question, questionIndex) => {
-          const feedback = result.feedback.find(
-            (f) => f.questionId === question.id
-          );
-
-          if (!feedback) return null;
-
-          const isCorrect = feedback.correct;
-          // Mapear índice original → posição embaralhada para exibir o texto correto
-          const correctShuffledIdx = question.originalIndices.indexOf(feedback.correctAnswer);
-          const correctOption = question.options[correctShuffledIdx];
-          const selectedShuffledIdx =
-            feedback.selectedAnswer !== null
-              ? question.originalIndices.indexOf(feedback.selectedAnswer)
-              : null;
-          const selectedOption =
-            selectedShuffledIdx !== null
-              ? question.options[selectedShuffledIdx]
-              : null;
-
-          return (
-            <motion.div
-              key={question.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: questionIndex * 0.1 }}
-              className={cn(
-                'bg-white dark:bg-[#1A1A2E] border border-[#E2E5F1] dark:border-[#2D2D4A] rounded-2xl p-6',
-                isCorrect
-                  ? 'border-[#10B981]/30 bg-[#10B981]/5'
-                  : 'border-[#EF4444]/30 bg-[#EF4444]/5'
-              )}
-            >
-              <div className="flex items-start gap-3 mb-4">
-                {isCorrect ? (
-                  <CheckCircle2 className="w-5 h-5 text-[#10B981] flex-shrink-0 mt-0.5" />
-                ) : (
-                  <XCircle className="w-5 h-5 text-[#EF4444] flex-shrink-0 mt-0.5" />
-                )}
-                <div className="flex-1">
-                  <h4 className="text-base font-medium text-[#1A1D2E] dark:text-[#E8E8ED] mb-2">
-                    Questão {questionIndex + 1}
-                  </h4>
-                  <p className="text-[#6B7194] dark:text-[#8888A0] mb-4">{question.question}</p>
-
-                  {/* Resposta correta */}
-                  <div className="mb-2">
-                    <span className="text-sm text-[#6B7194] dark:text-[#8888A0]">
-                      Resposta correta:{' '}
-                    </span>
-                    <span className="text-sm font-medium text-[#10B981]">
-                      {correctOption}
-                    </span>
-                  </div>
-
-                  {/* Resposta selecionada (se errou) */}
-                  {!isCorrect && selectedOption && (
-                    <div>
-                      <span className="text-sm text-[#6B7194] dark:text-[#8888A0]">
-                        Sua resposta:{' '}
-                      </span>
-                      <span className="text-sm font-medium text-[#EF4444]">
-                        {selectedOption}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
     </motion.div>
   );
 }
