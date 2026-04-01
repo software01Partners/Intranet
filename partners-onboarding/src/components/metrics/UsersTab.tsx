@@ -90,10 +90,10 @@ export function UsersTab({ users }: UsersTabProps) {
                     {i + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED] truncate">
+                    <p className="text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0] truncate">
                       {user.userName}
                     </p>
-                    <p className="text-xs text-[#6B7194] dark:text-[#8888A0]">{user.areaName}</p>
+                    <p className="text-xs text-[#7A7468] dark:text-[#9A9590]">{user.areaName}</p>
                   </div>
                   <span className="text-sm font-bold text-[#10B981]">{user.overallProgress}%</span>
                 </div>
@@ -117,10 +117,10 @@ export function UsersTab({ users }: UsersTabProps) {
                     {i + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED] truncate">
+                    <p className="text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0] truncate">
                       {user.userName}
                     </p>
-                    <p className="text-xs text-[#6B7194] dark:text-[#8888A0]">{user.areaName}</p>
+                    <p className="text-xs text-[#7A7468] dark:text-[#9A9590]">{user.areaName}</p>
                   </div>
                   <span className="text-sm font-bold text-[#EF4444]">{user.overallProgress}%</span>
                 </div>
@@ -147,35 +147,35 @@ export function UsersTab({ users }: UsersTabProps) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#E2E5F1] dark:border-[#2D2D4A]">
-                  <th className="text-left py-3 px-2 font-medium text-[#6B7194] dark:text-[#8888A0]">
-                    <button onClick={() => toggleSort('userName')} className="flex items-center gap-1 hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED]">
+                <tr className="border-b border-[#E0DCD6] dark:border-[#3D3D3D]">
+                  <th className="text-left py-3 px-2 font-medium text-[#7A7468] dark:text-[#9A9590]">
+                    <button onClick={() => toggleSort('userName')} className="flex items-center gap-1 hover:text-[#2D2A26] dark:hover:text-[#E8E5E0]">
                       Nome <ArrowUpDown className="w-3 h-3" />
                     </button>
                   </th>
-                  <th className="text-left py-3 px-2 font-medium text-[#6B7194] dark:text-[#8888A0]">Área</th>
-                  <th className="text-center py-3 px-2 font-medium text-[#6B7194] dark:text-[#8888A0] min-w-[140px]">
-                    <button onClick={() => toggleSort('overallProgress')} className="flex items-center gap-1 hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED] mx-auto">
+                  <th className="text-left py-3 px-2 font-medium text-[#7A7468] dark:text-[#9A9590]">Área</th>
+                  <th className="text-center py-3 px-2 font-medium text-[#7A7468] dark:text-[#9A9590] min-w-[140px]">
+                    <button onClick={() => toggleSort('overallProgress')} className="flex items-center gap-1 hover:text-[#2D2A26] dark:hover:text-[#E8E5E0] mx-auto">
                       Progresso <ArrowUpDown className="w-3 h-3" />
                     </button>
                   </th>
-                  <th className="text-center py-3 px-2 font-medium text-[#6B7194] dark:text-[#8888A0]">
-                    <button onClick={() => toggleSort('trailsCompleted')} className="flex items-center gap-1 hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED] mx-auto">
+                  <th className="text-center py-3 px-2 font-medium text-[#7A7468] dark:text-[#9A9590]">
+                    <button onClick={() => toggleSort('trailsCompleted')} className="flex items-center gap-1 hover:text-[#2D2A26] dark:hover:text-[#E8E5E0] mx-auto">
                       Trilhas <ArrowUpDown className="w-3 h-3" />
                     </button>
                   </th>
-                  <th className="text-left py-3 px-2 font-medium text-[#6B7194] dark:text-[#8888A0]">
-                    <button onClick={() => toggleSort('lastActivity')} className="flex items-center gap-1 hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED]">
+                  <th className="text-left py-3 px-2 font-medium text-[#7A7468] dark:text-[#9A9590]">
+                    <button onClick={() => toggleSort('lastActivity')} className="flex items-center gap-1 hover:text-[#2D2A26] dark:hover:text-[#E8E5E0]">
                       Última Atividade <ArrowUpDown className="w-3 h-3" />
                     </button>
                   </th>
-                  <th className="text-center py-3 px-2 font-medium text-[#6B7194] dark:text-[#8888A0]">Status</th>
+                  <th className="text-center py-3 px-2 font-medium text-[#7A7468] dark:text-[#9A9590]">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-[#6B7194] dark:text-[#8888A0]">
+                    <td colSpan={6} className="text-center py-8 text-[#7A7468] dark:text-[#9A9590]">
                       Nenhum usuário encontrado
                     </td>
                   </tr>
@@ -183,31 +183,31 @@ export function UsersTab({ users }: UsersTabProps) {
                   filtered.map((user) => (
                     <tr
                       key={user.userId}
-                      className="border-b border-[#E2E5F1]/50 dark:border-[#2D2D4A]/50 hover:bg-[#F8F9FC] dark:hover:bg-[#2D2D4A]/30"
+                      className="border-b border-[#E0DCD6]/50 dark:border-[#3D3D3D]/50 hover:bg-[#F5F3EF] dark:hover:bg-[#3D3D3D]/30"
                     >
                       <td className="py-3 px-2">
                         <div>
-                          <p className="font-medium text-[#1A1D2E] dark:text-[#E8E8ED]">
+                          <p className="font-medium text-[#2D2A26] dark:text-[#E8E5E0]">
                             {user.userName}
                           </p>
-                          <p className="text-xs text-[#6B7194] dark:text-[#8888A0]">{user.email}</p>
+                          <p className="text-xs text-[#7A7468] dark:text-[#9A9590]">{user.email}</p>
                         </div>
                       </td>
-                      <td className="py-3 px-2 text-[#1A1D2E] dark:text-[#E8E8ED]">
+                      <td className="py-3 px-2 text-[#2D2A26] dark:text-[#E8E5E0]">
                         {user.areaName}
                       </td>
                       <td className="py-3 px-2">
                         <div className="flex items-center gap-2">
                           <ProgressBar value={user.overallProgress} />
-                          <span className="text-xs text-[#6B7194] dark:text-[#8888A0] w-10 text-right">
+                          <span className="text-xs text-[#7A7468] dark:text-[#9A9590] w-10 text-right">
                             {user.overallProgress}%
                           </span>
                         </div>
                       </td>
-                      <td className="py-3 px-2 text-center text-[#1A1D2E] dark:text-[#E8E8ED]">
+                      <td className="py-3 px-2 text-center text-[#2D2A26] dark:text-[#E8E5E0]">
                         {user.trailsCompleted}/{user.totalTrails}
                       </td>
-                      <td className="py-3 px-2 text-xs text-[#6B7194] dark:text-[#8888A0]">
+                      <td className="py-3 px-2 text-xs text-[#7A7468] dark:text-[#9A9590]">
                         {user.lastActivity ? formatRelativeTime(user.lastActivity) : 'Sem atividade'}
                       </td>
                       <td className="py-3 px-2 text-center">

@@ -145,9 +145,9 @@ export function Sidebar({ isOpen, onClose, role: roleProp }: SidebarProps) {
   const linkBase =
     'flex items-center gap-3 px-4 py-3 rounded-xl transition-all border-l-[3px] border-transparent';
   const linkActive =
-    'bg-[#6B2FA0]/10 dark:bg-[#8B5CF6]/15 text-[#6B2FA0] dark:text-[#A78BFA] border-l-[#6B2FA0] dark:border-l-[#8B5CF6]';
+    'bg-[#1B4D3E]/10 dark:bg-[#34D399]/15 text-[#1B4D3E] dark:text-[#6EE7B7] border-l-[#1B4D3E] dark:border-l-[#34D399]';
   const linkInactive =
-    'text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED] hover:bg-[#F1F3F8] dark:hover:bg-[#2D2D4A]';
+    'text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0] hover:bg-[#EDE9E3] dark:hover:bg-[#3D3D3D]';
 
   return (
     <>
@@ -166,7 +166,7 @@ export function Sidebar({ isOpen, onClose, role: roleProp }: SidebarProps) {
 
       <aside
         className={`
-          fixed left-0 top-0 h-full w-[240px] bg-white dark:bg-[#1A1A2E] border-r border-[#E2E5F1] dark:border-[#2D2D4A] z-50
+          fixed left-0 top-0 h-full w-[240px] bg-white dark:bg-[#262626] border-r border-[#E0DCD6] dark:border-[#3D3D3D] z-50
           flex flex-col
           transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -174,18 +174,18 @@ export function Sidebar({ isOpen, onClose, role: roleProp }: SidebarProps) {
         `}
       >
         {/* Header com logo */}
-        <div className="flex items-center justify-between p-6 border-b border-[#E2E5F1] dark:border-[#2D2D4A]">
+        <div className="flex items-center justify-between p-6 border-b border-[#E0DCD6] dark:border-[#3D3D3D]">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#6B2FA0] to-[#F5A623] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1B4D3E] to-[#D4A053] flex items-center justify-center">
               <span className="text-white font-bold text-sm">P</span>
             </div>
-            <span className="text-[#1A1D2E] dark:text-[#E8E8ED] font-semibold text-lg">
+            <span className="text-[#2D2A26] dark:text-[#E8E5E0] font-semibold text-lg">
               Partners
             </span>
           </div>
           <button
             onClick={onClose}
-            className="lg:hidden text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED] transition-colors"
+            className="lg:hidden text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -219,7 +219,7 @@ export function Sidebar({ isOpen, onClose, role: roleProp }: SidebarProps) {
 
           {gestorItems.length > 0 && (
             <>
-              <div className="h-px bg-[#E2E5F1] dark:bg-[#2D2D4A] my-4" />
+              <div className="h-px bg-[#E0DCD6] dark:bg-[#3D3D3D] my-4" />
               <div className="space-y-2">
                 {gestorItems.map((item) => {
                   const Icon = item.icon;
@@ -247,7 +247,7 @@ export function Sidebar({ isOpen, onClose, role: roleProp }: SidebarProps) {
 
           {adminItems.length > 0 && (
             <>
-              <div className="h-px bg-[#E2E5F1] dark:bg-[#2D2D4A] my-4" />
+              <div className="h-px bg-[#E0DCD6] dark:bg-[#3D3D3D] my-4" />
               <div className="space-y-2">
                 {adminItems.map((item) => {
                   const Icon = item.icon;
@@ -274,10 +274,10 @@ export function Sidebar({ isOpen, onClose, role: roleProp }: SidebarProps) {
           )}
         </nav>
 
-        <div className="p-4 border-t border-[#E2E5F1] dark:border-[#2D2D4A]">
+        <div className="p-4 border-t border-[#E0DCD6] dark:border-[#3D3D3D]">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED] hover:bg-[#F1F3F8] dark:hover:bg-[#2D2D4A] transition-all"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0] hover:bg-[#EDE9E3] dark:hover:bg-[#3D3D3D] transition-all"
           >
             <LogOut className="w-5 h-5" />
             <span className="font-medium">Sair</span>

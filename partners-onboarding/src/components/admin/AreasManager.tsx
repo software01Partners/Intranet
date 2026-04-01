@@ -219,10 +219,10 @@ export function AreasManager() {
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl font-bold text-[#1A1D2E] dark:text-[#1A1D2E] dark:text-[#E8E8ED]">
+              <h2 className="text-xl font-bold text-[#2D2A26] dark:text-[#2D2A26] dark:text-[#E8E5E0]">
                 Áreas Cadastradas
               </h2>
-              <p className="text-sm text-[#6B7194] dark:text-[#6B7194] dark:text-[#8888A0] mt-1">
+              <p className="text-sm text-[#7A7468] dark:text-[#7A7468] dark:text-[#9A9590] mt-1">
                 {areas.length} {areas.length === 1 ? 'área' : 'áreas'} cadastrada{areas.length === 1 ? '' : 's'}
               </p>
             </div>
@@ -233,7 +233,7 @@ export function AreasManager() {
 
           {areas.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-[#6B7194] dark:text-[#6B7194] dark:text-[#8888A0] mb-4">Nenhuma área cadastrada</p>
+              <p className="text-[#7A7468] dark:text-[#7A7468] dark:text-[#9A9590] mb-4">Nenhuma área cadastrada</p>
               <Button onClick={handleOpenCreateModal} icon={Plus}>
                 Criar Primeira Área
               </Button>
@@ -242,23 +242,23 @@ export function AreasManager() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-[#E2E5F1] dark:border-[#2D2D4A]">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
+                  <tr className="border-b border-[#E0DCD6] dark:border-[#3D3D3D]">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#7A7468] dark:text-[#9A9590]">
                       Cor
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#7A7468] dark:text-[#9A9590]">
                       Nome
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#7A7468] dark:text-[#9A9590]">
                       Abreviação
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#7A7468] dark:text-[#9A9590]">
                       Colaboradores
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-[#7A7468] dark:text-[#9A9590]">
                       Trilhas
                     </th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
+                    <th className="text-right py-3 px-4 text-sm font-medium text-[#7A7468] dark:text-[#9A9590]">
                       Ações
                     </th>
                   </tr>
@@ -267,27 +267,27 @@ export function AreasManager() {
                   {areas.map((area) => (
                     <tr
                       key={area.id}
-                      className="border-b border-[#E2E5F1] dark:border-[#2D2D4A] hover:bg-[#F8F9FC] dark:hover:bg-[#2D2D4A] transition-colors"
+                      className="border-b border-[#E0DCD6] dark:border-[#3D3D3D] hover:bg-[#F5F3EF] dark:hover:bg-[#3D3D3D] transition-colors"
                     >
                       <td className="py-3 px-4">
                         <div
-                          className="w-6 h-6 rounded-full border border-[#E2E5F1] dark:border-[#2D2D4A]"
+                          className="w-6 h-6 rounded-full border border-[#E0DCD6] dark:border-[#3D3D3D]"
                           style={{ backgroundColor: area.color }}
                         />
                       </td>
                       <td className="py-3 px-4">
-                        <span className="text-[#1A1D2E] dark:text-[#E8E8ED] font-medium">
+                        <span className="text-[#2D2A26] dark:text-[#E8E5E0] font-medium">
                           {area.name}
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="text-[#6B7194] dark:text-[#8888A0]">{area.abbreviation}</span>
+                        <span className="text-[#7A7468] dark:text-[#9A9590]">{area.abbreviation}</span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="text-[#1A1D2E] dark:text-[#E8E8ED]">{area.usersCount}</span>
+                        <span className="text-[#2D2A26] dark:text-[#E8E5E0]">{area.usersCount}</span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="text-[#1A1D2E] dark:text-[#E8E8ED]">{area.trailsCount}</span>
+                        <span className="text-[#2D2A26] dark:text-[#E8E5E0]">{area.trailsCount}</span>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center justify-end gap-2">

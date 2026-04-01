@@ -44,8 +44,8 @@ export default async function GestorModulosPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-[#E8E8ED] mb-1">Módulos da Minha Área</h1>
-        <p className="text-[#8888A0]">
+        <h1 className="text-3xl font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-1">Módulos da Minha Área</h1>
+        <p className="text-[#7A7468] dark:text-[#9A9590]">
           Gerencie os módulos das trilhas da sua área
         </p>
       </div>

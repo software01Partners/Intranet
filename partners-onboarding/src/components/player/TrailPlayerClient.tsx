@@ -132,7 +132,7 @@ export function TrailPlayerClient({
   if (!currentModule) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-[#6B7194] dark:text-[#8888A0]">Módulo não encontrado</p>
+        <p className="text-[#7A7468] dark:text-[#9A9590]">Módulo não encontrado</p>
       </div>
     );
   }
@@ -164,8 +164,8 @@ export function TrailPlayerClient({
           )}
 
           {currentModule.type === 'video' && !currentModule.signedUrl && (
-            <div className="w-full aspect-video bg-[#0F0F1A] dark:bg-[#1A1A2E] rounded-2xl border border-[#E2E5F1] dark:border-[#2D2D4A] flex items-center justify-center">
-              <p className="text-[#6B7194] dark:text-[#8888A0]">
+            <div className="w-full aspect-video bg-[#1A1A1A] dark:bg-[#262626] rounded-2xl border border-[#E0DCD6] dark:border-[#3D3D3D] flex items-center justify-center">
+              <p className="text-[#7A7468] dark:text-[#9A9590]">
                 Vídeo indisponível. Verifique se o arquivo está no R2 e se content_url é a chave (ex: videos/trailId/arquivo.mp4).
               </p>
             </div>
@@ -185,14 +185,14 @@ export function TrailPlayerClient({
             <Card>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg bg-[#F5A623]/10 dark:bg-[#F5A623]/15 flex items-center justify-center">
-                    <HelpCircle className="w-6 h-6 text-[#F5A623]" />
+                  <div className="w-12 h-12 rounded-lg bg-[#D4A053]/10 dark:bg-[#D4A053]/15 flex items-center justify-center">
+                    <HelpCircle className="w-6 h-6 text-[#D4A053]" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-[#1A1D2E] dark:text-[#E8E8ED]">
+                    <h3 className="text-lg font-bold text-[#2D2A26] dark:text-[#E8E5E0]">
                       Quiz
                     </h3>
-                    <p className="text-sm text-[#6B7194] dark:text-[#8888A0]">
+                    <p className="text-sm text-[#7A7468] dark:text-[#9A9590]">
                       Responda as questões para concluir este módulo
                     </p>
                   </div>
@@ -218,7 +218,7 @@ export function TrailPlayerClient({
 
           {/* Informações do módulo */}
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED]">
+            <h1 className="text-2xl font-bold text-[#2D2A26] dark:text-[#E8E5E0]">
               {currentModule.title}
             </h1>
             <div className="flex items-center gap-2">
@@ -230,7 +230,7 @@ export function TrailPlayerClient({
                     : 'Quiz'}
               </Badge>
               {currentModule.duration && (
-                <span className="text-sm text-[#6B7194] dark:text-[#8888A0]">
+                <span className="text-sm text-[#7A7468] dark:text-[#9A9590]">
                   {formatDuration(currentModule.duration)}
                 </span>
               )}
@@ -243,7 +243,7 @@ export function TrailPlayerClient({
           <Card className="p-6">
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-2">
+                <h2 className="text-lg font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-2">
                   {trail.name}
                 </h2>
                 <Badge
@@ -261,7 +261,7 @@ export function TrailPlayerClient({
                   status === 'overdue' ? 'text-red-500' :
                   status === 'urgent' ? 'text-orange-500' :
                   status === 'warning' ? 'text-yellow-600 dark:text-yellow-400' :
-                  'text-[#6B7194] dark:text-[#8888A0]';
+                  'text-[#7A7468] dark:text-[#9A9590]';
                 return (
                   <div className={`flex items-center gap-2 text-sm ${deadlineColorClass} pb-2`}>
                     <CalendarClock className="w-4 h-4 flex-shrink-0" />
@@ -272,8 +272,8 @@ export function TrailPlayerClient({
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-[#6B7194] dark:text-[#8888A0]">Progresso</span>
-                  <span className="text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED]">
+                  <span className="text-sm text-[#7A7468] dark:text-[#9A9590]">Progresso</span>
+                  <span className="text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0]">
                     {trailProgress}%
                   </span>
                 </div>
@@ -283,7 +283,7 @@ export function TrailPlayerClient({
           </Card>
 
           <Card className="p-6">
-            <h3 className="text-base font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-4">
+            <h3 className="text-base font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-4">
               Módulos
             </h3>
             <ModuleList
@@ -303,7 +303,7 @@ export function TrailPlayerClient({
         size="md"
       >
         <div className="space-y-4">
-          <p className="text-[#1A1D2E] dark:text-[#E8E8ED]">
+          <p className="text-[#2D2A26] dark:text-[#E8E5E0]">
             Você concluiu todos os módulos desta trilha!
           </p>
           <div className="flex gap-3">

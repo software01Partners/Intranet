@@ -27,8 +27,8 @@ const badgeColorMap: Record<
   { solid: string; soft: string }
 > = {
   accent: {
-    solid: 'bg-[#F5A623] text-white',
-    soft: 'bg-[#F5A623]/10 text-[#E0951F] dark:bg-[#F5A623]/15 dark:text-[#F5A623]',
+    solid: 'bg-[#D4A053] text-white',
+    soft: 'bg-[#D4A053]/10 text-[#B8893E] dark:bg-[#D4A053]/15 dark:text-[#D4A053]',
   },
   green: {
     solid: 'bg-[#10B981] text-white',
@@ -47,28 +47,28 @@ const badgeColorMap: Record<
     soft: 'bg-[#F59E0B]/10 text-[#F59E0B] dark:bg-[#F59E0B]/15 dark:text-[#FBBF24]',
   },
   purple: {
-    solid: 'bg-[#6B2FA0] text-white dark:bg-[#8B5CF6]',
-    soft: 'bg-[#6B2FA0]/10 text-[#6B2FA0] dark:bg-[#8B5CF6]/15 dark:text-[#A78BFA]',
+    solid: 'bg-[#1B4D3E] text-white dark:bg-[#34D399] dark:text-[#1A1A1A]',
+    soft: 'bg-[#1B4D3E]/10 text-[#1B4D3E] dark:bg-[#34D399]/15 dark:text-[#6EE7B7]',
   },
   gray: {
-    solid: 'bg-[#6B7194] text-white dark:bg-[#2D2D4A] dark:text-[#E8E8ED]',
-    soft: 'bg-[#E2E5F1]/80 text-[#6B7194] dark:bg-[#2D2D4A] dark:text-[#8888A0]',
+    solid: 'bg-[#7A7468] text-white dark:bg-[#3D3D3D] dark:text-[#E8E5E0]',
+    soft: 'bg-[#E0DCD6]/80 text-[#7A7468] dark:bg-[#3D3D3D] dark:text-[#9A9590]',
   },
   admin: {
-    solid: 'bg-[#6B2FA0] text-white dark:bg-[#8B5CF6]',
-    soft: 'bg-[#6B2FA0]/10 text-[#6B2FA0] dark:bg-[#8B5CF6]/15 dark:text-[#A78BFA]',
+    solid: 'bg-[#1B4D3E] text-white dark:bg-[#34D399] dark:text-[#1A1A1A]',
+    soft: 'bg-[#1B4D3E]/10 text-[#1B4D3E] dark:bg-[#34D399]/15 dark:text-[#6EE7B7]',
   },
   gestor: {
-    solid: 'bg-[#F5A623] text-white',
-    soft: 'bg-[#F5A623]/10 text-[#E0951F] dark:bg-[#F5A623]/15 dark:text-[#F5A623]',
+    solid: 'bg-[#D4A053] text-white',
+    soft: 'bg-[#D4A053]/10 text-[#B8893E] dark:bg-[#D4A053]/15 dark:text-[#D4A053]',
   },
   colaborador: {
     solid: 'bg-[#3B82F6] text-white',
     soft: 'bg-[#3B82F6]/10 text-[#3B82F6] dark:bg-[#3B82F6]/15 dark:text-[#60A5FA]',
   },
   obrigatoria_global: {
-    solid: 'bg-[#6B2FA0] text-white dark:bg-[#8B5CF6]',
-    soft: 'bg-[#6B2FA0]/10 text-[#6B2FA0] dark:bg-[#8B5CF6]/15 dark:text-[#A78BFA]',
+    solid: 'bg-[#1B4D3E] text-white dark:bg-[#34D399] dark:text-[#1A1A1A]',
+    soft: 'bg-[#1B4D3E]/10 text-[#1B4D3E] dark:bg-[#34D399]/15 dark:text-[#6EE7B7]',
   },
   obrigatoria_area: {
     solid: 'bg-[#3B82F6] text-white',

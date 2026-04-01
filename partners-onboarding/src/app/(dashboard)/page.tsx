@@ -465,19 +465,19 @@ async function StatsCards({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card className="border-l-4 border-l-[#6B2FA0] dark:border-l-[#8B5CF6]">
+      <Card className="border-l-4 border-l-[#1B4D3E] dark:border-l-[#34D399]">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-[#9CA3C4] dark:text-[#8888A0] mb-1">
+              <p className="text-xs font-medium uppercase tracking-wide text-[#B0A99E] dark:text-[#9A9590] mb-1">
                 Trilhas em Andamento
               </p>
-              <p className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED]">
+              <p className="text-2xl font-bold text-[#2D2A26] dark:text-[#E8E5E0]">
                 {stats.trailsInProgress}
               </p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-[#6B2FA0]/10 dark:bg-[#8B5CF6]/15 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-[#6B2FA0] dark:text-[#8B5CF6]" />
+            <div className="w-10 h-10 rounded-full bg-[#1B4D3E]/10 dark:bg-[#34D399]/15 flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-[#1B4D3E] dark:text-[#34D399]" />
             </div>
           </div>
         </CardContent>
@@ -487,10 +487,10 @@ async function StatsCards({
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-[#9CA3C4] dark:text-[#8888A0] mb-1">
+              <p className="text-xs font-medium uppercase tracking-wide text-[#B0A99E] dark:text-[#9A9590] mb-1">
                 Módulos Concluídos
               </p>
-              <p className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED]">
+              <p className="text-2xl font-bold text-[#2D2A26] dark:text-[#E8E5E0]">
                 {stats.modulesCompleted}
               </p>
             </div>
@@ -505,7 +505,7 @@ async function StatsCards({
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-[#9CA3C4] dark:text-[#8888A0] mb-1">
+              <p className="text-xs font-medium uppercase tracking-wide text-[#B0A99E] dark:text-[#9A9590] mb-1">
                 Progresso Geral
               </p>
               <div className="mt-2">
@@ -516,19 +516,19 @@ async function StatsCards({
         </CardContent>
       </Card>
 
-      <Card className="border-l-4 border-l-[#F5A623]">
+      <Card className="border-l-4 border-l-[#D4A053]">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-[#9CA3C4] dark:text-[#8888A0] mb-1">
+              <p className="text-xs font-medium uppercase tracking-wide text-[#B0A99E] dark:text-[#9A9590] mb-1">
                 Certificados
               </p>
-              <p className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED]">
+              <p className="text-2xl font-bold text-[#2D2A26] dark:text-[#E8E5E0]">
                 {stats.certificates}
               </p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-[#F5A623]/10 flex items-center justify-center">
-              <Award className="w-5 h-5 text-[#F5A623]" />
+            <div className="w-10 h-10 rounded-full bg-[#D4A053]/10 flex items-center justify-center">
+              <Award className="w-5 h-5 text-[#D4A053]" />
             </div>
           </div>
         </CardContent>
@@ -638,18 +638,18 @@ async function LastModuleCard({ userId }: { userId: string }) {
                 <TypeIcon className="w-3 h-3 mr-1" />
                 {getTypeLabel(lastModule.type)}
               </Badge>
-              <span className="text-sm text-[#6B7194] dark:text-[#8888A0]">
+              <span className="text-sm text-[#7A7468] dark:text-[#9A9590]">
                 {lastModule.trail.name}
               </span>
             </div>
-            <h3 className="text-lg font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-1">
+            <h3 className="text-lg font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-1">
               {lastModule.title}
             </h3>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-[#6B7194] dark:text-[#8888A0]">Progresso da trilha</span>
-              <span className="text-[#1A1D2E] dark:text-[#E8E8ED] font-medium">
+              <span className="text-[#7A7468] dark:text-[#9A9590]">Progresso da trilha</span>
+              <span className="text-[#2D2A26] dark:text-[#E8E5E0] font-medium">
                 {completedModules}/{totalModules} módulos
               </span>
             </div>
@@ -696,14 +696,14 @@ async function RequiredTrailsGrid({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {trails.map((trail) => (
         <Link key={trail.id} href={`/trilhas/${trail.id}`}>
-          <Card className="hover:border-[#6B2FA0]/30 dark:hover:border-[#8B5CF6]/30 transition-colors cursor-pointer">
+          <Card className="hover:border-[#1B4D3E]/30 dark:hover:border-[#34D399]/30 transition-colors cursor-pointer">
             <CardHeader>
               <div className="flex items-start justify-between mb-2">
                 <CardTitle className="text-lg">{trail.name}</CardTitle>
                 {getTypeBadge(trail)}
               </div>
               {trail.description && (
-                <p className="text-sm text-[#6B7194] dark:text-[#8888A0] line-clamp-2">
+                <p className="text-sm text-[#7A7468] dark:text-[#9A9590] line-clamp-2">
                   {trail.description}
                 </p>
               )}
@@ -711,8 +711,8 @@ async function RequiredTrailsGrid({
             <CardContent>
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[#6B7194] dark:text-[#8888A0]">Progresso</span>
-                  <span className="text-[#1A1D2E] dark:text-[#E8E8ED] font-medium">
+                  <span className="text-[#7A7468] dark:text-[#9A9590]">Progresso</span>
+                  <span className="text-[#2D2A26] dark:text-[#E8E5E0] font-medium">
                     {trail.completedModules}/{trail.totalModules} módulos
                   </span>
                 </div>
@@ -738,7 +738,7 @@ async function OptionalTrailsGrid({ userId, areaId }: { userId: string; areaId: 
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {trails.map((trail) => (
         <Link key={trail.id} href={`/trilhas/${trail.id}`}>
-          <Card className="hover:border-[#6B2FA0]/30 dark:hover:border-[#8B5CF6]/30 transition-colors cursor-pointer">
+          <Card className="hover:border-[#1B4D3E]/30 dark:hover:border-[#34D399]/30 transition-colors cursor-pointer">
             <CardHeader>
               <div className="flex items-start justify-between mb-2">
                 <CardTitle className="text-lg">{trail.name}</CardTitle>
@@ -747,7 +747,7 @@ async function OptionalTrailsGrid({ userId, areaId }: { userId: string; areaId: 
                 </Badge>
               </div>
               {trail.description && (
-                <p className="text-sm text-[#6B7194] dark:text-[#8888A0] line-clamp-2">
+                <p className="text-sm text-[#7A7468] dark:text-[#9A9590] line-clamp-2">
                   {trail.description}
                 </p>
               )}
@@ -755,8 +755,8 @@ async function OptionalTrailsGrid({ userId, areaId }: { userId: string; areaId: 
             <CardContent>
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[#6B7194] dark:text-[#8888A0]">Progresso</span>
-                  <span className="text-[#1A1D2E] dark:text-[#E8E8ED] font-medium">
+                  <span className="text-[#7A7468] dark:text-[#9A9590]">Progresso</span>
+                  <span className="text-[#2D2A26] dark:text-[#E8E5E0] font-medium">
                     {trail.completedModules}/{trail.totalModules} módulos
                   </span>
                 </div>
@@ -777,7 +777,7 @@ export default async function DashboardPage() {
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-[#6B7194] dark:text-[#8888A0]">Erro ao carregar dados do usuário.</p>
+        <p className="text-[#7A7468] dark:text-[#9A9590]">Erro ao carregar dados do usuário.</p>
       </div>
     );
   }
@@ -789,10 +789,10 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-1">
+        <h1 className="text-3xl font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-1">
           Olá, {userName}!
         </h1>
-        <p className="text-[#6B7194] dark:text-[#8888A0] capitalize">{currentDate}</p>
+        <p className="text-[#7A7468] dark:text-[#9A9590] capitalize">{currentDate}</p>
       </div>
 
       {/* Stats Cards */}
@@ -807,7 +807,7 @@ export default async function DashboardPage() {
 
       {/* Trilhas Obrigatórias */}
       <div>
-        <h2 className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-4">
+        <h2 className="text-2xl font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-4">
           Trilhas Obrigatórias
         </h2>
         <Suspense fallback={<TrailsSkeleton />}>
@@ -838,7 +838,7 @@ async function OptionalTrailsSection({ userId, areaId }: { userId: string; areaI
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-4">
+      <h2 className="text-2xl font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-4">
         Trilhas Optativas
       </h2>
       <OptionalTrailsGrid userId={userId} areaId={areaId} />
@@ -856,7 +856,7 @@ async function CertificatesSection({ userId }: { userId: string }) {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-4">
+      <h2 className="text-2xl font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-4">
         Meus Certificados
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -865,11 +865,11 @@ async function CertificatesSection({ userId }: { userId: string }) {
             <CardHeader>
               <div className="flex items-start justify-between mb-2">
                 <CardTitle className="text-lg">{cert.trail_name}</CardTitle>
-                <div className="w-8 h-8 rounded-full bg-[#F5A623]/10 flex items-center justify-center flex-shrink-0">
-                  <Award className="w-4 h-4 text-[#F5A623]" />
+                <div className="w-8 h-8 rounded-full bg-[#D4A053]/10 flex items-center justify-center flex-shrink-0">
+                  <Award className="w-4 h-4 text-[#D4A053]" />
                 </div>
               </div>
-              <p className="text-sm text-[#6B7194] dark:text-[#8888A0]">
+              <p className="text-sm text-[#7A7468] dark:text-[#9A9590]">
                 Emitido em {formatDateFull(new Date(cert.issued_at))}
               </p>
             </CardHeader>

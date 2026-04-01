@@ -41,7 +41,7 @@ export async function AlertsSection({ areaId }: AlertsSectionProps) {
           {delayedMembers.map((member) => (
             <div
               key={member.id}
-              className="p-4 rounded-xl bg-[#F8F9FC] dark:bg-[#1A1A2E] border border-[#E2E5F1] dark:border-[#2D2D4A] hover:border-[#EF4444]/50 transition-colors"
+              className="p-4 rounded-xl bg-[#F5F3EF] dark:bg-[#262626] border border-[#E0DCD6] dark:border-[#3D3D3D] hover:border-[#EF4444]/50 transition-colors"
             >
               <div className="flex items-start gap-3 mb-3">
                 {member.avatar_url ? (
@@ -54,15 +54,15 @@ export async function AlertsSection({ areaId }: AlertsSectionProps) {
                     unoptimized
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-[#E2E5F1] dark:bg-[#2D2D4A] flex items-center justify-center text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED]">
+                  <div className="w-10 h-10 rounded-full bg-[#E0DCD6] dark:bg-[#3D3D3D] flex items-center justify-center text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0]">
                     {member.name.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-semibold text-[#1A1D2E] dark:text-[#E8E8ED] truncate">
+                  <h4 className="text-sm font-semibold text-[#2D2A26] dark:text-[#E8E5E0] truncate">
                     {member.name}
                   </h4>
-                  <p className="text-xs text-[#6B7194] dark:text-[#8888A0] truncate">
+                  <p className="text-xs text-[#7A7468] dark:text-[#9A9590] truncate">
                     {member.email}
                   </p>
                 </div>
@@ -70,23 +70,23 @@ export async function AlertsSection({ areaId }: AlertsSectionProps) {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-[#6B7194] dark:text-[#8888A0]">Progresso</span>
+                  <span className="text-xs text-[#7A7468] dark:text-[#9A9590]">Progresso</span>
                   <div className="flex items-center gap-2">
                     <ProgressRing
                       value={member.overallProgress}
                       size={40}
                       strokeWidth={4}
                     />
-                    <span className="text-xs font-medium text-[#1A1D2E] dark:text-[#E8E8ED]">
+                    <span className="text-xs font-medium text-[#2D2A26] dark:text-[#E8E5E0]">
                       {member.overallProgress}%
                     </span>
                   </div>
                 </div>
 
-                <div className="text-xs text-[#6B7194] dark:text-[#8888A0]">
+                <div className="text-xs text-[#7A7468] dark:text-[#9A9590]">
                   <div className="flex items-center justify-between mb-1">
                     <span>Último acesso:</span>
-                    <span className="text-[#1A1D2E] dark:text-[#E8E8ED]">
+                    <span className="text-[#2D2A26] dark:text-[#E8E5E0]">
                       {member.lastModuleCompletedAt
                         ? formatDate(member.lastModuleCompletedAt)
                         : 'Nunca'}
@@ -94,7 +94,7 @@ export async function AlertsSection({ areaId }: AlertsSectionProps) {
                   </div>
                   <div className="flex items-center justify-between">
                     <span>Trilhas concluídas:</span>
-                    <span className="text-[#1A1D2E] dark:text-[#E8E8ED]">
+                    <span className="text-[#2D2A26] dark:text-[#E8E5E0]">
                       {member.trailsCompleted}/{member.totalTrails}
                     </span>
                   </div>

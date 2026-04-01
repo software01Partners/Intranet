@@ -32,7 +32,7 @@ export const ProgressBar = forwardRef<HTMLDivElement, ProgressBarProps>(
       <div ref={ref} className={cn('w-full', className)} {...props}>
         <div
           className={cn(
-            'w-full bg-[#E2E5F1] dark:bg-[#2D2D4A] rounded-full overflow-hidden',
+            'w-full bg-[#E0DCD6] dark:bg-[#3D3D3D] rounded-full overflow-hidden',
             sizes[size]
           )}
         >
@@ -40,15 +40,15 @@ export const ProgressBar = forwardRef<HTMLDivElement, ProgressBarProps>(
             initial={{ width: 0 }}
             animate={{ width: `${clampedValue}%` }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
-            className="h-full rounded-full bg-gradient-to-r from-[#6B2FA0] to-[#8B5CF6]"
+            className="h-full rounded-full bg-gradient-to-r from-[#1B4D3E] to-[#34D399]"
           />
         </div>
         {showLabel && (
           <div className="mt-1.5 flex justify-between items-center">
-            <span className="text-xs text-[#9CA3C4] dark:text-[#8888A0]">
+            <span className="text-xs text-[#B0A99E] dark:text-[#9A9590]">
               Progresso
             </span>
-            <span className="text-xs font-medium text-[#1A1D2E] dark:text-[#E8E8ED]">
+            <span className="text-xs font-medium text-[#2D2A26] dark:text-[#E8E5E0]">
               {Math.round(clampedValue)}%
             </span>
           </div>

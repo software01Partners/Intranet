@@ -153,10 +153,10 @@ export function QuizClient({
         <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-6">
           <Lock className="w-8 h-8 text-red-400" />
         </div>
-        <h2 className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-3">
+        <h2 className="text-2xl font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-3">
           Quiz Bloqueado
         </h2>
-        <p className="text-[#6B7194] dark:text-[#8888A0] mb-2 max-w-md">
+        <p className="text-[#7A7468] dark:text-[#9A9590] mb-2 max-w-md">
           Você utilizou todas as 3 tentativas deste ciclo.
           O quiz será desbloqueado em:
         </p>
@@ -188,8 +188,8 @@ export function QuizClient({
   if (isSubmitting) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <Loader2 className="w-12 h-12 animate-spin text-[#6B2FA0] dark:text-[#8B5CF6] mb-4" />
-        <p className="text-[#6B7194] dark:text-[#8888A0]">Corrigindo seu quiz...</p>
+        <Loader2 className="w-12 h-12 animate-spin text-[#1B4D3E] dark:text-[#34D399] mb-4" />
+        <p className="text-[#7A7468] dark:text-[#9A9590]">Corrigindo seu quiz...</p>
       </div>
     );
   }
@@ -199,7 +199,7 @@ export function QuizClient({
     <div>
       {/* Indicador de tentativas */}
       <div className="flex items-center justify-between mb-4 px-1">
-        <span className="text-sm text-[#6B7194] dark:text-[#8888A0]">
+        <span className="text-sm text-[#7A7468] dark:text-[#9A9590]">
           Tentativa {attemptInfo.attemptsUsed + 1} de 3
         </span>
       </div>

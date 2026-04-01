@@ -305,7 +305,7 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#E8580C]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#D4A053]" />
       </div>
     );
   }
@@ -315,10 +315,10 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
       {/* Header com botão Nova Trilha */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-[#E8E8ED]">
+          <h2 className="text-2xl font-semibold text-[#2D2A26] dark:text-[#E8E5E0]">
             {areaFilter ? 'Trilhas da Minha Área' : 'Gerenciar Trilhas'}
           </h2>
-          <p className="text-sm text-[#8888A0] mt-1">
+          <p className="text-sm text-[#7A7468] dark:text-[#9A9590] mt-1">
             {filteredTrails.length} trilha{filteredTrails.length !== 1 ? 's' : ''} encontrada
             {filteredTrails.length !== 1 ? 's' : ''}
           </p>
@@ -357,36 +357,36 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-[#0A0A0F] border-b border-[#262630]">
+              <thead className="bg-[#0A0A0F] border-b border-[#333333]">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#8888A0] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#7A7468] dark:text-[#9A9590] uppercase tracking-wider">
                     Nome
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#8888A0] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#7A7468] dark:text-[#9A9590] uppercase tracking-wider">
                     Tipo
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#8888A0] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#7A7468] dark:text-[#9A9590] uppercase tracking-wider">
                     Área
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#8888A0] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#7A7468] dark:text-[#9A9590] uppercase tracking-wider">
                     Módulos
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#8888A0] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#7A7468] dark:text-[#9A9590] uppercase tracking-wider">
                     Prazo
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#8888A0] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#7A7468] dark:text-[#9A9590] uppercase tracking-wider">
                     Criado por
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-[#8888A0] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-[#7A7468] dark:text-[#9A9590] uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#262630]">
+              <tbody className="divide-y divide-[#333333]">
                 {filteredTrails.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-12 text-center">
-                      <p className="text-[#8888A0]">
+                      <p className="text-[#7A7468] dark:text-[#9A9590]">
                         {searchTerm || typeFilter !== 'all'
                           ? 'Nenhuma trilha encontrada com os filtros aplicados'
                           : 'Nenhuma trilha cadastrada'}
@@ -401,9 +401,9 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <p className="text-sm font-medium text-[#E8E8ED]">{trail.name}</p>
+                          <p className="text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0]">{trail.name}</p>
                           {trail.description && (
-                            <p className="text-xs text-[#8888A0] mt-1 line-clamp-1">
+                            <p className="text-xs text-[#7A7468] dark:text-[#9A9590] mt-1 line-clamp-1">
                               {trail.description}
                             </p>
                           )}
@@ -411,14 +411,14 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">{getTypeBadge(trail.type)}</td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-[#E8E8ED]">
+                        <span className="text-sm text-[#2D2A26] dark:text-[#E8E5E0]">
                           {trail.areaNames.length > 0
                             ? trail.areaNames.join(', ')
                             : '-'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-[#E8E8ED]">{trail.modulesCount}</span>
+                        <span className="text-sm text-[#2D2A26] dark:text-[#E8E5E0]">{trail.modulesCount}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {trail.deadline ? (() => {
@@ -427,18 +427,18 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
                             status === 'overdue' ? 'text-red-500' :
                             status === 'urgent' ? 'text-orange-500' :
                             status === 'warning' ? 'text-yellow-400' :
-                            'text-[#E8E8ED]';
+                            'text-[#2D2A26] dark:text-[#E8E5E0]';
                           return (
                             <span className={`text-sm font-medium ${colorClass}`}>
                               {formatDeadline(trail.deadline)}
                             </span>
                           );
                         })() : (
-                          <span className="text-sm text-[#8888A0]">Sem prazo</span>
+                          <span className="text-sm text-[#7A7468] dark:text-[#9A9590]">Sem prazo</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-[#8888A0]">
+                        <span className="text-sm text-[#7A7468] dark:text-[#9A9590]">
                           {trail.creatorName || '-'}
                         </span>
                       </td>

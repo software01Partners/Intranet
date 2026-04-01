@@ -80,7 +80,7 @@ export function VideoPlayer({
 
   return (
     <div className="w-full space-y-4">
-      <div className="relative w-full aspect-video bg-[#0F0F1A] dark:bg-[#1A1A2E] rounded-2xl overflow-hidden border border-[#E2E5F1] dark:border-[#2D2D4A]">
+      <div className="relative w-full aspect-video bg-[#1A1A1A] dark:bg-[#262626] rounded-2xl overflow-hidden border border-[#E0DCD6] dark:border-[#3D3D3D]">
         <video
           src={videoUrl}
           controls

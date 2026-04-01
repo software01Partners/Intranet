@@ -76,7 +76,7 @@ export function PDFViewer({
 
   return (
     <div className="w-full space-y-4">
-      <div className="relative w-full aspect-[4/3] bg-[#0A0A0F] rounded-xl overflow-hidden border border-[#262630]">
+      <div className="relative w-full aspect-[4/3] bg-[#0A0A0F] rounded-xl overflow-hidden border border-[#333333]">
         <iframe
           src={pdfUrl}
           className="w-full h-full"

@@ -231,7 +231,7 @@ export function QuizEditor({ moduleId, onClose }: QuizEditorProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-[#8888A0]">Carregando questões...</p>
+        <p className="text-[#7A7468] dark:text-[#9A9590]">Carregando questões...</p>
       </div>
     );
   }
@@ -240,8 +240,8 @@ export function QuizEditor({ moduleId, onClose }: QuizEditorProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-semibold text-[#E8E8ED]">Editor de Questões</h3>
-          <p className="text-sm text-[#8888A0] mt-1">
+          <h3 className="text-xl font-semibold text-[#2D2A26] dark:text-[#E8E5E0]">Editor de Questões</h3>
+          <p className="text-sm text-[#7A7468] dark:text-[#9A9590] mt-1">
             {questions.length} questão{questions.length !== 1 ? 'ões' : ''} cadastrada
             {questions.length !== 1 ? 's' : ''} (mínimo: 3)
           </p>
@@ -286,7 +286,7 @@ export function QuizEditor({ moduleId, onClose }: QuizEditorProps) {
                 />
 
                 <div className="space-y-3">
-                  <label className="block text-sm font-medium text-[#E8E8ED]">
+                  <label className="block text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0]">
                     Opções de resposta
                   </label>
                   {question.options.map((option, optionIndex) => (
@@ -298,7 +298,7 @@ export function QuizEditor({ moduleId, onClose }: QuizEditorProps) {
                         onChange={() =>
                           updateQuestion(questionIndex, 'correctAnswer', optionIndex)
                         }
-                        className="w-4 h-4 text-[#E8580C] bg-[#0A0A0F] border-[#262630] focus:ring-[#E8580C]"
+                        className="w-4 h-4 text-[#D4A053] bg-[#0A0A0F] border-[#333333] focus:ring-[#D4A053]"
                       />
                       <Input
                         value={option}

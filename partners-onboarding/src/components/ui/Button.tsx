@@ -29,19 +29,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      'inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed focus:ring-offset-[#F8F9FC] dark:focus:ring-offset-[#0F0F1A]';
+      'inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed focus:ring-offset-[#F5F3EF] dark:focus:ring-offset-[#1A1A1A]';
 
     const variants = {
       primary:
-        'bg-[#6B2FA0] text-white hover:bg-[#5A2788] focus:ring-[#6B2FA0]/30 dark:bg-[#8B5CF6] dark:hover:bg-[#7C3AED] dark:focus:ring-[#8B5CF6]/30',
+        'bg-[#1B4D3E] text-white hover:bg-[#153D31] focus:ring-[#1B4D3E]/30 dark:bg-[#34D399] dark:text-[#1A1A1A] dark:hover:bg-[#2BB585] dark:focus:ring-[#34D399]/30',
       secondary:
-        'bg-[#F1F3F8] text-[#1A1D2E] hover:bg-[#E2E5F1] focus:ring-[#E2E5F1] dark:bg-[#2D2D4A] dark:text-[#E8E8ED] dark:hover:bg-[#3D3D5C] dark:focus:ring-[#2D2D4A]',
+        'bg-[#EDE9E3] text-[#2D2A26] hover:bg-[#E0DCD6] focus:ring-[#E0DCD6] dark:bg-[#3D3D3D] dark:text-[#E8E5E0] dark:hover:bg-[#4D4D4D] dark:focus:ring-[#3D3D3D]',
       ghost:
-        'text-[#6B7194] hover:bg-[#F1F3F8] hover:text-[#1A1D2E] focus:ring-[#E2E5F1] dark:text-[#8888A0] dark:hover:bg-[#2D2D4A] dark:hover:text-[#E8E8ED] dark:focus:ring-[#2D2D4A]',
+        'text-[#7A7468] hover:bg-[#EDE9E3] hover:text-[#2D2A26] focus:ring-[#E0DCD6] dark:text-[#9A9590] dark:hover:bg-[#3D3D3D] dark:hover:text-[#E8E5E0] dark:focus:ring-[#3D3D3D]',
       danger:
         'bg-[#EF4444] text-white hover:bg-[#DC2626] focus:ring-[#EF4444]/30',
       accent:
-        'bg-[#F5A623] text-white hover:bg-[#E0951F] focus:ring-[#F5A623]/30',
+        'bg-[#D4A053] text-white hover:bg-[#B8893E] focus:ring-[#D4A053]/30',
     };
 
     const sizes = {

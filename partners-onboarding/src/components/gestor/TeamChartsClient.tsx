@@ -22,7 +22,7 @@ interface TeamChartsClientProps {
 }
 
 const COLORS = {
-  primary: '#6B2FA0',
+  primary: '#1B4D3E',
   green: '#10B981',
   blue: '#3B82F6',
   red: '#EF4444',
@@ -65,26 +65,26 @@ export function TeamChartsClient({ trailData, teamMembers }: TeamChartsClientPro
               layout="vertical"
               margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#E2E5F1" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E0DCD6" />
               <XAxis
                 type="number"
                 domain={[0, 100]}
-                stroke="#6B7194"
-                tick={{ fill: '#6B7194' }}
+                stroke="#7A7468"
+                tick={{ fill: '#7A7468' }}
               />
               <YAxis
                 type="category"
                 dataKey="name"
-                stroke="#6B7194"
-                tick={{ fill: '#6B7194' }}
+                stroke="#7A7468"
+                tick={{ fill: '#7A7468' }}
                 width={90}
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: '#FFFFFF',
-                  border: '1px solid #E2E5F1',
+                  border: '1px solid #E0DCD6',
                   borderRadius: '12px',
-                  color: '#1A1D2E',
+                  color: '#2D2A26',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                 }}
                 formatter={(value: unknown, _name: unknown, props: { payload?: { fullName?: string } }) => [
@@ -132,16 +132,16 @@ export function TeamChartsClient({ trailData, teamMembers }: TeamChartsClientPro
               <Tooltip
                 contentStyle={{
                   backgroundColor: '#FFFFFF',
-                  border: '1px solid #E2E5F1',
+                  border: '1px solid #E0DCD6',
                   borderRadius: '12px',
-                  color: '#1A1D2E',
+                  color: '#2D2A26',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                 }}
               />
               <Legend
                 wrapperStyle={{ color: 'currentColor' }}
                 formatter={(value) => (
-                  <span className="text-[#1A1D2E] dark:text-[#E8E8ED]">{value}</span>
+                  <span className="text-[#2D2A26] dark:text-[#E8E5E0]">{value}</span>
                 )}
               />
             </PieChart>

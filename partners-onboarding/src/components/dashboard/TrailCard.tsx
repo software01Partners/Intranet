@@ -89,7 +89,7 @@ export function TrailCard({ trail }: TrailCardProps) {
     >
       <div className="flex-1 space-y-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-lg font-bold text-[#1A1D2E] dark:text-[#E8E8ED] flex-1">
+          <h3 className="text-lg font-bold text-[#2D2A26] dark:text-[#E8E5E0] flex-1">
             {trail.name}
           </h3>
           <Badge variant="soft" color={badgeConfig.color}>
@@ -98,12 +98,12 @@ export function TrailCard({ trail }: TrailCardProps) {
         </div>
 
         {trail.description && (
-          <p className="text-sm text-[#6B7194] dark:text-[#8888A0] line-clamp-2">
+          <p className="text-sm text-[#7A7468] dark:text-[#9A9590] line-clamp-2">
             {trail.description}
           </p>
         )}
 
-        <div className="flex items-center gap-4 text-sm text-[#6B7194] dark:text-[#8888A0]">
+        <div className="flex items-center gap-4 text-sm text-[#7A7468] dark:text-[#9A9590]">
           {trail.duration && trail.duration > 0 && (
             <div className="flex items-center gap-1.5">
               <Clock className="w-4 h-4" />
@@ -122,7 +122,7 @@ export function TrailCard({ trail }: TrailCardProps) {
             status === 'overdue' ? 'text-red-500' :
             status === 'urgent' ? 'text-orange-500' :
             status === 'warning' ? 'text-yellow-600 dark:text-yellow-400' :
-            'text-[#6B7194] dark:text-[#8888A0]';
+            'text-[#7A7468] dark:text-[#9A9590]';
           return (
             <div className={`flex items-center gap-1.5 text-sm ${deadlineColorClass}`}>
               <CalendarClock className="w-4 h-4" />
@@ -134,15 +134,15 @@ export function TrailCard({ trail }: TrailCardProps) {
         <div className="space-y-1.5">
           <ProgressBar value={trail.progress} size="sm" />
           <div className="flex justify-between items-center text-xs">
-            <span className="text-[#9CA3C4] dark:text-[#8888A0]">Progresso</span>
-            <span className="text-[#1A1D2E] dark:text-[#E8E8ED] font-medium">
+            <span className="text-[#B0A99E] dark:text-[#9A9590]">Progresso</span>
+            <span className="text-[#2D2A26] dark:text-[#E8E5E0] font-medium">
               {Math.round(trail.progress)}%
             </span>
           </div>
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-[#E2E5F1] dark:border-[#2D2D4A]">
+      <div className="mt-4 pt-4 border-t border-[#E0DCD6] dark:border-[#3D3D3D]">
         <Link href={`/trilhas/${trail.id}`} onClick={(e) => e.stopPropagation()}>
           <Button
             variant={trail.progress === 100 ? 'secondary' : 'primary'}

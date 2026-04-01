@@ -31,23 +31,23 @@ export function QuizBlockedTable({ items }: QuizBlockedTableProps) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#E2E5F1] dark:border-[#2D2D4A]">
-                <th className="text-left py-3 px-2 text-[#6B7194] dark:text-[#8888A0] font-medium">
+              <tr className="border-b border-[#E0DCD6] dark:border-[#3D3D3D]">
+                <th className="text-left py-3 px-2 text-[#7A7468] dark:text-[#9A9590] font-medium">
                   Usuário
                 </th>
-                <th className="text-left py-3 px-2 text-[#6B7194] dark:text-[#8888A0] font-medium">
+                <th className="text-left py-3 px-2 text-[#7A7468] dark:text-[#9A9590] font-medium">
                   Quiz
                 </th>
-                <th className="text-left py-3 px-2 text-[#6B7194] dark:text-[#8888A0] font-medium">
+                <th className="text-left py-3 px-2 text-[#7A7468] dark:text-[#9A9590] font-medium">
                   Trilha
                 </th>
-                <th className="text-center py-3 px-2 text-[#6B7194] dark:text-[#8888A0] font-medium">
+                <th className="text-center py-3 px-2 text-[#7A7468] dark:text-[#9A9590] font-medium">
                   Tentativas
                 </th>
-                <th className="text-center py-3 px-2 text-[#6B7194] dark:text-[#8888A0] font-medium">
+                <th className="text-center py-3 px-2 text-[#7A7468] dark:text-[#9A9590] font-medium">
                   Último Score
                 </th>
-                <th className="text-left py-3 px-2 text-[#6B7194] dark:text-[#8888A0] font-medium">
+                <th className="text-left py-3 px-2 text-[#7A7468] dark:text-[#9A9590] font-medium">
                   Bloqueado até
                 </th>
               </tr>
@@ -56,18 +56,18 @@ export function QuizBlockedTable({ items }: QuizBlockedTableProps) {
               {items.map((item) => (
                 <tr
                   key={`${item.userId}-${item.moduleId}`}
-                  className="border-b border-[#E2E5F1]/50 dark:border-[#2D2D4A]/50 last:border-0"
+                  className="border-b border-[#E0DCD6]/50 dark:border-[#3D3D3D]/50 last:border-0"
                 >
-                  <td className="py-3 px-2 text-[#1A1D2E] dark:text-[#E8E8ED]">
+                  <td className="py-3 px-2 text-[#2D2A26] dark:text-[#E8E5E0]">
                     {item.userName}
                   </td>
-                  <td className="py-3 px-2 text-[#1A1D2E] dark:text-[#E8E8ED]">
+                  <td className="py-3 px-2 text-[#2D2A26] dark:text-[#E8E5E0]">
                     {item.moduleName}
                   </td>
-                  <td className="py-3 px-2 text-[#6B7194] dark:text-[#8888A0]">
+                  <td className="py-3 px-2 text-[#7A7468] dark:text-[#9A9590]">
                     {item.trailName}
                   </td>
-                  <td className="py-3 px-2 text-center text-[#1A1D2E] dark:text-[#E8E8ED]">
+                  <td className="py-3 px-2 text-center text-[#2D2A26] dark:text-[#E8E5E0]">
                     {item.totalAttempts}
                   </td>
                   <td className="py-3 px-2 text-center">

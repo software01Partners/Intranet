@@ -129,14 +129,14 @@ export function AreaForm({ initialData, onSuccess, onCancel }: AreaFormProps) {
       />
 
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED]">
+        <label className="block text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0]">
           Cor
         </label>
         <div className="flex items-center gap-3">
           <input
             type="color"
             {...register('color')}
-            className="w-16 h-10 rounded-xl border border-[#E2E5F1] dark:border-[#2D2D4A] cursor-pointer bg-[#F8F9FC] dark:bg-[#0F0F1A]"
+            className="w-16 h-10 rounded-xl border border-[#E0DCD6] dark:border-[#3D3D3D] cursor-pointer bg-[#F5F3EF] dark:bg-[#1A1A1A]"
             disabled={isSubmitting}
           />
           <Input

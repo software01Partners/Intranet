@@ -337,7 +337,7 @@ export function ModuleForm({
       {/* Toggle Upload / Link externo (só para vídeo) */}
       {selectedType === 'video' && (
         <div className="space-y-3">
-          <label className="block text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED]">
+          <label className="block text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0]">
             Origem do conteúdo
           </label>
           <div className="flex gap-2">
@@ -351,8 +351,8 @@ export function ModuleForm({
               disabled={isSubmitting || isUploading}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 contentSource === 'upload'
-                  ? 'bg-[#6B2FA0] text-white'
-                  : 'bg-[#F8F9FC] dark:bg-[#0F0F1A] text-[#6B7194] dark:text-[#8888A0] border border-[#E2E5F1] dark:border-[#2D2D4A] hover:border-[#6B2FA0] dark:hover:border-[#8B5CF6]'
+                  ? 'bg-[#1B4D3E] text-white'
+                  : 'bg-[#F5F3EF] dark:bg-[#1A1A1A] text-[#7A7468] dark:text-[#9A9590] border border-[#E0DCD6] dark:border-[#3D3D3D] hover:border-[#1B4D3E] dark:hover:border-[#34D399]'
               }`}
             >
               <Upload className="w-4 h-4" />
@@ -369,8 +369,8 @@ export function ModuleForm({
               disabled={isSubmitting || isUploading}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 contentSource === 'link'
-                  ? 'bg-[#6B2FA0] text-white'
-                  : 'bg-[#F8F9FC] dark:bg-[#0F0F1A] text-[#6B7194] dark:text-[#8888A0] border border-[#E2E5F1] dark:border-[#2D2D4A] hover:border-[#6B2FA0] dark:hover:border-[#8B5CF6]'
+                  ? 'bg-[#1B4D3E] text-white'
+                  : 'bg-[#F5F3EF] dark:bg-[#1A1A1A] text-[#7A7468] dark:text-[#9A9590] border border-[#E0DCD6] dark:border-[#3D3D3D] hover:border-[#1B4D3E] dark:hover:border-[#34D399]'
               }`}
             >
               <Link2 className="w-4 h-4" />
@@ -383,26 +383,26 @@ export function ModuleForm({
       {/* Input de link externo (YouTube / Google Drive) */}
       {selectedType === 'video' && contentSource === 'link' && (
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED]">
+          <label className="block text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0]">
             Link do vídeo (YouTube ou Google Drive)
             {!isEditMode && <span className="text-red-500 ml-1">*</span>}
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Youtube className="w-5 h-5 text-[#9CA3C4] dark:text-[#8888A0]" />
+              <Youtube className="w-5 h-5 text-[#B0A99E] dark:text-[#9A9590]" />
             </div>
             <input
               type="url"
               {...register('externalUrl')}
               placeholder="https://www.youtube.com/watch?v=... ou https://drive.google.com/file/d/..."
               disabled={isSubmitting || isUploading}
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8F9FC] dark:bg-[#0F0F1A] border border-[#E2E5F1] dark:border-[#2D2D4A] text-sm text-[#1A1D2E] dark:text-[#E8E8ED] placeholder-[#9CA3C4] dark:placeholder-[#8888A0] focus:outline-none focus:border-[#6B2FA0] dark:focus:border-[#8B5CF6] transition-colors"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F5F3EF] dark:bg-[#1A1A1A] border border-[#E0DCD6] dark:border-[#3D3D3D] text-sm text-[#2D2A26] dark:text-[#E8E5E0] placeholder-[#B0A99E] dark:placeholder-[#9A9590] focus:outline-none focus:border-[#1B4D3E] dark:focus:border-[#34D399] transition-colors"
             />
           </div>
           {errors.externalUrl && (
             <p className="text-sm text-red-500">{errors.externalUrl.message}</p>
           )}
-          <p className="text-xs text-[#6B7194] dark:text-[#8888A0]">
+          <p className="text-xs text-[#7A7468] dark:text-[#9A9590]">
             Cole o link do YouTube ou do Google Drive. Para Google Drive, certifique-se de que o compartilhamento está habilitado.
           </p>
         </div>
@@ -411,7 +411,7 @@ export function ModuleForm({
       {/* Upload de arquivo (vídeo com upload ou documento) */}
       {((selectedType === 'video' && contentSource === 'upload') || selectedType === 'document') && (
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED]">
+          <label className="block text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0]">
             Arquivo {selectedType === 'video' ? '(MP4, MOV - máx. 500MB)' : '(PDF - máx. 500MB)'}
             {!isEditMode && <span className="text-red-500 ml-1">*</span>}
           </label>
@@ -426,21 +426,21 @@ export function ModuleForm({
             />
             <label
               htmlFor="module-file-input"
-              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#F8F9FC] dark:bg-[#0F0F1A] border border-[#E2E5F1] dark:border-[#2D2D4A] cursor-pointer hover:border-[#6B2FA0] dark:hover:border-[#8B5CF6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#F5F3EF] dark:bg-[#1A1A1A] border border-[#E0DCD6] dark:border-[#3D3D3D] cursor-pointer hover:border-[#1B4D3E] dark:hover:border-[#34D399] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {selectedType === 'video' ? (
-                <FileVideo className="w-5 h-5 text-[#9CA3C4] dark:text-[#8888A0]" />
+                <FileVideo className="w-5 h-5 text-[#B0A99E] dark:text-[#9A9590]" />
               ) : (
-                <FileText className="w-5 h-5 text-[#9CA3C4] dark:text-[#8888A0]" />
+                <FileText className="w-5 h-5 text-[#B0A99E] dark:text-[#9A9590]" />
               )}
-              <span className="text-sm text-[#1A1D2E] dark:text-[#E8E8ED] flex-1">
+              <span className="text-sm text-[#2D2A26] dark:text-[#E8E5E0] flex-1">
                 {selectedFile
                   ? selectedFile.name
                   : initialData?.content_url && !existingIsExternal
                   ? 'Arquivo já carregado (clique para substituir)'
                   : 'Selecione um arquivo'}
               </span>
-              <Upload className="w-4 h-4 text-[#9CA3C4] dark:text-[#8888A0]" />
+              <Upload className="w-4 h-4 text-[#B0A99E] dark:text-[#9A9590]" />
             </label>
           </div>
           {errors.file && (
@@ -448,13 +448,13 @@ export function ModuleForm({
           )}
           {isUploading && (
             <div className="space-y-1">
-              <div className="w-full bg-[#E2E5F1] dark:bg-[#2D2D4A] rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-[#E0DCD6] dark:bg-[#3D3D3D] rounded-full h-2 overflow-hidden">
                 <div
-                  className="bg-gradient-to-r from-[#6B2FA0] to-[#8B5CF6] h-2 transition-all duration-300"
+                  className="bg-gradient-to-r from-[#1B4D3E] to-[#34D399] h-2 transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
-              <p className="text-xs text-[#6B7194] dark:text-[#8888A0] text-center">
+              <p className="text-xs text-[#7A7468] dark:text-[#9A9590] text-center">
                 {uploadProgress}% - Enviando arquivo...
               </p>
             </div>

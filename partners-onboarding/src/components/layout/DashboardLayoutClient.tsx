@@ -21,7 +21,7 @@ export function DashboardLayoutClient({
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} role={role} />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-        <main className="flex-1 p-4 lg:p-6 overflow-auto bg-[#F8F9FC] dark:bg-[#0F0F1A]">
+        <main className="flex-1 p-4 lg:p-6 overflow-auto bg-[#F5F3EF] dark:bg-[#1A1A1A]">
           {children}
         </main>
       </div>

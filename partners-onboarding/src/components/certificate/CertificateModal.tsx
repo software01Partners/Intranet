@@ -70,20 +70,20 @@ export function CertificateModal({
       size="md"
     >
       <div className="flex flex-col items-center text-center space-y-6 py-4">
-        <div className="w-20 h-20 rounded-full bg-[#F5A623]/10 dark:bg-[#F5A623]/15 flex items-center justify-center">
-          <Award className="w-10 h-10 text-[#F5A623]" />
+        <div className="w-20 h-20 rounded-full bg-[#D4A053]/10 dark:bg-[#D4A053]/15 flex items-center justify-center">
+          <Award className="w-10 h-10 text-[#D4A053]" />
         </div>
 
         <div className="space-y-2">
-          <p className="text-[#1A1D2E] dark:text-[#E8E8ED] text-lg">
+          <p className="text-[#2D2A26] dark:text-[#E8E5E0] text-lg">
             Você concluiu com sucesso esta trilha!
           </p>
           {trailName && (
-            <p className="text-[#6B7194] dark:text-[#8888A0] text-sm">
+            <p className="text-[#7A7468] dark:text-[#9A9590] text-sm">
               {trailName}
             </p>
           )}
-          <p className="text-[#6B7194] dark:text-[#8888A0] text-sm mt-4">
+          <p className="text-[#7A7468] dark:text-[#9A9590] text-sm mt-4">
             Baixe seu certificado de conclusão para compartilhar sua conquista.
           </p>
         </div>

@@ -38,10 +38,10 @@ export default async function UsuariosPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-[#E8E8ED] mb-1">
+        <h1 className="text-3xl font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-1">
           Gestão de Usuários
         </h1>
-        <p className="text-[#8888A0]">
+        <p className="text-[#7A7468] dark:text-[#9A9590]">
           Gerencie usuários, roles e áreas do sistema
         </p>
       </div>

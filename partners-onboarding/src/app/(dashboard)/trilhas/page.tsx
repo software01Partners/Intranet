@@ -137,7 +137,7 @@ async function TrailsData() {
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-[#6B7194] dark:text-[#8888A0]">Erro ao carregar dados do usuário.</p>
+        <p className="text-[#7A7468] dark:text-[#9A9590]">Erro ao carregar dados do usuário.</p>
       </div>
     );
   }
@@ -170,7 +170,7 @@ export default async function TrailsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-1">
+        <h1 className="text-3xl font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-1">
           Trilhas de Conhecimento
         </h1>
         <Suspense fallback={<Skeleton className="h-5 w-48" />}>
@@ -193,7 +193,7 @@ async function TrailsCount() {
 
   const trails = await getTrailsWithProgress(user.id, user.area_id);
   return (
-    <p className="text-[#6B7194] dark:text-[#8888A0]">
+    <p className="text-[#7A7468] dark:text-[#9A9590]">
       {trails.length} {trails.length === 1 ? 'trilha disponível' : 'trilhas disponíveis'}
     </p>
   );

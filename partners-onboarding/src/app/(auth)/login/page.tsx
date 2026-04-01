@@ -145,22 +145,22 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F8F9FC] to-[#6B2FA0]/5 dark:from-[#0F0F1A] dark:to-[#1A1A2E] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-b from-[#F5F3EF] to-[#1B4D3E]/5 dark:from-[#1A1A1A] dark:to-[#262626] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#6B2FA0] to-[#F5A623] flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1B4D3E] to-[#D4A053] flex items-center justify-center">
               <span className="text-white font-bold text-xl">P</span>
             </div>
-            <h1 className="text-3xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED]">
+            <h1 className="text-3xl font-bold text-[#2D2A26] dark:text-[#E8E5E0]">
               Partners
             </h1>
           </div>
         </div>
 
         {/* Card de Login */}
-        <div className="bg-white dark:bg-[#1A1A2E] border border-[#E2E5F1] dark:border-[#2D2D4A] rounded-2xl p-6 shadow-lg">
+        <div className="bg-white dark:bg-[#262626] border border-[#E0DCD6] dark:border-[#3D3D3D] rounded-2xl p-6 shadow-lg">
           {/* Tabs */}
           <div className="flex gap-2 mb-6">
             <button
@@ -168,8 +168,8 @@ export default function LoginPage() {
               onClick={() => setActiveTab('email')}
               className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${
                 activeTab === 'email'
-                  ? 'bg-[#6B2FA0] dark:bg-[#8B5CF6] text-white'
-                  : 'bg-[#F8F9FC] dark:bg-[#0F0F1A] text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED]'
+                  ? 'bg-[#1B4D3E] dark:bg-[#34D399] text-white dark:text-[#1A1A1A]'
+                  : 'bg-[#F5F3EF] dark:bg-[#1A1A1A] text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0]'
               }`}
             >
               Email/Senha
@@ -179,8 +179,8 @@ export default function LoginPage() {
               onClick={() => setActiveTab('magic')}
               className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${
                 activeTab === 'magic'
-                  ? 'bg-[#6B2FA0] dark:bg-[#8B5CF6] text-white'
-                  : 'bg-[#F8F9FC] dark:bg-[#0F0F1A] text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED]'
+                  ? 'bg-[#1B4D3E] dark:bg-[#34D399] text-white dark:text-[#1A1A1A]'
+                  : 'bg-[#F5F3EF] dark:bg-[#1A1A1A] text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0]'
               }`}
             >
               Magic Link
@@ -195,7 +195,7 @@ export default function LoginPage() {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED] mb-2"
+                  className="block text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0] mb-2"
                 >
                   Email
                 </label>
@@ -203,7 +203,7 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   {...registerEmailPassword('email')}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#0F0F1A] border border-[#E2E5F1] dark:border-[#2D2D4A] text-[#1A1D2E] dark:text-[#E8E8ED] placeholder-[#9CA3C4] dark:placeholder-[#6B7194] focus:outline-none focus:ring-2 focus:ring-[#6B2FA0]/30 dark:focus:ring-[#8B5CF6]/30 focus:border-[#6B2FA0] dark:focus:border-[#8B5CF6]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F5F3EF] dark:bg-[#1A1A1A] border border-[#E0DCD6] dark:border-[#3D3D3D] text-[#2D2A26] dark:text-[#E8E5E0] placeholder-[#B0A99E] dark:placeholder-[#7A7468] focus:outline-none focus:ring-2 focus:ring-[#1B4D3E]/30 dark:focus:ring-[#34D399]/30 focus:border-[#1B4D3E] dark:focus:border-[#34D399]"
                   placeholder="seu@email.com"
                 />
                 {errorsEmailPassword.email && (
@@ -216,7 +216,7 @@ export default function LoginPage() {
               <div>
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED] mb-2"
+                  className="block text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0] mb-2"
                 >
                   Senha
                 </label>
@@ -224,7 +224,7 @@ export default function LoginPage() {
                   id="password"
                   type="password"
                   {...registerEmailPassword('password')}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#0F0F1A] border border-[#E2E5F1] dark:border-[#2D2D4A] text-[#1A1D2E] dark:text-[#E8E8ED] placeholder-[#9CA3C4] dark:placeholder-[#6B7194] focus:outline-none focus:ring-2 focus:ring-[#6B2FA0]/30 dark:focus:ring-[#8B5CF6]/30 focus:border-[#6B2FA0] dark:focus:border-[#8B5CF6]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F5F3EF] dark:bg-[#1A1A1A] border border-[#E0DCD6] dark:border-[#3D3D3D] text-[#2D2A26] dark:text-[#E8E5E0] placeholder-[#B0A99E] dark:placeholder-[#7A7468] focus:outline-none focus:ring-2 focus:ring-[#1B4D3E]/30 dark:focus:ring-[#34D399]/30 focus:border-[#1B4D3E] dark:focus:border-[#34D399]"
                   placeholder="••••••••"
                 />
                 {errorsEmailPassword.password && (
@@ -237,7 +237,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-2.5 px-4 bg-[#6B2FA0] dark:bg-[#8B5CF6] text-white rounded-xl font-semibold hover:bg-[#5A2788] dark:hover:bg-[#7C3AED] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-2.5 px-4 bg-[#1B4D3E] dark:bg-[#34D399] text-white dark:text-[#1A1A1A] rounded-xl font-semibold hover:bg-[#153D31] dark:hover:bg-[#2BB585] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Entrando...' : 'Entrar'}
               </button>
@@ -246,7 +246,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowResetPassword(true)}
-                  className="text-sm text-[#6B2FA0] dark:text-[#8B5CF6] hover:text-[#5A2788] dark:hover:text-[#7C3AED] transition-colors"
+                  className="text-sm text-[#1B4D3E] dark:text-[#34D399] hover:text-[#153D31] dark:hover:text-[#2BB585] transition-colors"
                 >
                   Esqueci minha senha
                 </button>
@@ -262,7 +262,7 @@ export default function LoginPage() {
               <div>
                 <label
                   htmlFor="magic-email"
-                  className="block text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED] mb-2"
+                  className="block text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0] mb-2"
                 >
                   Email
                 </label>
@@ -270,7 +270,7 @@ export default function LoginPage() {
                   id="magic-email"
                   type="email"
                   {...registerMagicLink('email')}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#0F0F1A] border border-[#E2E5F1] dark:border-[#2D2D4A] text-[#1A1D2E] dark:text-[#E8E8ED] placeholder-[#9CA3C4] dark:placeholder-[#6B7194] focus:outline-none focus:ring-2 focus:ring-[#6B2FA0]/30 dark:focus:ring-[#8B5CF6]/30 focus:border-[#6B2FA0] dark:focus:border-[#8B5CF6]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F5F3EF] dark:bg-[#1A1A1A] border border-[#E0DCD6] dark:border-[#3D3D3D] text-[#2D2A26] dark:text-[#E8E5E0] placeholder-[#B0A99E] dark:placeholder-[#7A7468] focus:outline-none focus:ring-2 focus:ring-[#1B4D3E]/30 dark:focus:ring-[#34D399]/30 focus:border-[#1B4D3E] dark:focus:border-[#34D399]"
                   placeholder="seu@email.com"
                 />
                 {errorsMagicLink.email && (
@@ -283,7 +283,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-2.5 px-4 bg-[#6B2FA0] dark:bg-[#8B5CF6] text-white rounded-xl font-semibold hover:bg-[#5A2788] dark:hover:bg-[#7C3AED] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-2.5 px-4 bg-[#1B4D3E] dark:bg-[#34D399] text-white dark:text-[#1A1A1A] rounded-xl font-semibold hover:bg-[#153D31] dark:hover:bg-[#2BB585] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Enviando...' : 'Enviar link de acesso'}
               </button>
@@ -294,10 +294,10 @@ export default function LoginPage() {
 
       {/* Modal de Recuperação de Senha */}
       {showResetPassword && (
-        <div className="fixed inset-0 bg-[#1A1D2E]/50 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-[#1A1A2E] border border-[#E2E5F1] dark:border-[#2D2D4A] rounded-2xl p-6 w-full max-w-md shadow-xl">
+        <div className="fixed inset-0 bg-[#2D2A26]/50 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-[#262626] border border-[#E0DCD6] dark:border-[#3D3D3D] rounded-2xl p-6 w-full max-w-md shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED]">
+              <h2 className="text-xl font-bold text-[#2D2A26] dark:text-[#E8E5E0]">
                 Recuperar Senha
               </h2>
               <button
@@ -306,7 +306,7 @@ export default function LoginPage() {
                   setShowResetPassword(false);
                   resetResetPassword();
                 }}
-                className="text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED] transition-colors"
+                className="text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0] transition-colors"
               >
                 <X size={20} />
               </button>
@@ -319,7 +319,7 @@ export default function LoginPage() {
               <div>
                 <label
                   htmlFor="reset-email"
-                  className="block text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED] mb-2"
+                  className="block text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0] mb-2"
                 >
                   Email
                 </label>
@@ -327,7 +327,7 @@ export default function LoginPage() {
                   id="reset-email"
                   type="email"
                   {...registerResetPassword('email')}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#0F0F1A] border border-[#E2E5F1] dark:border-[#2D2D4A] text-[#1A1D2E] dark:text-[#E8E8ED] placeholder-[#9CA3C4] dark:placeholder-[#6B7194] focus:outline-none focus:ring-2 focus:ring-[#6B2FA0]/30 dark:focus:ring-[#8B5CF6]/30 focus:border-[#6B2FA0] dark:focus:border-[#8B5CF6]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F5F3EF] dark:bg-[#1A1A1A] border border-[#E0DCD6] dark:border-[#3D3D3D] text-[#2D2A26] dark:text-[#E8E5E0] placeholder-[#B0A99E] dark:placeholder-[#7A7468] focus:outline-none focus:ring-2 focus:ring-[#1B4D3E]/30 dark:focus:ring-[#34D399]/30 focus:border-[#1B4D3E] dark:focus:border-[#34D399]"
                   placeholder="seu@email.com"
                 />
                 {errorsResetPassword.email && (
@@ -344,14 +344,14 @@ export default function LoginPage() {
                     setShowResetPassword(false);
                     resetResetPassword();
                   }}
-                  className="flex-1 py-2.5 px-4 bg-[#F1F3F8] dark:bg-[#2D2D4A] border border-[#E2E5F1] dark:border-[#2D2D4A] text-[#1A1D2E] dark:text-[#E8E8ED] rounded-xl font-medium hover:bg-[#E2E5F1] dark:hover:bg-[#3D3D5C] transition-colors"
+                  className="flex-1 py-2.5 px-4 bg-[#EDE9E3] dark:bg-[#3D3D3D] border border-[#E0DCD6] dark:border-[#3D3D3D] text-[#2D2A26] dark:text-[#E8E5E0] rounded-xl font-medium hover:bg-[#E0DCD6] dark:hover:bg-[#4D4D4D] transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 py-2.5 px-4 bg-[#6B2FA0] dark:bg-[#8B5CF6] text-white rounded-xl font-semibold hover:bg-[#5A2788] dark:hover:bg-[#7C3AED] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 py-2.5 px-4 bg-[#1B4D3E] dark:bg-[#34D399] text-white dark:text-[#1A1A1A] rounded-xl font-semibold hover:bg-[#153D31] dark:hover:bg-[#2BB585] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? 'Enviando...' : 'Enviar'}
                 </button>

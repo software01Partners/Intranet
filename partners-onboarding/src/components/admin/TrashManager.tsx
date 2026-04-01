@@ -130,13 +130,13 @@ export function TrashManager() {
     if (days <= 3) return 'text-red-500';
     if (days <= 7) return 'text-orange-500';
     if (days <= 14) return 'text-yellow-400';
-    return 'text-[#8888A0]';
+    return 'text-[#7A7468] dark:text-[#9A9590]';
   }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#6B2FA0]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#1B4D3E]" />
       </div>
     );
   }
@@ -162,8 +162,8 @@ export function TrashManager() {
         <CardContent className="p-0">
           {filteredItems.length === 0 ? (
             <div className="p-12 text-center">
-              <Trash2 className="w-12 h-12 text-[#8888A0] mx-auto mb-4 opacity-50" />
-              <p className="text-[#8888A0] text-lg">
+              <Trash2 className="w-12 h-12 text-[#7A7468] dark:text-[#9A9590] mx-auto mb-4 opacity-50" />
+              <p className="text-[#7A7468] dark:text-[#9A9590] text-lg">
                 {items.length === 0
                   ? 'A lixeira está vazia'
                   : 'Nenhum item encontrado com este filtro'}
@@ -172,26 +172,26 @@ export function TrashManager() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-[#0A0A0F] border-b border-[#262630]">
+                <thead className="bg-[#0A0A0F] border-b border-[#333333]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#8888A0] uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7A7468] dark:text-[#9A9590] uppercase tracking-wider">
                       Item
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#8888A0] uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7A7468] dark:text-[#9A9590] uppercase tracking-wider">
                       Tipo
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#8888A0] uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7A7468] dark:text-[#9A9590] uppercase tracking-wider">
                       Excluído em
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#8888A0] uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7A7468] dark:text-[#9A9590] uppercase tracking-wider">
                       Dias restantes
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-[#8888A0] uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-[#7A7468] dark:text-[#9A9590] uppercase tracking-wider">
                       Ações
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#262630]">
+                <tbody className="divide-y divide-[#333333]">
                   {filteredItems.map((item) => {
                     const Icon = entityIcons[item.entity_type];
                     return (
@@ -201,8 +201,8 @@ export function TrashManager() {
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            <Icon className="w-5 h-5 text-[#8888A0]" />
-                            <span className="text-sm font-medium text-[#E8E8ED]">
+                            <Icon className="w-5 h-5 text-[#7A7468] dark:text-[#9A9590]" />
+                            <span className="text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0]">
                               {item.name}
                             </span>
                           </div>
@@ -213,7 +213,7 @@ export function TrashManager() {
                           </Badge>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-[#8888A0]">
+                          <span className="text-sm text-[#7A7468] dark:text-[#9A9590]">
                             {formatDeletedDate(item.deleted_at)}
                           </span>
                         </td>

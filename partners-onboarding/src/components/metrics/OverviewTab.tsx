@@ -27,9 +27,9 @@ interface OverviewTabProps {
 
 const tooltipStyle = {
   backgroundColor: '#FFFFFF',
-  border: '1px solid #E2E5F1',
+  border: '1px solid #E0DCD6',
   borderRadius: '12px',
-  color: '#1A1D2E',
+  color: '#2D2A26',
   boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
 };
 
@@ -55,7 +55,7 @@ export function OverviewTab({
           </CardHeader>
           <CardContent>
             {statusDistribution.every((s) => s.value === 0) ? (
-              <p className="text-center text-[#6B7194] dark:text-[#8888A0] py-12">
+              <p className="text-center text-[#7A7468] dark:text-[#9A9590] py-12">
                 Nenhum dado disponível
               </p>
             ) : (
@@ -80,7 +80,7 @@ export function OverviewTab({
                   <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'transparent' }} />
                   <Legend
                     formatter={(value) => (
-                      <span className="text-[#1A1D2E] dark:text-[#E8E8ED]">{value}</span>
+                      <span className="text-[#2D2A26] dark:text-[#E8E5E0]">{value}</span>
                     )}
                   />
                 </PieChart>
@@ -97,7 +97,7 @@ export function OverviewTab({
             </CardHeader>
             <CardContent>
               {areaComparison.length === 0 ? (
-                <p className="text-center text-[#6B7194] dark:text-[#8888A0] py-12">
+                <p className="text-center text-[#7A7468] dark:text-[#9A9590] py-12">
                   Nenhuma área cadastrada
                 </p>
               ) : (
@@ -116,18 +116,18 @@ export function OverviewTab({
                     layout="vertical"
                     margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E2E5F1" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E0DCD6" />
                     <XAxis
                       type="number"
                       domain={[0, 100]}
-                      stroke="#6B7194"
-                      tick={{ fill: '#6B7194' }}
+                      stroke="#7A7468"
+                      tick={{ fill: '#7A7468' }}
                     />
                     <YAxis
                       type="category"
                       dataKey="name"
-                      stroke="#6B7194"
-                      tick={{ fill: '#6B7194' }}
+                      stroke="#7A7468"
+                      tick={{ fill: '#7A7468' }}
                       width={70}
                     />
                     <Tooltip
@@ -141,7 +141,7 @@ export function OverviewTab({
                     />
                     <Bar dataKey="progress" radius={[0, 4, 4, 0]}>
                       {areaComparison.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.areaColor || '#6B2FA0'} />
+                        <Cell key={`cell-${index}`} fill={entry.areaColor || '#1B4D3E'} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -163,14 +163,14 @@ export function OverviewTab({
               data={timelineFormatted}
               margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#E2E5F1" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E0DCD6" />
               <XAxis
                 dataKey="label"
-                stroke="#6B7194"
-                tick={{ fill: '#6B7194', fontSize: 12 }}
+                stroke="#7A7468"
+                tick={{ fill: '#7A7468', fontSize: 12 }}
                 interval="preserveStartEnd"
               />
-              <YAxis stroke="#6B7194" tick={{ fill: '#6B7194' }} allowDecimals={false} />
+              <YAxis stroke="#7A7468" tick={{ fill: '#7A7468' }} allowDecimals={false} />
               <Tooltip
                 contentStyle={tooltipStyle}
                 cursor={{ fill: 'transparent' }}
@@ -178,14 +178,14 @@ export function OverviewTab({
               />
               <Legend
                 formatter={(value) => (
-                  <span className="text-[#1A1D2E] dark:text-[#E8E8ED]">{value}</span>
+                  <span className="text-[#2D2A26] dark:text-[#E8E5E0]">{value}</span>
                 )}
               />
               <Line
                 type="monotone"
                 dataKey="completions"
                 name="Módulos Concluídos"
-                stroke="#6B2FA0"
+                stroke="#1B4D3E"
                 strokeWidth={2}
                 dot={false}
                 activeDot={{ r: 4 }}
@@ -194,7 +194,7 @@ export function OverviewTab({
                 type="monotone"
                 dataKey="certificates"
                 name="Certificados"
-                stroke="#F5A623"
+                stroke="#D4A053"
                 strokeWidth={2}
                 dot={false}
                 activeDot={{ r: 4 }}

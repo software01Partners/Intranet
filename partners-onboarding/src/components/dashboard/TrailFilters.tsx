@@ -21,14 +21,14 @@ export function TrailFilters({
 }: TrailFiltersProps) {
   return (
     <div className="space-y-4">
-      <div className="flex gap-2 border-b border-[#E2E5F1] dark:border-[#2D2D4A]">
+      <div className="flex gap-2 border-b border-[#E0DCD6] dark:border-[#3D3D3D]">
         <button
           onClick={() => onFilterTypeChange('all')}
           className={cn(
             'px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px]',
             filterType === 'all'
-              ? 'text-[#6B2FA0] dark:text-[#8B5CF6] border-[#6B2FA0] dark:border-[#8B5CF6]'
-              : 'text-[#6B7194] dark:text-[#8888A0] border-transparent hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED]'
+              ? 'text-[#1B4D3E] dark:text-[#34D399] border-[#1B4D3E] dark:border-[#34D399]'
+              : 'text-[#7A7468] dark:text-[#9A9590] border-transparent hover:text-[#2D2A26] dark:hover:text-[#E8E5E0]'
           )}
         >
           Todas
@@ -38,8 +38,8 @@ export function TrailFilters({
           className={cn(
             'px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px]',
             filterType === 'required'
-              ? 'text-[#6B2FA0] dark:text-[#8B5CF6] border-[#6B2FA0] dark:border-[#8B5CF6]'
-              : 'text-[#6B7194] dark:text-[#8888A0] border-transparent hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED]'
+              ? 'text-[#1B4D3E] dark:text-[#34D399] border-[#1B4D3E] dark:border-[#34D399]'
+              : 'text-[#7A7468] dark:text-[#9A9590] border-transparent hover:text-[#2D2A26] dark:hover:text-[#E8E5E0]'
           )}
         >
           Obrigatórias
@@ -49,8 +49,8 @@ export function TrailFilters({
           className={cn(
             'px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px]',
             filterType === 'optional'
-              ? 'text-[#6B2FA0] dark:text-[#8B5CF6] border-[#6B2FA0] dark:border-[#8B5CF6]'
-              : 'text-[#6B7194] dark:text-[#8888A0] border-transparent hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED]'
+              ? 'text-[#1B4D3E] dark:text-[#34D399] border-[#1B4D3E] dark:border-[#34D399]'
+              : 'text-[#7A7468] dark:text-[#9A9590] border-transparent hover:text-[#2D2A26] dark:hover:text-[#E8E5E0]'
           )}
         >
           Optativas

@@ -41,18 +41,18 @@ export function EmptyState({
     >
       <div
         className={cn(
-          'mb-4 text-[#9CA3C4] dark:text-[#8888A0]',
+          'mb-4 text-[#B0A99E] dark:text-[#9A9590]',
           iconSizes[iconSize],
           iconClassName
         )}
       >
         <Icon className="w-full h-full" />
       </div>
-      <h3 className="text-lg font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-2">
+      <h3 className="text-lg font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-2">
         {title}
       </h3>
       {description && (
-        <p className="text-sm text-[#6B7194] dark:text-[#8888A0] max-w-md mb-6">
+        <p className="text-sm text-[#7A7468] dark:text-[#9A9590] max-w-md mb-6">
           {description}
         </p>
       )}

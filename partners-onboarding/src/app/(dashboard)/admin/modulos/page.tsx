@@ -44,10 +44,10 @@ export default async function AdminModulosPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-1">
+        <h1 className="text-3xl font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-1">
           Gerenciar Módulos — Todas as Áreas
         </h1>
-        <p className="text-[#6B7194] dark:text-[#8888A0]">
+        <p className="text-[#7A7468] dark:text-[#9A9590]">
           Gerencie todos os módulos do sistema
         </p>
       </div>

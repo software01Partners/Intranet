@@ -29,7 +29,7 @@ export function MetricsDashboardClient({ data }: MetricsDashboardClientProps) {
   return (
     <div className="space-y-6">
       {/* Tab Bar */}
-      <div className="flex gap-1 p-1 bg-[#F1F3F8] dark:bg-[#1A1A2E] rounded-xl overflow-x-auto">
+      <div className="flex gap-1 p-1 bg-[#EDE9E3] dark:bg-[#262626] rounded-xl overflow-x-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -41,8 +41,8 @@ export function MetricsDashboardClient({ data }: MetricsDashboardClientProps) {
                 flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap
                 ${
                   isActive
-                    ? 'bg-white dark:bg-[#2D2D4A] text-[#6B2FA0] dark:text-[#A78BFA] shadow-sm'
-                    : 'text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED]'
+                    ? 'bg-white dark:bg-[#3D3D3D] text-[#1B4D3E] dark:text-[#6EE7B7] shadow-sm'
+                    : 'text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0]'
                 }
               `}
             >

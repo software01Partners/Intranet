@@ -121,7 +121,7 @@ export function AuditLogViewer() {
           />
         </div>
         {data && (
-          <div className="flex items-center ml-auto text-sm text-[#6B7194] dark:text-[#8888A0]">
+          <div className="flex items-center ml-auto text-sm text-[#7A7468] dark:text-[#9A9590]">
             {data.total} registro{data.total !== 1 ? 's' : ''}
           </div>
         )}
@@ -136,7 +136,7 @@ export function AuditLogViewer() {
         </div>
       ) : !data || data.logs.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-[#6B7194] dark:text-[#8888A0]">
+          <CardContent className="py-12 text-center text-[#7A7468] dark:text-[#9A9590]">
             Nenhum log encontrado.
           </CardContent>
         </Card>
@@ -157,23 +157,23 @@ export function AuditLogViewer() {
                       {ENTITY_LABELS[log.entity_type]}
                     </Badge>
                     {log.entity_name && (
-                      <span className="text-sm text-[#1A1D2E] dark:text-[#E8E8ED] font-medium truncate">
+                      <span className="text-sm text-[#2D2A26] dark:text-[#E8E5E0] font-medium truncate">
                         {log.entity_name}
                       </span>
                     )}
                   </div>
 
                   {/* Usuário + Role + Data */}
-                  <div className="flex items-center gap-3 text-sm text-[#6B7194] dark:text-[#8888A0] shrink-0">
+                  <div className="flex items-center gap-3 text-sm text-[#7A7468] dark:text-[#9A9590] shrink-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-medium text-[#1A1D2E] dark:text-[#E8E8ED]">
+                      <span className="font-medium text-[#2D2A26] dark:text-[#E8E5E0]">
                         {log.user_name}
                       </span>
                       <span
                         className={`text-xs px-1.5 py-0.5 rounded ${
                           log.user_role === 'admin'
-                            ? 'bg-[#6B2FA0]/10 text-[#6B2FA0] dark:bg-[#8B5CF6]/15 dark:text-[#A78BFA]'
-                            : 'bg-[#F5A623]/10 text-[#F5A623] dark:bg-[#F5A623]/15 dark:text-[#F5C869]'
+                            ? 'bg-[#1B4D3E]/10 text-[#1B4D3E] dark:bg-[#34D399]/15 dark:text-[#6EE7B7]'
+                            : 'bg-[#D4A053]/10 text-[#D4A053] dark:bg-[#D4A053]/15 dark:text-[#F5C869]'
                         }`}
                       >
                         {ROLE_LABELS[log.user_role]}
@@ -187,7 +187,7 @@ export function AuditLogViewer() {
 
                 {/* Detalhes extras */}
                 {log.details && Object.keys(log.details).length > 0 && (
-                  <div className="mt-2 text-xs text-[#6B7194] dark:text-[#8888A0] bg-[#F8F9FC] dark:bg-[#1A1A2E] rounded-lg px-3 py-2">
+                  <div className="mt-2 text-xs text-[#7A7468] dark:text-[#9A9590] bg-[#F5F3EF] dark:bg-[#262626] rounded-lg px-3 py-2">
                     {Object.entries(log.details).map(([key, value]) => (
                       <span key={key} className="mr-4">
                         <span className="font-medium">{key}:</span>{' '}
@@ -213,7 +213,7 @@ export function AuditLogViewer() {
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="text-sm text-[#6B7194] dark:text-[#8888A0]">
+          <span className="text-sm text-[#7A7468] dark:text-[#9A9590]">
             Página {page} de {data.totalPages}
           </span>
           <Button

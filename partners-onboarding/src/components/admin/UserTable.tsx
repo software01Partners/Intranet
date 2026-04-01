@@ -412,29 +412,29 @@ export function UserTable() {
           </div>
         ) : paginatedUsers.length === 0 ? (
           <div className="p-12 text-center">
-            <p className="text-[#6B7194] dark:text-[#8888A0]">Nenhum usuário encontrado</p>
+            <p className="text-[#7A7468] dark:text-[#9A9590]">Nenhum usuário encontrado</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#E2E5F1] dark:border-[#2D2D4A]">
-                  <th className="px-6 py-4 text-left text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
+                <tr className="border-b border-[#E0DCD6] dark:border-[#3D3D3D]">
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#7A7468] dark:text-[#9A9590]">
                     Usuário
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#7A7468] dark:text-[#9A9590]">
                     Área
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#7A7468] dark:text-[#9A9590]">
                     Role
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#7A7468] dark:text-[#9A9590]">
                     Data de Cadastro
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#7A7468] dark:text-[#9A9590]">
                     Progresso Geral
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#7A7468] dark:text-[#9A9590]">
                     Ações
                   </th>
                 </tr>
@@ -443,7 +443,7 @@ export function UserTable() {
                 {paginatedUsers.map((user) => (
                   <tr
                     key={user.id}
-                    className="border-b border-[#E2E5F1] dark:border-[#2D2D4A] hover:bg-[#F8F9FC] dark:hover:bg-[#2D2D4A]/50 transition-colors"
+                    className="border-b border-[#E0DCD6] dark:border-[#3D3D3D] hover:bg-[#F5F3EF] dark:hover:bg-[#3D3D3D]/50 transition-colors"
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -459,13 +459,13 @@ export function UserTable() {
                             />
                           </div>
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-[#E2E5F1] dark:bg-[#2D2D4A] flex items-center justify-center text-[#1A1D2E] dark:text-[#E8E8ED] font-medium">
+                          <div className="w-10 h-10 rounded-full bg-[#E0DCD6] dark:bg-[#3D3D3D] flex items-center justify-center text-[#2D2A26] dark:text-[#E8E5E0] font-medium">
                             {user.name.charAt(0).toUpperCase()}
                           </div>
                         )}
                         <div>
-                          <p className="text-[#1A1D2E] dark:text-[#E8E8ED] font-medium">{user.name}</p>
-                          <p className="text-sm text-[#6B7194] dark:text-[#8888A0]">{user.email}</p>
+                          <p className="text-[#2D2A26] dark:text-[#E8E5E0] font-medium">{user.name}</p>
+                          <p className="text-sm text-[#7A7468] dark:text-[#9A9590]">{user.email}</p>
                         </div>
                       </div>
                     </td>
@@ -485,7 +485,7 @@ export function UserTable() {
                           {user.area.name}
                         </Badge>
                       ) : (
-                        <span className="text-[#6B7194] dark:text-[#8888A0] text-sm">Sem área</span>
+                        <span className="text-[#7A7468] dark:text-[#9A9590] text-sm">Sem área</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
@@ -494,7 +494,7 @@ export function UserTable() {
                         onChange={(e) =>
                           handleUpdateRole(user.id, e.target.value as UserRole)
                         }
-                        className="bg-[#F8F9FC] dark:bg-[#0F0F1A] border border-[#E2E5F1] dark:border-[#2D2D4A] rounded-xl px-3 py-1.5 text-sm text-[#1A1D2E] dark:text-[#E8E8ED] focus:outline-none focus:ring-2 focus:ring-[#6B2FA0]/30 dark:focus:ring-[#8B5CF6]/30 cursor-pointer"
+                        className="bg-[#F5F3EF] dark:bg-[#1A1A1A] border border-[#E0DCD6] dark:border-[#3D3D3D] rounded-xl px-3 py-1.5 text-sm text-[#2D2A26] dark:text-[#E8E5E0] focus:outline-none focus:ring-2 focus:ring-[#1B4D3E]/30 dark:focus:ring-[#34D399]/30 cursor-pointer"
                       >
                         {roleSelectOptions.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -503,13 +503,13 @@ export function UserTable() {
                         ))}
                       </select>
                     </td>
-                    <td className="px-6 py-4 text-sm text-[#6B7194] dark:text-[#8888A0]">
+                    <td className="px-6 py-4 text-sm text-[#7A7468] dark:text-[#9A9590]">
                       {formatDate(user.created_at)}
                     </td>
                     <td className="px-6 py-4">
                       <div className="w-32">
                         <ProgressBar value={user.overallProgress} size="sm" />
-                        <span className="text-xs text-[#6B7194] dark:text-[#8888A0] mt-1 block">
+                        <span className="text-xs text-[#7A7468] dark:text-[#9A9590] mt-1 block">
                           {user.overallProgress}%
                         </span>
                       </div>
@@ -524,7 +524,7 @@ export function UserTable() {
                               e.target.value === '' ? null : e.target.value
                             )
                           }
-                          className="bg-[#F8F9FC] dark:bg-[#0F0F1A] border border-[#E2E5F1] dark:border-[#2D2D4A] rounded-xl px-3 py-1.5 text-sm text-[#1A1D2E] dark:text-[#E8E8ED] focus:outline-none focus:ring-2 focus:ring-[#6B2FA0]/30 dark:focus:ring-[#8B5CF6]/30 cursor-pointer"
+                          className="bg-[#F5F3EF] dark:bg-[#1A1A1A] border border-[#E0DCD6] dark:border-[#3D3D3D] rounded-xl px-3 py-1.5 text-sm text-[#2D2A26] dark:text-[#E8E5E0] focus:outline-none focus:ring-2 focus:ring-[#1B4D3E]/30 dark:focus:ring-[#34D399]/30 cursor-pointer"
                         >
                           <option value="">Sem área</option>
                           {areas.map((area) => (
@@ -544,8 +544,8 @@ export function UserTable() {
 
         {/* Paginação */}
         {!loading && filteredUsers.length > 0 && (
-          <div className="px-6 py-4 border-t border-[#E2E5F1] dark:border-[#2D2D4A] flex items-center justify-between">
-            <p className="text-sm text-[#6B7194] dark:text-[#8888A0]">
+          <div className="px-6 py-4 border-t border-[#E0DCD6] dark:border-[#3D3D3D] flex items-center justify-between">
+            <p className="text-sm text-[#7A7468] dark:text-[#9A9590]">
               Mostrando {paginatedUsers.length} de {filteredUsers.length} usuários
             </p>
             <div className="flex items-center gap-2">
@@ -558,7 +558,7 @@ export function UserTable() {
               >
                 Anterior
               </Button>
-              <span className="text-sm text-[#6B7194] dark:text-[#8888A0] px-4">
+              <span className="text-sm text-[#7A7468] dark:text-[#9A9590] px-4">
                 Página {currentPage} de {totalPages}
               </span>
               <Button

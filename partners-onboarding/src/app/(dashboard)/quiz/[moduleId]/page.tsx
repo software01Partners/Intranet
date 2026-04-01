@@ -166,10 +166,10 @@ export default async function QuizPage({ params }: PageProps) {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#E8E8ED] mb-2">
+        <h1 className="text-2xl font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-2">
           {data.module.title}
         </h1>
-        <p className="text-[#8888A0]">
+        <p className="text-[#7A7468] dark:text-[#9A9590]">
           Trilha: {data.trail.name}
         </p>
       </div>

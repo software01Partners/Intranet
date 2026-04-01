@@ -280,7 +280,7 @@ export function TrailForm({
 
       {/* Prazo */}
       <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED] cursor-pointer">
+        <label className="flex items-center gap-2 text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0] cursor-pointer">
           <input
             type="checkbox"
             checked={hasDeadline}
@@ -290,7 +290,7 @@ export function TrailForm({
                 setValue('deadline', null);
               }
             }}
-            className="rounded border-[#D1D5DB] dark:border-[#4A4A6A] text-[#6B2FA0] focus:ring-[#6B2FA0]"
+            className="rounded border-[#D1D5DB] dark:border-[#4D4D4D] text-[#1B4D3E] focus:ring-[#1B4D3E]"
             disabled={isSubmitting}
           />
           Definir prazo para conclusão

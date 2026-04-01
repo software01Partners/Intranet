@@ -57,11 +57,11 @@ export function TopBar({ onMenuClick }: TopBarProps) {
       case 'colaborador':
         return 'bg-[#3B82F6]/10 text-[#3B82F6] dark:text-[#60A5FA] border-[#3B82F6]/20';
       case 'gestor':
-        return 'bg-[#F5A623]/10 text-[#E0951F] dark:text-[#F5A623] border-[#F5A623]/20';
+        return 'bg-[#D4A053]/10 text-[#B8893E] dark:text-[#D4A053] border-[#D4A053]/20';
       case 'admin':
-        return 'bg-[#6B2FA0]/10 text-[#6B2FA0] dark:bg-[#8B5CF6]/15 dark:text-[#A78BFA] border-[#6B2FA0]/20 dark:border-[#8B5CF6]/30';
+        return 'bg-[#1B4D3E]/10 text-[#1B4D3E] dark:bg-[#34D399]/15 dark:text-[#6EE7B7] border-[#1B4D3E]/20 dark:border-[#34D399]/30';
       default:
-        return 'bg-[#F1F3F8] dark:bg-[#2D2D4A] text-[#6B7194] dark:text-[#8888A0] border-[#E2E5F1] dark:border-[#2D2D4A]';
+        return 'bg-[#EDE9E3] dark:bg-[#3D3D3D] text-[#7A7468] dark:text-[#9A9590] border-[#E0DCD6] dark:border-[#3D3D3D]';
     }
   };
 
@@ -86,12 +86,12 @@ export function TopBar({ onMenuClick }: TopBarProps) {
   const breadcrumbs = generateBreadcrumb();
 
   return (
-    <header className="sticky top-0 z-30 bg-white dark:bg-[#1A1A2E] border-b border-[#E2E5F1] dark:border-[#2D2D4A] h-16 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+    <header className="sticky top-0 z-30 bg-white dark:bg-[#262626] border-b border-[#E0DCD6] dark:border-[#3D3D3D] h-16 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
       <div className="flex items-center justify-between h-full px-4 lg:px-6">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED] hover:bg-[#F1F3F8] dark:hover:bg-[#2D2D4A] rounded-lg transition-colors"
+            className="lg:hidden p-2 text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0] hover:bg-[#EDE9E3] dark:hover:bg-[#3D3D3D] rounded-lg transition-colors"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -99,14 +99,14 @@ export function TopBar({ onMenuClick }: TopBarProps) {
             {breadcrumbs.map((crumb, index) => (
               <div key={crumb.href} className="flex items-center gap-2">
                 {index > 0 && (
-                  <ChevronRight className="w-4 h-4 text-[#9CA3C4] dark:text-[#8888A0]" />
+                  <ChevronRight className="w-4 h-4 text-[#B0A99E] dark:text-[#9A9590]" />
                 )}
                 <Link
                   href={crumb.href}
                   className={`${
                     index === breadcrumbs.length - 1
-                      ? 'text-[#1A1D2E] dark:text-[#E8E8ED] font-semibold'
-                      : 'text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED]'
+                      ? 'text-[#2D2A26] dark:text-[#E8E5E0] font-semibold'
+                      : 'text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0]'
                   } transition-colors`}
                 >
                   {crumb.label}
@@ -121,7 +121,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
           {mounted && (
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED] hover:bg-[#F1F3F8] dark:hover:bg-[#2D2D4A] transition-colors"
+              className="p-2 rounded-lg text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0] hover:bg-[#EDE9E3] dark:hover:bg-[#3D3D3D] transition-colors"
               aria-label={theme === 'dark' ? 'Ativar modo claro' : 'Ativar modo escuro'}
             >
               {theme === 'dark' ? (
@@ -143,7 +143,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
               </span>
             )}
 
-            <button className="flex items-center gap-3 p-1.5 rounded-lg hover:bg-[#F1F3F8] dark:hover:bg-[#2D2D4A] transition-colors">
+            <button className="flex items-center gap-3 p-1.5 rounded-lg hover:bg-[#EDE9E3] dark:hover:bg-[#3D3D3D] transition-colors">
               {avatarUrl ? (
                 <div className="relative w-8 h-8 rounded-full overflow-hidden">
                   <Image
@@ -156,7 +156,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
                   />
                 </div>
               ) : (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#6B2FA0] to-[#F5A623] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1B4D3E] to-[#D4A053] flex items-center justify-center">
                   <span className="text-white text-sm font-semibold">
                     {userName
                       ? userName.charAt(0).toUpperCase()
@@ -164,7 +164,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
                   </span>
                 </div>
               )}
-              <span className="hidden md:block text-[#1A1D2E] dark:text-[#E8E8ED] text-sm font-medium">
+              <span className="hidden md:block text-[#2D2A26] dark:text-[#E8E5E0] text-sm font-medium">
                 {userName || user?.email || 'Usuário'}
               </span>
             </button>

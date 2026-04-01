@@ -6,18 +6,18 @@
 /* ===== PARTNERS DESIGN SYSTEM ===== */
 :root {
   /* Light (default) */
-  --bg-main: #F8F9FC;
+  --bg-main: #F5F3EF;
   --bg-card: #FFFFFF;
-  --bg-secondary: #F1F3F8;
-  --border: #E2E5F1;
-  --primary: #6B2FA0;
-  --primary-hover: #5A2788;
-  --primary-light: rgba(107, 47, 160, 0.08);
-  --accent: #F5A623;
-  --accent-light: rgba(245, 166, 35, 0.1);
-  --text: #1A1D2E;
-  --text-secondary: #6B7194;
-  --text-muted: #9CA3C4;
+  --bg-secondary: #EDE9E3;
+  --border: #E0DCD6;
+  --primary: #1B4D3E;
+  --primary-hover: #153D31;
+  --primary-light: rgba(27, 77, 62, 0.08);
+  --accent: #D4A053;
+  --accent-light: rgba(212, 160, 83, 0.1);
+  --text: #2D2A26;
+  --text-secondary: #7A7468;
+  --text-muted: #B0A99E;
   --success: #10B981;
   --error: #EF4444;
   --warning: #F59E0B;
@@ -25,18 +25,18 @@
 }
 
 .dark {
-  --bg-main: #0F0F1A;
-  --bg-card: #1A1A2E;
-  --bg-secondary: #1A1A2E;
-  --border: #2D2D4A;
-  --primary: #8B5CF6;
-  --primary-hover: #7C3AED;
-  --primary-light: rgba(139, 92, 246, 0.15);
-  --accent: #F5A623;
-  --accent-light: rgba(245, 166, 35, 0.15);
-  --text: #E8E8ED;
-  --text-secondary: #8888A0;
-  --text-muted: #6B7194;
+  --bg-main: #1A1A1A;
+  --bg-card: #262626;
+  --bg-secondary: #262626;
+  --border: #3D3D3D;
+  --primary: #34D399;
+  --primary-hover: #2BB585;
+  --primary-light: rgba(52, 211, 153, 0.15);
+  --accent: #D4A053;
+  --accent-light: rgba(212, 160, 83, 0.15);
+  --text: #E8E5E0;
+  --text-secondary: #9A9590;
+  --text-muted: #7A7468;
   --success: #10B981;
   --error: #EF4444;
   --warning: #F59E0B;

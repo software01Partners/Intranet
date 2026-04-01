@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
     const pageHeight = doc.internal.pageSize.getHeight();
 
     // Cores
-    const goldColor = '#E8580C'; // Laranja/dourado da Partners
+    const goldColor = '#D4A053'; // Laranja/dourado da Partners
     const darkGoldColor = '#C44A0A';
     const textColor = '#1A1A1A';
 

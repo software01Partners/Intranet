@@ -252,7 +252,7 @@ async function getMetricsData(
         return {
           areaId: area.id,
           areaName: area.name,
-          areaColor: area.color || '#6B2FA0',
+          areaColor: area.color || '#1B4D3E',
           memberCount: areaUsers.length,
           averageProgress:
             areaUsers.length > 0
@@ -543,14 +543,14 @@ function KPICard({ icon, label, value, color, subtext }: KPICardProps) {
             <div style={{ color }}>{icon}</div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-[#6B7194] dark:text-[#8888A0] uppercase tracking-wider">
+            <p className="text-xs font-medium text-[#7A7468] dark:text-[#9A9590] uppercase tracking-wider">
               {label}
             </p>
-            <p className="text-2xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED]">
+            <p className="text-2xl font-bold text-[#2D2A26] dark:text-[#E8E5E0]">
               {value}
             </p>
             {subtext && (
-              <p className="text-xs text-[#6B7194] dark:text-[#8888A0]">{subtext}</p>
+              <p className="text-xs text-[#7A7468] dark:text-[#9A9590]">{subtext}</p>
             )}
           </div>
         </div>
@@ -622,10 +622,10 @@ export default async function AdminDashboardPage({
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-1">
+        <h1 className="text-3xl font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-1">
           Dashboard de Métricas
         </h1>
-        <p className="text-[#6B7194] dark:text-[#8888A0]">
+        <p className="text-[#7A7468] dark:text-[#9A9590]">
           Visão geral de progresso e engajamento na plataforma
         </p>
       </div>
@@ -641,7 +641,7 @@ export default async function AdminDashboardPage({
           icon={<Users className="w-5 h-5" />}
           label="Colaboradores"
           value={kpis.totalUsers}
-          color="#6B2FA0"
+          color="#1B4D3E"
         />
         <KPICard
           icon={<UserCheck className="w-5 h-5" />}
@@ -660,13 +660,13 @@ export default async function AdminDashboardPage({
           icon={<GraduationCap className="w-5 h-5" />}
           label="Trilhas Concluídas"
           value={kpis.totalTrailsCompleted}
-          color="#8B5CF6"
+          color="#34D399"
         />
         <KPICard
           icon={<Award className="w-5 h-5" />}
           label="Certificados"
           value={kpis.certificatesIssued}
-          color="#F5A623"
+          color="#D4A053"
         />
         <KPICard
           icon={<AlertTriangle className="w-5 h-5" />}

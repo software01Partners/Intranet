@@ -17,7 +17,7 @@ const borderColors: Record<string, string> = {
   urgent: 'border-l-[#F59E0B]',
   warning: 'border-l-[#F59E0B]',
   ok: 'border-l-[#10B981]',
-  no_deadline: 'border-l-[#6B7194]',
+  no_deadline: 'border-l-[#7A7468]',
 };
 
 const bgColors: Record<string, string> = {
@@ -60,10 +60,10 @@ export function DeadlinesTab({ deadlines }: DeadlinesTabProps) {
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-[#1A1D2E] dark:text-[#E8E8ED] truncate">
+                  <h3 className="font-semibold text-[#2D2A26] dark:text-[#E8E5E0] truncate">
                     {item.trailName}
                   </h3>
-                  <p className="text-sm text-[#6B7194] dark:text-[#8888A0] mt-0.5">
+                  <p className="text-sm text-[#7A7468] dark:text-[#9A9590] mt-0.5">
                     {formatDeadline(item.deadline)}
                   </p>
                 </div>
@@ -72,7 +72,7 @@ export function DeadlinesTab({ deadlines }: DeadlinesTabProps) {
 
               <div className="space-y-3">
                 <div>
-                  <div className="flex justify-between text-xs text-[#6B7194] dark:text-[#8888A0] mb-1">
+                  <div className="flex justify-between text-xs text-[#7A7468] dark:text-[#9A9590] mb-1">
                     <span>{item.completedUsers}/{item.totalUsers} concluíram</span>
                     <span>{progress}%</span>
                   </div>

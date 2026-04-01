@@ -262,7 +262,7 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-[#6B7194] dark:text-[#8888A0]">Carregando...</p>
+        <p className="text-[#7A7468] dark:text-[#9A9590]">Carregando...</p>
       </div>
     );
   }
@@ -271,12 +271,12 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <p className="text-[#6B7194] dark:text-[#8888A0] mb-4">
+          <p className="text-[#7A7468] dark:text-[#9A9590] mb-4">
             {areaFilter
               ? 'Nenhuma trilha encontrada na sua área'
               : 'Nenhuma trilha cadastrada'}
           </p>
-          <p className="text-sm text-[#8888A0]">
+          <p className="text-sm text-[#7A7468] dark:text-[#9A9590]">
             Crie uma trilha primeiro para adicionar módulos
           </p>
         </div>
@@ -289,8 +289,8 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-[#E8E8ED]">Gerenciar Módulos</h2>
-          <p className="text-sm text-[#8888A0] mt-1">
+          <h2 className="text-2xl font-semibold text-[#2D2A26] dark:text-[#E8E5E0]">Gerenciar Módulos</h2>
+          <p className="text-sm text-[#7A7468] dark:text-[#9A9590] mt-1">
             {modules.length} módulo{modules.length !== 1 ? 's' : ''} na trilha selecionada
           </p>
         </div>
@@ -322,13 +322,13 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
           <CardContent className="p-0">
             {modules.length === 0 ? (
               <div className="p-12 text-center">
-                <p className="text-[#8888A0] mb-2">Nenhum módulo cadastrado nesta trilha</p>
+                <p className="text-[#7A7468] dark:text-[#9A9590] mb-2">Nenhum módulo cadastrado nesta trilha</p>
                 <Button onClick={handleCreate} variant="secondary" size="sm" icon={Plus}>
                   Criar primeiro módulo
                 </Button>
               </div>
             ) : (
-              <div className="divide-y divide-[#262630]">
+              <div className="divide-y divide-[#333333]">
                 {modules.map((module, index) => (
                   <div
                     key={module.id}
@@ -338,7 +338,7 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
                       <div className="flex items-start gap-4 flex-1">
                         {/* Número e controles de ordem */}
                         <div className="flex flex-col items-center gap-2">
-                          <span className="text-sm font-medium text-[#8888A0] w-8 text-center">
+                          <span className="text-sm font-medium text-[#7A7468] dark:text-[#9A9590] w-8 text-center">
                             {index + 1}
                           </span>
                           <div className="flex flex-col gap-1">
@@ -364,12 +364,12 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
                         {/* Informações do módulo */}
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg font-medium text-[#E8E8ED]">
+                            <h3 className="text-lg font-medium text-[#2D2A26] dark:text-[#E8E5E0]">
                               {module.title}
                             </h3>
                             {getTypeBadge(module.type)}
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-[#8888A0]">
+                          <div className="flex items-center gap-4 text-sm text-[#7A7468] dark:text-[#9A9590]">
                             {module.duration !== null && module.duration > 0 && (
                               <span>Duração: {module.duration} min</span>
                             )}

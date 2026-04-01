@@ -405,10 +405,10 @@ export default async function GestorPage({
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-[#E8E8ED] mb-1">
+        <h1 className="text-3xl font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-1">
           Painel do Gestor
         </h1>
-        <p className="text-[#8888A0]">
+        <p className="text-[#7A7468] dark:text-[#9A9590]">
           Visão geral da equipe e progresso dos colaboradores
         </p>
       </div>

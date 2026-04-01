@@ -19,7 +19,7 @@ export const Skeleton = forwardRef<HTMLDivElement, SkeletonProps>(
     ref
   ) => {
     const baseStyles =
-      'bg-[#E2E5F1] dark:bg-[#2D2D4A] animate-pulse';
+      'bg-[#E0DCD6] dark:bg-[#3D3D3D] animate-pulse';
 
     const variants = {
       line: 'h-4 rounded-lg',

@@ -40,16 +40,16 @@ export function QuizQuestion({
       {/* Barra de progresso */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-[#8888A0]">
+          <span className="text-sm text-[#7A7468] dark:text-[#9A9590]">
             Questão {currentIndex + 1} de {totalQuestions}
           </span>
-          <span className="text-sm text-[#8888A0]">
+          <span className="text-sm text-[#7A7468] dark:text-[#9A9590]">
             {Math.round(progress)}%
           </span>
         </div>
-        <div className="w-full h-2 bg-[#262630] rounded-full overflow-hidden">
+        <div className="w-full h-2 bg-[#333333] rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-[#E8580C] rounded-full"
+            className="h-full bg-[#D4A053] rounded-full"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.3 }}
@@ -66,8 +66,8 @@ export function QuizQuestion({
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="bg-[#13131A] border border-[#262630] rounded-xl p-6 mb-6">
-            <h2 className="text-xl font-semibold text-[#E8E8ED] mb-6">
+          <div className="bg-[#1A1A1A] border border-[#333333] rounded-xl p-6 mb-6">
+            <h2 className="text-xl font-semibold text-[#E8E5E0] mb-6">
               {question.question}
             </h2>
 
@@ -83,10 +83,10 @@ export function QuizQuestion({
                     onClick={() => onSelectAnswer(index)}
                     className={cn(
                       'w-full text-left p-4 rounded-xl border transition-all duration-200',
-                      'bg-[#13131A] border-[#262630]',
-                      'hover:border-[#E8580C]/50 hover:bg-[#1A1A24]',
+                      'bg-[#1A1A1A] border-[#333333]',
+                      'hover:border-[#D4A053]/50 hover:bg-[#222222]',
                       isSelected &&
-                        'border-[#E8580C] bg-[#E8580C]/10 hover:bg-[#E8580C]/15'
+                        'border-[#D4A053] bg-[#D4A053]/10 hover:bg-[#D4A053]/15'
                     )}
                   >
                     <div className="flex items-center gap-3">
@@ -94,20 +94,20 @@ export function QuizQuestion({
                         className={cn(
                           'w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0',
                           isSelected
-                            ? 'border-[#E8580C] bg-[#E8580C]/20'
-                            : 'border-[#262630] bg-[#1A1A24]'
+                            ? 'border-[#D4A053] bg-[#D4A053]/20'
+                            : 'border-[#333333] bg-[#222222]'
                         )}
                       >
                         {isSelected && (
-                          <div className="w-3 h-3 rounded-full bg-[#E8580C]" />
+                          <div className="w-3 h-3 rounded-full bg-[#D4A053]" />
                         )}
                       </div>
                       <span
                         className={cn(
                           'text-base',
                           isSelected
-                            ? 'text-[#E8E8ED] font-medium'
-                            : 'text-[#8888A0]'
+                            ? 'text-[#E8E5E0] font-medium'
+                            : 'text-[#9A9590]'
                         )}
                       >
                         {option}

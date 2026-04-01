@@ -122,19 +122,19 @@ export function TeamTable({ areaId }: TeamTableProps) {
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) {
-      return <ArrowUpDown className="w-4 h-4 text-[#6B7194] dark:text-[#8888A0]" />;
+      return <ArrowUpDown className="w-4 h-4 text-[#7A7468] dark:text-[#9A9590]" />;
     }
     return sortDirection === 'asc' ? (
-      <ArrowUp className="w-4 h-4 text-[#6B2FA0]" />
+      <ArrowUp className="w-4 h-4 text-[#1B4D3E]" />
     ) : (
-      <ArrowDown className="w-4 h-4 text-[#6B2FA0]" />
+      <ArrowDown className="w-4 h-4 text-[#1B4D3E]" />
     );
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-[#6B7194] dark:text-[#8888A0]">Carregando equipe...</p>
+        <p className="text-[#7A7468] dark:text-[#9A9590]">Carregando equipe...</p>
       </div>
     );
   }
@@ -142,7 +142,7 @@ export function TeamTable({ areaId }: TeamTableProps) {
   if (filteredAndSorted.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-[#6B7194] dark:text-[#8888A0]">
+        <p className="text-[#7A7468] dark:text-[#9A9590]">
           {statusFilter !== 'all'
             ? 'Nenhum colaborador encontrado com este status.'
             : 'Nenhum colaborador encontrado na área.'}
@@ -173,11 +173,11 @@ export function TeamTable({ areaId }: TeamTableProps) {
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-[#E2E5F1] dark:border-[#2D2D4A]">
+            <tr className="border-b border-[#E0DCD6] dark:border-[#3D3D3D]">
               <th className="text-left py-3 px-4">
                 <button
                   onClick={() => handleSort('name')}
-                  className="flex items-center gap-2 text-sm font-medium text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED] transition-colors"
+                  className="flex items-center gap-2 text-sm font-medium text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0] transition-colors"
                 >
                   Nome
                   {getSortIcon('name')}
@@ -186,7 +186,7 @@ export function TeamTable({ areaId }: TeamTableProps) {
               <th className="text-left py-3 px-4">
                 <button
                   onClick={() => handleSort('email')}
-                  className="flex items-center gap-2 text-sm font-medium text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED] transition-colors"
+                  className="flex items-center gap-2 text-sm font-medium text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0] transition-colors"
                 >
                   Email
                   {getSortIcon('email')}
@@ -195,7 +195,7 @@ export function TeamTable({ areaId }: TeamTableProps) {
               <th className="text-left py-3 px-4">
                 <button
                   onClick={() => handleSort('progress')}
-                  className="flex items-center gap-2 text-sm font-medium text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED] transition-colors"
+                  className="flex items-center gap-2 text-sm font-medium text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0] transition-colors"
                 >
                   Progresso Geral
                   {getSortIcon('progress')}
@@ -204,7 +204,7 @@ export function TeamTable({ areaId }: TeamTableProps) {
               <th className="text-left py-3 px-4">
                 <button
                   onClick={() => handleSort('trails')}
-                  className="flex items-center gap-2 text-sm font-medium text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED] transition-colors"
+                  className="flex items-center gap-2 text-sm font-medium text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0] transition-colors"
                 >
                   Trilhas Concluídas
                   {getSortIcon('trails')}
@@ -213,7 +213,7 @@ export function TeamTable({ areaId }: TeamTableProps) {
               <th className="text-left py-3 px-4">
                 <button
                   onClick={() => handleSort('lastModule')}
-                  className="flex items-center gap-2 text-sm font-medium text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED] transition-colors"
+                  className="flex items-center gap-2 text-sm font-medium text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0] transition-colors"
                 >
                   Último Módulo
                   {getSortIcon('lastModule')}
@@ -222,7 +222,7 @@ export function TeamTable({ areaId }: TeamTableProps) {
               <th className="text-left py-3 px-4">
                 <button
                   onClick={() => handleSort('status')}
-                  className="flex items-center gap-2 text-sm font-medium text-[#6B7194] dark:text-[#8888A0] hover:text-[#1A1D2E] dark:hover:text-[#E8E8ED] transition-colors"
+                  className="flex items-center gap-2 text-sm font-medium text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0] transition-colors"
                 >
                   Status
                   {getSortIcon('status')}
@@ -234,7 +234,7 @@ export function TeamTable({ areaId }: TeamTableProps) {
             {filteredAndSorted.map((member) => (
               <tr
                 key={member.id}
-                className="border-b border-[#E2E5F1] dark:border-[#2D2D4A] hover:bg-[#F8F9FC] dark:hover:bg-[#2D2D4A]/50 transition-colors"
+                className="border-b border-[#E0DCD6] dark:border-[#3D3D3D] hover:bg-[#F5F3EF] dark:hover:bg-[#3D3D3D]/50 transition-colors"
               >
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-3">
@@ -248,16 +248,16 @@ export function TeamTable({ areaId }: TeamTableProps) {
                         unoptimized
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-[#E2E5F1] dark:bg-[#2D2D4A] flex items-center justify-center text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED]">
+                      <div className="w-8 h-8 rounded-full bg-[#E0DCD6] dark:bg-[#3D3D3D] flex items-center justify-center text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0]">
                         {member.name.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <span className="text-[#1A1D2E] dark:text-[#E8E8ED] font-medium">
+                    <span className="text-[#2D2A26] dark:text-[#E8E5E0] font-medium">
                       {member.name}
                     </span>
                   </div>
                 </td>
-                <td className="py-3 px-4 text-[#6B7194] dark:text-[#8888A0] text-sm">
+                <td className="py-3 px-4 text-[#7A7468] dark:text-[#9A9590] text-sm">
                   {member.email}
                 </td>
                 <td className="py-3 px-4">
@@ -267,15 +267,15 @@ export function TeamTable({ areaId }: TeamTableProps) {
                       size="sm"
                       showLabel={false}
                     />
-                    <span className="text-xs text-[#6B7194] dark:text-[#8888A0]">
+                    <span className="text-xs text-[#7A7468] dark:text-[#9A9590]">
                       {member.overallProgress}%
                     </span>
                   </div>
                 </td>
-                <td className="py-3 px-4 text-[#1A1D2E] dark:text-[#E8E8ED] text-sm">
+                <td className="py-3 px-4 text-[#2D2A26] dark:text-[#E8E5E0] text-sm">
                   {member.trailsCompleted}/{member.totalTrails}
                 </td>
-                <td className="py-3 px-4 text-[#6B7194] dark:text-[#8888A0] text-sm">
+                <td className="py-3 px-4 text-[#7A7468] dark:text-[#9A9590] text-sm">
                   {member.lastModuleCompletedAt
                     ? formatDate(member.lastModuleCompletedAt)
                     : 'Nunca'}

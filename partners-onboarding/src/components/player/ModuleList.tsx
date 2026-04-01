@@ -67,14 +67,14 @@ export function ModuleList({
             disabled={!isClickable}
             className={cn(
               'w-full p-4 rounded-xl border transition-all text-left',
-              'hover:border-[#6B2FA0]/30 dark:hover:border-[#8B5CF6]/30',
+              'hover:border-[#1B4D3E]/30 dark:hover:border-[#34D399]/30',
               isCurrent
-                ? 'bg-[#6B2FA0]/10 dark:bg-[#8B5CF6]/15 border-[#6B2FA0] dark:border-[#8B5CF6]'
+                ? 'bg-[#1B4D3E]/10 dark:bg-[#34D399]/15 border-[#1B4D3E] dark:border-[#34D399]'
                 : isCompleted
                   ? 'bg-[#10B981]/10 border-[#10B981]/30'
                   : module.isUnlocked
-                    ? 'bg-[#F1F3F8] dark:bg-[#2D2D4A] border-[#E2E5F1] dark:border-[#2D2D4A]'
-                    : 'bg-[#F8F9FC] dark:bg-[#0F0F1A] border-[#E2E5F1] dark:border-[#2D2D4A] opacity-50 cursor-not-allowed'
+                    ? 'bg-[#EDE9E3] dark:bg-[#3D3D3D] border-[#E0DCD6] dark:border-[#3D3D3D]'
+                    : 'bg-[#F5F3EF] dark:bg-[#1A1A1A] border-[#E0DCD6] dark:border-[#3D3D3D] opacity-50 cursor-not-allowed'
             )}
           >
             <div className="flex items-start gap-3">
@@ -82,12 +82,12 @@ export function ModuleList({
                 className={cn(
                   'flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center',
                   isCurrent
-                    ? 'bg-[#6B2FA0] dark:bg-[#8B5CF6] text-white'
+                    ? 'bg-[#1B4D3E] dark:bg-[#34D399] text-white dark:text-[#1A1A1A]'
                     : isCompleted
                       ? 'bg-[#10B981] text-white'
                       : module.isUnlocked
-                        ? 'bg-[#E2E5F1] dark:bg-[#2D2D4A] text-[#6B7194] dark:text-[#8888A0]'
-                        : 'bg-[#E2E5F1] dark:bg-[#2D2D4A] text-[#9CA3C4] dark:text-[#6B7194]'
+                        ? 'bg-[#E0DCD6] dark:bg-[#3D3D3D] text-[#7A7468] dark:text-[#9A9590]'
+                        : 'bg-[#E0DCD6] dark:bg-[#3D3D3D] text-[#B0A99E] dark:text-[#7A7468]'
                 )}
               >
                 {isCompleted ? (
@@ -99,15 +99,15 @@ export function ModuleList({
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium text-[#6B7194] dark:text-[#8888A0]">
+                  <span className="text-sm font-medium text-[#7A7468] dark:text-[#9A9590]">
                     {index + 1}.
                   </span>
                   <h3
                     className={cn(
                       'text-sm font-medium truncate',
                       isClickable
-                        ? 'text-[#1A1D2E] dark:text-[#E8E8ED]'
-                        : 'text-[#9CA3C4] dark:text-[#6B7194]'
+                        ? 'text-[#2D2A26] dark:text-[#E8E5E0]'
+                        : 'text-[#B0A99E] dark:text-[#7A7468]'
                     )}
                   >
                     {module.title}
@@ -119,7 +119,7 @@ export function ModuleList({
                     {getModuleTypeLabel(module.type)}
                   </Badge>
                   {module.duration && (
-                    <span className="text-xs text-[#6B7194] dark:text-[#8888A0]">
+                    <span className="text-xs text-[#7A7468] dark:text-[#9A9590]">
                       {formatDuration(module.duration)}
                     </span>
                   )}
@@ -127,7 +127,7 @@ export function ModuleList({
               </div>
 
               {!module.isUnlocked && (
-                <Lock className="w-4 h-4 text-[#9CA3C4] dark:text-[#6B7194] flex-shrink-0" />
+                <Lock className="w-4 h-4 text-[#B0A99E] dark:text-[#7A7468] flex-shrink-0" />
               )}
             </div>
           </button>

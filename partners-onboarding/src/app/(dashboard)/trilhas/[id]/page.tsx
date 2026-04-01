@@ -222,7 +222,7 @@ export default async function TrailPlayerPage({
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
-          <p className="text-[#6B7194] dark:text-[#8888A0]">Esta trilha ainda não possui módulos.</p>
+          <p className="text-[#7A7468] dark:text-[#9A9590]">Esta trilha ainda não possui módulos.</p>
         </div>
       </div>
     );

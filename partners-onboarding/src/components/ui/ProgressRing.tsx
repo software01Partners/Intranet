@@ -65,8 +65,8 @@ export function ProgressRing({
       <svg width={size} height={size} className="transform -rotate-90">
         <defs>
           <linearGradient id="progress-ring-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#6B2FA0" />
-            <stop offset="100%" stopColor="#8B5CF6" />
+            <stop offset="0%" stopColor="#1B4D3E" />
+            <stop offset="100%" stopColor="#34D399" />
           </linearGradient>
         </defs>
         {/* Background circle */}
@@ -77,7 +77,7 @@ export function ProgressRing({
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-[#E2E5F1] dark:text-[#2D2D4A]"
+          className="text-[#E0DCD6] dark:text-[#3D3D3D]"
         />
         {/* Progress circle */}
         <motion.circle
@@ -99,7 +99,7 @@ export function ProgressRing({
         <div className="absolute inset-0 flex items-center justify-center">
           <span
             className={cn(
-              'font-bold text-[#1A1D2E] dark:text-[#E8E8ED]',
+              'font-bold text-[#2D2A26] dark:text-[#E8E5E0]',
               labelSizes[labelSize]
             )}
           >

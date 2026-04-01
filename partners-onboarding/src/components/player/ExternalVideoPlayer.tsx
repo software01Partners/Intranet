@@ -89,8 +89,8 @@ export function ExternalVideoPlayer({
 
   if (!embedUrl) {
     return (
-      <div className="w-full aspect-video bg-[#0F0F1A] dark:bg-[#1A1A2E] rounded-2xl border border-[#E2E5F1] dark:border-[#2D2D4A] flex items-center justify-center">
-        <p className="text-[#6B7194] dark:text-[#8888A0]">
+      <div className="w-full aspect-video bg-[#1A1A1A] dark:bg-[#262626] rounded-2xl border border-[#E0DCD6] dark:border-[#3D3D3D] flex items-center justify-center">
+        <p className="text-[#7A7468] dark:text-[#9A9590]">
           Link de vídeo inválido ou não suportado.
         </p>
       </div>
@@ -99,7 +99,7 @@ export function ExternalVideoPlayer({
 
   return (
     <div className="w-full space-y-4">
-      <div className="relative w-full aspect-video bg-[#0F0F1A] dark:bg-[#1A1A2E] rounded-2xl overflow-hidden border border-[#E2E5F1] dark:border-[#2D2D4A]">
+      <div className="relative w-full aspect-video bg-[#1A1A1A] dark:bg-[#262626] rounded-2xl overflow-hidden border border-[#E0DCD6] dark:border-[#3D3D3D]">
         <iframe
           src={embedUrl}
           className="w-full h-full"

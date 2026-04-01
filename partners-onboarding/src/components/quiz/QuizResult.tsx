@@ -47,7 +47,7 @@ export function QuizResult({ result, trailId, onRetry }: QuizResultProps) {
       className="w-full max-w-3xl mx-auto"
     >
       {/* Resultado principal */}
-      <div className="bg-white dark:bg-[#1A1A2E] border border-[#E2E5F1] dark:border-[#2D2D4A] rounded-2xl p-8 mb-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="bg-white dark:bg-[#262626] border border-[#E0DCD6] dark:border-[#3D3D3D] rounded-2xl p-8 mb-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <div className="flex flex-col items-center gap-6">
           <div className="relative">
             <ProgressRing
@@ -57,10 +57,10 @@ export function QuizResult({ result, trailId, onRetry }: QuizResultProps) {
               showLabel={false}
             />
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="text-4xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED]">
+              <div className="text-4xl font-bold text-[#2D2A26] dark:text-[#E8E5E0]">
                 {result.score}/{result.total}
               </div>
-              <div className="text-lg text-[#6B7194] dark:text-[#8888A0] mt-1">
+              <div className="text-lg text-[#7A7468] dark:text-[#9A9590] mt-1">
                 {result.percentage.toFixed(0)}%
               </div>
             </div>
@@ -76,7 +76,7 @@ export function QuizResult({ result, trailId, onRetry }: QuizResultProps) {
                     Parabéns! Você foi aprovado!
                   </h2>
                 </div>
-                <p className="text-[#6B7194] dark:text-[#8888A0]">
+                <p className="text-[#7A7468] dark:text-[#9A9590]">
                   Você atingiu a nota mínima de {result.minimumScore}% e
                   concluiu este módulo com sucesso.
                 </p>
@@ -89,12 +89,12 @@ export function QuizResult({ result, trailId, onRetry }: QuizResultProps) {
                     Nota mínima não atingida
                   </h2>
                 </div>
-                <p className="text-[#6B7194] dark:text-[#8888A0]">
+                <p className="text-[#7A7468] dark:text-[#9A9590]">
                   Você precisa de pelo menos {result.minimumScore}% para ser
                   aprovado. Sua nota foi {result.percentage.toFixed(0)}%.
                 </p>
                 {result.attemptsRemaining > 0 ? (
-                  <p className="text-sm text-[#6B7194] dark:text-[#8888A0] mt-1">
+                  <p className="text-sm text-[#7A7468] dark:text-[#9A9590] mt-1">
                     Tentativas restantes: {result.attemptsRemaining}
                   </p>
                 ) : result.blockedUntil ? (

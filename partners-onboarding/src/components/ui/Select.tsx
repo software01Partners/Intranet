@@ -41,14 +41,14 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-sm font-medium text-[#1A1D2E] dark:text-[#E8E8ED] mb-2"
+            className="block text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0] mb-2"
           >
             {label}
           </label>
         )}
         <div className="relative">
           {Icon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3C4] dark:text-[#8888A0] pointer-events-none z-10">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#B0A99E] dark:text-[#9A9590] pointer-events-none z-10">
               <Icon className="w-5 h-5" />
             </div>
           )}
@@ -56,7 +56,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             ref={ref}
             id={inputId}
             className={cn(
-              'w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#0F0F1A] border border-[#E2E5F1] dark:border-[#2D2D4A] text-[#1A1D2E] dark:text-[#E8E8ED] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#6B2FA0]/30 dark:focus:ring-[#8B5CF6]/30 focus:border-[#6B2FA0] dark:focus:border-[#8B5CF6] disabled:opacity-50 disabled:cursor-not-allowed appearance-none cursor-pointer',
+              'w-full px-4 py-2.5 rounded-xl bg-[#F5F3EF] dark:bg-[#1A1A1A] border border-[#E0DCD6] dark:border-[#3D3D3D] text-[#2D2A26] dark:text-[#E8E5E0] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#1B4D3E]/30 dark:focus:ring-[#34D399]/30 focus:border-[#1B4D3E] dark:focus:border-[#34D399] disabled:opacity-50 disabled:cursor-not-allowed appearance-none cursor-pointer',
               Icon && 'pl-11',
               error && 'border-[#EF4444] focus:ring-[#EF4444]/30 focus:border-[#EF4444]',
               className
@@ -73,13 +73,13 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 key={option.value}
                 value={option.value}
                 disabled={option.disabled}
-                className="bg-white dark:bg-[#1A1A2E] text-[#1A1D2E] dark:text-[#E8E8ED]"
+                className="bg-white dark:bg-[#262626] text-[#2D2A26] dark:text-[#E8E5E0]"
               >
                 {option.label}
               </option>
             ))}
           </select>
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3C4] dark:text-[#8888A0] pointer-events-none">
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#B0A99E] dark:text-[#9A9590] pointer-events-none">
             <ChevronDown className="w-5 h-5" />
           </div>
         </div>

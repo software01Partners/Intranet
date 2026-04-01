@@ -65,7 +65,7 @@ export function Modal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-[#1A1D2E]/50 dark:bg-black/60 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-[#2D2A26]/50 dark:bg-black/60 backdrop-blur-sm z-50"
             onClick={closeOnOverlayClick ? onClose : undefined}
           />
 
@@ -77,7 +77,7 @@ export function Modal({
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className={cn(
-                'w-full bg-white dark:bg-[#1A1A2E] border border-[#E2E5F1] dark:border-[#2D2D4A] rounded-2xl shadow-xl pointer-events-auto max-h-[90vh] overflow-hidden flex flex-col',
+                'w-full bg-white dark:bg-[#262626] border border-[#E0DCD6] dark:border-[#3D3D3D] rounded-2xl shadow-xl pointer-events-auto max-h-[90vh] overflow-hidden flex flex-col',
                 sizeClasses[size],
                 className
               )}
@@ -85,15 +85,15 @@ export function Modal({
             >
               {/* Header */}
               {(title || description || showCloseButton) && (
-                <div className="flex items-start justify-between p-6 border-b border-[#E2E5F1] dark:border-[#2D2D4A]">
+                <div className="flex items-start justify-between p-6 border-b border-[#E0DCD6] dark:border-[#3D3D3D]">
                   <div className="flex-1 pr-4">
                     {title && (
-                      <h2 className="text-xl font-bold text-[#1A1D2E] dark:text-[#E8E8ED] mb-1">
+                      <h2 className="text-xl font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-1">
                         {title}
                       </h2>
                     )}
                     {description && (
-                      <p className="text-sm text-[#6B7194] dark:text-[#8888A0]">
+                      <p className="text-sm text-[#7A7468] dark:text-[#9A9590]">
                         {description}
                       </p>
                     )}
