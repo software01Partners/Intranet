@@ -68,10 +68,18 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
           setCurrentUser({ id: userData.id, areaId: userData.area_id });
         }
 
-        // Buscar áreas e usuários em paralelo
+        // Buscar áreas e usuários em paralelo (gestor só vê sua área)
+        let areasQuery = supabase.from('areas').select('*').is('deleted_at', null).order('name');
+        let usersQuery = supabase.from('users').select('*').order('name');
+
+        if (areaFilter) {
+          areasQuery = supabase.from('areas').select('*').eq('id', areaFilter).is('deleted_at', null).order('name');
+          usersQuery = supabase.from('users').select('*').eq('area_id', areaFilter).order('name');
+        }
+
         const [areasResult, usersResult] = await Promise.all([
-          supabase.from('areas').select('*').order('name'),
-          supabase.from('users').select('*').order('name'),
+          areasQuery,
+          usersQuery,
         ]);
 
         if (cancelled) return;

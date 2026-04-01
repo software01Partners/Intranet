@@ -66,30 +66,19 @@ export async function POST(request: NextRequest) {
     // Criar cliente admin para operações privilegiadas
     const adminClient = createAdminClient();
 
-    // Gerar senha aleatória
-    const randomPassword =
-      Math.random().toString(36).slice(-12) +
-      Math.random().toString(36).slice(-12) +
-      'A1!';
-
-    // Criar usuário no Supabase Auth com email confirmado
-    // O Supabase enviará automaticamente um email de convite
-    const { data: newAuthUser, error: createUserError } =
-      await adminClient.auth.admin.createUser({
-        email,
-        password: randomPassword,
-        email_confirm: true,
-        user_metadata: {
-          name,
-        },
+    // Convidar usuário via Supabase — envia email automaticamente com magic link
+    const { data: newAuthUser, error: inviteError } =
+      await adminClient.auth.admin.inviteUserByEmail(email, {
+        data: { name },
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
       });
 
-    if (createUserError || !newAuthUser.user) {
-      console.error('Erro ao criar usuário no Auth:', createUserError);
+    if (inviteError || !newAuthUser.user) {
+      console.error('Erro ao convidar usuário:', inviteError);
       return NextResponse.json(
         {
-          error: 'Erro ao criar usuário',
-          details: createUserError?.message || 'Erro desconhecido',
+          error: 'Erro ao convidar usuário',
+          details: inviteError?.message || 'Erro desconhecido',
         },
         { status: 500 }
       );
@@ -107,7 +96,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (insertError) {
-      // Se falhar ao inserir na tabela users, tentar deletar o usuário do Auth
+      // Se falhar ao inserir na tabela users, deletar o usuário do Auth
       await adminClient.auth.admin.deleteUser(newAuthUser.user.id);
       console.error('Erro ao inserir na tabela users:', insertError);
       return NextResponse.json(
@@ -117,18 +106,6 @@ export async function POST(request: NextRequest) {
         },
         { status: 500 }
       );
-    }
-
-    // Enviar email de recuperação de senha para o usuário definir sua senha
-    // Isso enviará um email para o usuário definir sua senha pela primeira vez
-    const { error: inviteError } = await adminClient.auth.admin.generateLink({
-      type: 'recovery',
-      email,
-    });
-
-    if (inviteError) {
-      // Não é crítico, apenas log - o usuário já foi criado
-      console.warn('Erro ao gerar link de recuperação:', inviteError);
     }
 
     await logAuditAction({

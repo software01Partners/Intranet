@@ -72,9 +72,11 @@ async function getDashboardStats(
 ): Promise<DashboardStats> {
   const supabase = await createClient();
 
-  // Buscar todas as trilhas visíveis para o usuário
-  // O RLS já filtra automaticamente, então buscamos todas
-  const { data: visibleTrails } = await supabase.from('trails').select('id');
+  // Buscar todas as trilhas visíveis para o usuário (excluir deletadas)
+  const { data: visibleTrails } = await supabase
+    .from('trails')
+    .select('id')
+    .is('deleted_at', null);
 
   if (!visibleTrails || visibleTrails.length === 0) {
     return {
@@ -87,11 +89,12 @@ async function getDashboardStats(
 
   const trailIds = visibleTrails.map((t) => t.id);
 
-  // Buscar todos os módulos dessas trilhas
+  // Buscar todos os módulos dessas trilhas (excluir deletados)
   const { data: modulesData } = await supabase
     .from('modules')
     .select('id, trail_id')
-    .in('trail_id', trailIds);
+    .in('trail_id', trailIds)
+    .is('deleted_at', null);
 
   if (!modulesData || modulesData.length === 0) {
     return {
@@ -206,8 +209,11 @@ async function getRequiredTrails(
 ): Promise<TrailWithProgress[]> {
   const supabase = await createClient();
 
-  // Buscar trilhas obrigatórias visíveis
-  const { data: allTrails } = await supabase.from('trails').select('*');
+  // Buscar trilhas obrigatórias visíveis (excluir deletadas)
+  const { data: allTrails } = await supabase
+    .from('trails')
+    .select('*')
+    .is('deleted_at', null);
 
   if (!allTrails || allTrails.length === 0) return [];
 
@@ -332,10 +338,11 @@ async function getOptionalTrails(
 ): Promise<TrailWithProgress[]> {
   const supabase = await createClient();
 
-  // Buscar todas as trilhas e filtrar optativas visíveis
+  // Buscar todas as trilhas e filtrar optativas visíveis (excluir deletadas)
   const { data: allTrails } = await supabase
     .from('trails')
-    .select('*');
+    .select('*')
+    .is('deleted_at', null);
 
   if (!allTrails || allTrails.length === 0) return [];
 

@@ -12,12 +12,15 @@ export async function logAction(params: {
   details?: Record<string, unknown>;
 }) {
   try {
-    await fetch('/api/admin/audit-log', {
+    const response = await fetch('/api/admin/audit-log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
     });
-  } catch {
-    // Não bloquear a operação principal
+    if (!response.ok) {
+      console.warn('[Audit] Falha ao registrar log:', response.status, await response.text().catch(() => ''));
+    }
+  } catch (error) {
+    console.warn('[Audit] Erro ao registrar log:', error);
   }
 }

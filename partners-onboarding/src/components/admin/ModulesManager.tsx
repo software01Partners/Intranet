@@ -40,6 +40,7 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
         const { data: trailsData, error } = await supabase
           .from('trails')
           .select('*')
+          .is('deleted_at', null)
           .order('name');
 
         if (cancelled) return;

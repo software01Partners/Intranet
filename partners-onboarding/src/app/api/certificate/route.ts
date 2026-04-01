@@ -38,11 +38,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Buscar trilha e todos os módulos
+    // Buscar trilha (somente ativa) e todos os módulos
     const { data: trail, error: trailError } = await supabase
       .from('trails')
       .select('id, name, duration')
       .eq('id', trailId)
+      .is('deleted_at', null)
       .single();
 
     if (trailError || !trail) {

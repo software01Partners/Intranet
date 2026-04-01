@@ -232,6 +232,36 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Item não encontrado na lixeira' }, { status: 404 });
     }
 
+    // Verificar dependências antes de excluir permanentemente
+    if (entity_type === 'trail') {
+      const { count } = await admin
+        .from('modules')
+        .select('id', { count: 'exact', head: true })
+        .eq('trail_id', id);
+
+      if ((count ?? 0) > 0) {
+        // Deletar módulos da trilha primeiro
+        await admin.from('modules').delete().eq('trail_id', id);
+      }
+      // Deletar trail_areas
+      await admin.from('trail_areas').delete().eq('trail_id', id);
+    }
+
+    if (entity_type === 'area') {
+      // Verificar se há usuários na área
+      const { count: usersCount } = await admin
+        .from('users')
+        .select('id', { count: 'exact', head: true })
+        .eq('area_id', id);
+
+      if ((usersCount ?? 0) > 0) {
+        return NextResponse.json(
+          { error: 'Não é possível excluir permanentemente: existem usuários nesta área. Remova-os primeiro.' },
+          { status: 400 }
+        );
+      }
+    }
+
     const { error } = await hardDeleteItem(admin, entity_type, id);
     if (error) {
       console.error('Erro ao excluir permanentemente:', error);

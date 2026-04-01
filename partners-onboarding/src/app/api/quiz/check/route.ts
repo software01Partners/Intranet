@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { handleTrailCompletion } from '@/lib/trail-completion';
 
 const checkQuizSchema = z.object({
   moduleId: z.string().uuid(),
@@ -45,6 +46,43 @@ export async function POST(request: NextRequest) {
         { error: 'Módulo não encontrado ou não é um quiz' },
         { status: 404 }
       );
+    }
+
+    // Verificar se o usuário tem acesso à trilha deste módulo
+    const { data: userData } = await supabase
+      .from('users')
+      .select('area_id')
+      .eq('id', user.id)
+      .single();
+
+    const { data: trail } = await supabase
+      .from('trails')
+      .select('id, type, area_id')
+      .eq('id', moduleData.trail_id)
+      .is('deleted_at', null)
+      .single();
+
+    if (!trail) {
+      return NextResponse.json(
+        { error: 'Trilha não encontrada ou foi excluída' },
+        { status: 404 }
+      );
+    }
+
+    // Verificar visibilidade da trilha para a área do usuário
+    if (trail.type === 'obrigatoria_area' || trail.type === 'optativa_area') {
+      const { data: trailAreas } = await supabase
+        .from('trail_areas')
+        .select('area_id')
+        .eq('trail_id', trail.id);
+
+      const trailAreaIds = (trailAreas || []).map((ta) => ta.area_id);
+      if (!userData?.area_id || !trailAreaIds.includes(userData.area_id)) {
+        return NextResponse.json(
+          { error: 'Você não tem acesso a este quiz' },
+          { status: 403 }
+        );
+      }
     }
 
     // Verificar se já completou
@@ -229,84 +267,7 @@ export async function POST(request: NextRequest) {
 
     if (passed) {
       trailIdForCertificate = moduleData.trail_id;
-
-      const { data: allModules } = await supabase
-        .from('modules')
-        .select('id')
-        .eq('trail_id', moduleData.trail_id);
-
-      if (allModules && allModules.length > 0) {
-        const moduleIds = allModules.map((m) => m.id);
-
-        const { data: completedProgress } = await supabase
-          .from('user_progress')
-          .select('module_id')
-          .eq('user_id', user.id)
-          .eq('completed', true)
-          .in('module_id', moduleIds);
-
-        const completedCount = completedProgress?.length || 0;
-        isTrailComplete = completedCount === allModules.length;
-
-        if (isTrailComplete) {
-          const { data: trailData } = await supabase
-            .from('trails')
-            .select('name')
-            .eq('id', moduleData.trail_id)
-            .single();
-
-          const { data: userInfo } = await supabase
-            .from('users')
-            .select('area_id, name')
-            .eq('id', user.id)
-            .single();
-
-          // Criar certificado se não existir
-          const { data: existingCertificate } = await supabase
-            .from('certificates')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('trail_id', moduleData.trail_id)
-            .single();
-
-          if (!existingCertificate) {
-            await supabase.from('certificates').insert({
-              user_id: user.id,
-              trail_id: moduleData.trail_id,
-            });
-          }
-
-          // Notificar colaborador
-          if (trailData) {
-            await supabase.from('notifications').insert({
-              user_id: user.id,
-              type: 'certificado',
-              message: `Parabéns! Você concluiu a trilha "${trailData.name}" e recebeu seu certificado.`,
-              read: false,
-            });
-          }
-
-          // Notificar gestor(es) da área
-          if (userInfo?.area_id) {
-            const { data: gestores } = await supabase
-              .from('users')
-              .select('id')
-              .eq('area_id', userInfo.area_id)
-              .eq('role', 'gestor');
-
-            if (gestores && gestores.length > 0 && trailData) {
-              const notifications = gestores.map((gestor) => ({
-                user_id: gestor.id,
-                type: 'nova_trilha' as const,
-                message: `${userInfo.name || 'Um colaborador'} concluiu a trilha "${trailData.name}".`,
-                read: false,
-              }));
-
-              await supabase.from('notifications').insert(notifications);
-            }
-          }
-        }
-      }
+      isTrailComplete = await handleTrailCompletion(supabase, user.id, moduleData.trail_id);
     }
 
     return NextResponse.json({

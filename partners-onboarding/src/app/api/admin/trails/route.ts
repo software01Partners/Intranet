@@ -208,7 +208,12 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Atualizar trail_areas: deletar antigas e inserir novas
+    // Atualizar trail_areas: salvar antigas para rollback, deletar e inserir novas
+    const { data: oldTrailAreas } = await admin
+      .from('trail_areas')
+      .select('trail_id, area_id')
+      .eq('trail_id', id);
+
     await admin.from('trail_areas').delete().eq('trail_id', id);
 
     if (resolvedAreaIds.length > 0) {
@@ -223,6 +228,10 @@ export async function PUT(request: Request) {
 
       if (taError) {
         console.error('Erro ao atualizar áreas da trilha:', taError);
+        // Rollback: restaurar áreas anteriores
+        if (oldTrailAreas && oldTrailAreas.length > 0) {
+          await admin.from('trail_areas').insert(oldTrailAreas);
+        }
         return NextResponse.json({ error: taError.message }, { status: 500 });
       }
     }

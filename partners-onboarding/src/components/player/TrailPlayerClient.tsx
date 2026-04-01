@@ -50,13 +50,6 @@ export function TrailPlayerClient({
 
   const currentModule = modules.find((m) => m.id === currentModuleId);
 
-  // Debug: módulo tipo document ou video
-  if (currentModule?.type === 'document' || currentModule?.type === 'video') {
-    console.log('Módulo atual (tipo):', currentModule?.type, currentModule?.id);
-    console.log('Content URL:', currentModule?.content_url);
-    console.log('Signed URL:', currentModule?.signedUrl ? 'ok' : 'vazio');
-  }
-
   useEffect(() => {
     // Verificar se há módulo na query string
     const moduleParam = searchParams.get('modulo');

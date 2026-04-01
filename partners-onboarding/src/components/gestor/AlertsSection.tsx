@@ -1,18 +1,63 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ProgressRing } from '@/components/ui/ProgressRing';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { AlertTriangle } from 'lucide-react';
-import { getTeamMembers } from '@/app/(dashboard)/gestor/page';
 import { formatDate } from '@/lib/utils';
 import Image from 'next/image';
+
+interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  avatar_url: string | null;
+  overallProgress: number;
+  trailsCompleted: number;
+  totalTrails: number;
+  lastModuleCompletedAt: string | null;
+  status: 'em_dia' | 'regular' | 'atrasado';
+}
 
 interface AlertsSectionProps {
   areaId: string | null;
 }
 
-export async function AlertsSection({ areaId }: AlertsSectionProps) {
-  const teamMembers = await getTeamMembers(areaId);
-  const delayedMembers = teamMembers.filter((m) => m.status === 'atrasado');
+export function AlertsSection({ areaId }: AlertsSectionProps) {
+  const [delayedMembers, setDelayedMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchDelayed() {
+      try {
+        const params = areaId ? `?areaId=${areaId}` : '';
+        const res = await fetch(`/api/gestor/team${params}`);
+        if (!res.ok) throw new Error('Erro ao buscar equipe');
+        const members: TeamMember[] = await res.json();
+        setDelayedMembers(members.filter((m) => m.status === 'atrasado'));
+      } catch {
+        setDelayedMembers([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchDelayed();
+  }, [areaId]);
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Alertas de Atraso</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-12">
+            <div className="w-8 h-8 border-2 border-[#1B4D3E] border-t-transparent rounded-full animate-spin" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (delayedMembers.length === 0) {
     return (

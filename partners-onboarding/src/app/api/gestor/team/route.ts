@@ -64,10 +64,11 @@ export async function GET(request: Request) {
 
     const memberIds = members.map((m) => m.id);
 
-    // Buscar todas as trilhas visíveis
+    // Buscar todas as trilhas visíveis (excluir deletadas)
     const { data: allTrails } = await supabase
       .from('trails')
-      .select('id, name, type, area_id');
+      .select('id, name, type, area_id')
+      .is('deleted_at', null);
 
     if (!allTrails || allTrails.length === 0) {
       return NextResponse.json(
@@ -97,10 +98,11 @@ export async function GET(request: Request) {
       visibleTrailsByMember.set(member.id, visible.map((t) => t.id));
     });
 
-    // Buscar todos os módulos
+    // Buscar todos os módulos (excluir deletados)
     const { data: allModules } = await supabase
       .from('modules')
-      .select('id, trail_id');
+      .select('id, trail_id')
+      .is('deleted_at', null);
 
     if (!allModules) {
       return NextResponse.json(

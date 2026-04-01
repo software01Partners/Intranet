@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { handleTrailCompletion } from '@/lib/trail-completion';
 
 const completeModuleSchema = z.object({
   module_id: z.string().uuid(),
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { module_id, time_spent } = completeModuleSchema.parse(body);
 
-    // Verificar se o módulo existe e se o usuário tem acesso
+    // Verificar se o módulo existe
     const { data: module, error: moduleError } = await supabase
       .from('modules')
       .select('id, trail_id')
@@ -36,6 +37,42 @@ export async function POST(request: NextRequest) {
         { error: 'Módulo não encontrado' },
         { status: 404 }
       );
+    }
+
+    // Verificar se o usuário tem acesso à trilha deste módulo
+    const { data: userInfo } = await supabase
+      .from('users')
+      .select('area_id')
+      .eq('id', user.id)
+      .single();
+
+    const { data: trailCheck } = await supabase
+      .from('trails')
+      .select('id, type')
+      .eq('id', module.trail_id)
+      .is('deleted_at', null)
+      .single();
+
+    if (!trailCheck) {
+      return NextResponse.json(
+        { error: 'Trilha não encontrada ou foi excluída' },
+        { status: 404 }
+      );
+    }
+
+    if (trailCheck.type === 'obrigatoria_area' || trailCheck.type === 'optativa_area') {
+      const { data: trailAreas } = await supabase
+        .from('trail_areas')
+        .select('area_id')
+        .eq('trail_id', trailCheck.id);
+
+      const trailAreaIds = (trailAreas || []).map((ta) => ta.area_id);
+      if (!userInfo?.area_id || !trailAreaIds.includes(userInfo.area_id)) {
+        return NextResponse.json(
+          { error: 'Você não tem acesso a este módulo' },
+          { status: 403 }
+        );
+      }
     }
 
     // Fazer upsert do progresso
@@ -65,11 +102,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar se todos os módulos da trilha foram concluídos (buscar TODOS ordenados)
+    // Verificar se todos os módulos da trilha foram concluídos
     const { data: allModules } = await supabase
       .from('modules')
       .select('id')
       .eq('trail_id', module.trail_id)
+      .is('deleted_at', null)
       .order('sort_order', { ascending: true });
 
     if (!allModules || allModules.length === 0) {
@@ -88,73 +126,16 @@ export async function POST(request: NextRequest) {
     const completedIds = new Set(
       (completedProgress ?? []).map((p) => p.module_id)
     );
-    const completedCount = completedIds.size;
-    const isTrailComplete = completedCount === allModules.length;
+    const isTrailComplete = completedIds.size === allModules.length;
 
     // Primeiro módulo ainda não concluído (para avançar automaticamente)
     const nextModuleId = isTrailComplete
       ? undefined
       : allModules.find((m) => !completedIds.has(m.id))?.id;
 
-    // Se a trilha foi concluída, criar notificações (certificado será gerado sob demanda)
+    // Se a trilha foi concluída, criar certificado e notificar
     if (isTrailComplete) {
-      // Buscar dados da trilha e do usuário
-      const { data: trail } = await supabase
-        .from('trails')
-        .select('name')
-        .eq('id', module.trail_id)
-        .single();
-
-      const { data: userData } = await supabase
-        .from('users')
-        .select('area_id, name')
-        .eq('id', user.id)
-        .single();
-
-      // Verificar se já existe certificado
-      const { data: existingCertificate } = await supabase
-        .from('certificates')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('trail_id', module.trail_id)
-        .single();
-
-      // Criar certificado apenas se não existir (sem PDF ainda, será gerado sob demanda)
-      if (!existingCertificate) {
-        await supabase.from('certificates').insert({
-          user_id: user.id,
-          trail_id: module.trail_id,
-        });
-      }
-
-      // Notificar o colaborador sobre o certificado
-      if (trail) {
-        await supabase.from('notifications').insert({
-          user_id: user.id,
-          type: 'certificado',
-          message: `Parabéns! Você concluiu a trilha "${trail.name}" e recebeu seu certificado.`,
-          read: false,
-        });
-      }
-
-      // Notificar o gestor da área (se houver)
-      if (userData?.area_id) {
-        const { data: gestor } = await supabase
-          .from('users')
-          .select('id')
-          .eq('area_id', userData.area_id)
-          .eq('role', 'gestor')
-          .single();
-
-        if (gestor && trail) {
-          await supabase.from('notifications').insert({
-            user_id: gestor.id,
-            type: 'nova_trilha', // Reutilizando tipo para notificar gestor
-            message: `${userData.name || 'Um colaborador'} concluiu a trilha "${trail.name}".`,
-            read: false,
-          });
-        }
-      }
+      await handleTrailCompletion(supabase, user.id, module.trail_id);
     }
 
     return NextResponse.json({

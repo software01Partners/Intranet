@@ -12,16 +12,24 @@ export function useTheme() {
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initial: Theme = stored ?? (prefersDark ? 'dark' : 'light');
-    setThemeState(initial);
-    document.documentElement.classList.toggle('dark', initial === 'dark');
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const initial: Theme = stored ?? (prefersDark ? 'dark' : 'light');
+      setThemeState(initial);
+      document.documentElement.classList.toggle('dark', initial === 'dark');
+    } catch {
+      // localStorage indisponível (navegação privada)
+    }
   }, []);
 
   const setTheme = (next: Theme) => {
     setThemeState(next);
-    localStorage.setItem(STORAGE_KEY, next);
+    try {
+      localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      // localStorage indisponível
+    }
     document.documentElement.classList.toggle('dark', next === 'dark');
   };
 

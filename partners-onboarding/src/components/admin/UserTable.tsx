@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { UserPlus, Search, ChevronLeft, ChevronRight, Edit2, X } from 'lucide-react';
+import { UserPlus, Search, ChevronLeft, ChevronRight, Edit2, Trash2, X } from 'lucide-react';
 import { formatDate, calculateProgress } from '@/lib/utils';
 import type { User, Area, UserRole } from '@/lib/types';
 import { logAction } from '@/lib/audit-client';
@@ -47,6 +47,21 @@ export function UserTable() {
     area_id: '',
     role: 'colaborador',
   });
+
+  // Estados para editar usuário
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserWithProgress | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', area_id: '', role: '' as UserRole });
+
+  // Estados para excluir usuário
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deletingUser, setDeletingUser] = useState<UserWithProgress | null>(null);
+
+  // Estado para confirmação de mudança de role
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [roleChangeTarget, setRoleChangeTarget] = useState<{ userId: string; userName: string; oldRole: UserRole; newRole: UserRole } | null>(null);
 
   const supabase = createClient();
 
@@ -187,7 +202,15 @@ export function UserTable() {
     return filteredUsers.slice(start, end);
   }, [filteredUsers, currentPage]);
 
-  // Atualizar role
+  // Solicitar confirmação de mudança de role
+  const handleRequestRoleChange = (userId: string, newRole: UserRole) => {
+    const targetUser = users.find((u) => u.id === userId);
+    if (!targetUser || targetUser.role === newRole) return;
+    setRoleChangeTarget({ userId, userName: targetUser.name, oldRole: targetUser.role, newRole });
+    setIsRoleModalOpen(true);
+  };
+
+  // Atualizar role (após confirmação)
   const handleUpdateRole = async (userId: string, newRole: UserRole) => {
     try {
       const { error } = await supabase
@@ -252,6 +275,91 @@ export function UserTable() {
       toast.error('Erro ao atualizar área', {
         description: error instanceof Error ? error.message : 'Erro desconhecido',
       });
+    }
+  };
+
+  // Abrir modal de edição
+  const handleOpenEdit = (user: UserWithProgress) => {
+    setEditingUser(user);
+    setEditForm({ name: user.name, area_id: user.area_id || '', role: user.role });
+    setIsEditModalOpen(true);
+  };
+
+  // Salvar edição
+  const handleSaveEdit = async () => {
+    if (!editingUser || !editForm.name.trim()) return;
+
+    setEditLoading(true);
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingUser.id,
+          name: editForm.name.trim(),
+          area_id: editForm.area_id || null,
+          role: editForm.role,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+
+      const newArea = editForm.area_id
+        ? areas.find((a) => a.id === editForm.area_id) || null
+        : null;
+
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === editingUser.id
+            ? { ...u, name: editForm.name.trim(), area_id: editForm.area_id || null, area: newArea, role: editForm.role }
+            : u
+        )
+      );
+
+      toast.success('Usuário atualizado com sucesso!');
+      setIsEditModalOpen(false);
+      setEditingUser(null);
+    } catch (error) {
+      toast.error('Erro ao atualizar usuário', {
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+      });
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  // Abrir modal de exclusão
+  const handleOpenDelete = (user: UserWithProgress) => {
+    setDeletingUser(user);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Confirmar exclusão
+  const handleConfirmDelete = async () => {
+    if (!deletingUser) return;
+
+    setDeleteLoading(true);
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: deletingUser.id }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+
+      setUsers((prev) => prev.filter((u) => u.id !== deletingUser.id));
+      toast.success(`Usuário ${deletingUser.name} excluído com sucesso!`);
+      setIsDeleteModalOpen(false);
+      setDeletingUser(null);
+    } catch (error) {
+      toast.error('Erro ao excluir usuário', {
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+      });
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -492,7 +600,7 @@ export function UserTable() {
                       <select
                         value={user.role}
                         onChange={(e) =>
-                          handleUpdateRole(user.id, e.target.value as UserRole)
+                          handleRequestRoleChange(user.id, e.target.value as UserRole)
                         }
                         className="bg-[#F5F3EF] dark:bg-[#1A1A1A] border border-[#E0DCD6] dark:border-[#3D3D3D] rounded-xl px-3 py-1.5 text-sm text-[#2D2A26] dark:text-[#E8E5E0] focus:outline-none focus:ring-2 focus:ring-[#1B4D3E]/30 dark:focus:ring-[#34D399]/30 cursor-pointer"
                       >
@@ -515,24 +623,21 @@ export function UserTable() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={user.area_id || ''}
-                          onChange={(e) =>
-                            handleUpdateArea(
-                              user.id,
-                              e.target.value === '' ? null : e.target.value
-                            )
-                          }
-                          className="bg-[#F5F3EF] dark:bg-[#1A1A1A] border border-[#E0DCD6] dark:border-[#3D3D3D] rounded-xl px-3 py-1.5 text-sm text-[#2D2A26] dark:text-[#E8E5E0] focus:outline-none focus:ring-2 focus:ring-[#1B4D3E]/30 dark:focus:ring-[#34D399]/30 cursor-pointer"
+                      <div className="relative flex items-center gap-1">
+                        <button
+                          onClick={() => handleOpenEdit(user)}
+                          className="p-2 rounded-lg text-[#7A7468] dark:text-[#9A9590] hover:text-[#6B2FA0] dark:hover:text-[#B87FD8] hover:bg-[#6B2FA0]/10 dark:hover:bg-[#B87FD8]/10 transition-colors"
+                          title="Editar usuário"
                         >
-                          <option value="">Sem área</option>
-                          {areas.map((area) => (
-                            <option key={area.id} value={area.id}>
-                              {area.name}
-                            </option>
-                          ))}
-                        </select>
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleOpenDelete(user)}
+                          className="p-2 rounded-lg text-[#7A7468] dark:text-[#9A9590] hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                          title="Excluir usuário"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -646,6 +751,134 @@ export function UserTable() {
               disabled={!inviteForm.name || !inviteForm.email || !inviteForm.area_id}
             >
               Enviar Convite
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de Edição */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => { setIsEditModalOpen(false); setEditingUser(null); }}
+        title="Editar Usuário"
+        description={editingUser ? `Editando ${editingUser.name}` : ''}
+        size="md"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Nome"
+            placeholder="Nome completo"
+            value={editForm.name}
+            onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
+            required
+          />
+
+          <Select
+            label="Área"
+            value={editForm.area_id}
+            onChange={(e) => setEditForm((prev) => ({ ...prev, area_id: e.target.value }))}
+            options={areas.map((area) => ({ value: area.id, label: area.name }))}
+            placeholder="Sem área"
+          />
+
+          <Select
+            label="Role"
+            value={editForm.role}
+            onChange={(e) => setEditForm((prev) => ({ ...prev, role: e.target.value as UserRole }))}
+            options={roleSelectOptions}
+          />
+
+          <div className="flex items-center justify-end gap-3 pt-4">
+            <Button
+              variant="ghost"
+              onClick={() => { setIsEditModalOpen(false); setEditingUser(null); }}
+              disabled={editLoading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSaveEdit}
+              loading={editLoading}
+              disabled={!editForm.name.trim()}
+            >
+              Salvar Alterações
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => { setIsDeleteModalOpen(false); setDeletingUser(null); }}
+        title="Excluir Usuário"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-[#2D2A26] dark:text-[#E8E5E0]">
+            Tem certeza que deseja excluir o usuário{' '}
+            <strong>{deletingUser?.name}</strong>?
+          </p>
+          <p className="text-sm text-[#7A7468] dark:text-[#9A9590]">
+            Esta ação é irreversível. Todo o progresso, certificados e notificações do usuário serão removidos permanentemente.
+          </p>
+
+          <div className="flex items-center justify-end gap-3 pt-4">
+            <Button
+              variant="ghost"
+              onClick={() => { setIsDeleteModalOpen(false); setDeletingUser(null); }}
+              disabled={deleteLoading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmDelete}
+              loading={deleteLoading}
+              className="bg-red-600 hover:bg-red-700 text-white border-red-600"
+            >
+              Excluir Usuário
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de Confirmação de Mudança de Role */}
+      <Modal
+        isOpen={isRoleModalOpen}
+        onClose={() => { setIsRoleModalOpen(false); setRoleChangeTarget(null); }}
+        title="Alterar Role"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-[#2D2A26] dark:text-[#E8E5E0]">
+            Tem certeza que deseja alterar a role de{' '}
+            <strong>{roleChangeTarget?.userName}</strong> de{' '}
+            <strong>{roleChangeTarget?.oldRole}</strong> para{' '}
+            <strong>{roleChangeTarget?.newRole}</strong>?
+          </p>
+          {roleChangeTarget?.oldRole === 'admin' && (
+            <p className="text-sm text-amber-600 dark:text-amber-400">
+              Atenção: o usuário perderá acesso às funcionalidades de administrador.
+            </p>
+          )}
+
+          <div className="flex items-center justify-end gap-3 pt-4">
+            <Button
+              variant="ghost"
+              onClick={() => { setIsRoleModalOpen(false); setRoleChangeTarget(null); }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={async () => {
+                if (roleChangeTarget) {
+                  await handleUpdateRole(roleChangeTarget.userId, roleChangeTarget.newRole);
+                  setIsRoleModalOpen(false);
+                  setRoleChangeTarget(null);
+                }
+              }}
+            >
+              Confirmar
             </Button>
           </div>
         </div>

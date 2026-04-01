@@ -15,6 +15,7 @@ interface QuizClientProps {
   attemptsRemaining: number;
   blockedUntil: string | null;
   cycle: number;
+  maxAttempts?: number;
 }
 
 export function QuizClient({
@@ -25,6 +26,7 @@ export function QuizClient({
   attemptsRemaining: initialAttemptsRemaining,
   blockedUntil: initialBlockedUntil,
   cycle: initialCycle,
+  maxAttempts = 3,
 }: QuizClientProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
@@ -157,7 +159,7 @@ export function QuizClient({
           Quiz Bloqueado
         </h2>
         <p className="text-[#7A7468] dark:text-[#9A9590] mb-2 max-w-md">
-          Você utilizou todas as 3 tentativas deste ciclo.
+          Você utilizou todas as {maxAttempts} tentativas deste ciclo.
           O quiz será desbloqueado em:
         </p>
         <div className="flex items-center gap-2 text-[#F59E0B] font-semibold text-lg mt-2">
@@ -200,7 +202,7 @@ export function QuizClient({
       {/* Indicador de tentativas */}
       <div className="flex items-center justify-between mb-4 px-1">
         <span className="text-sm text-[#7A7468] dark:text-[#9A9590]">
-          Tentativa {attemptInfo.attemptsUsed + 1} de 3
+          Tentativa {attemptInfo.attemptsUsed + 1} de {maxAttempts}
         </span>
       </div>
       <QuizQuestion

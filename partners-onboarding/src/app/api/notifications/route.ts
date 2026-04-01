@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     // Verificar role (gestor ou admin)
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('role')
+      .select('role, area_id')
       .eq('id', user.id)
       .single();
 
@@ -45,6 +45,25 @@ export async function POST(request: NextRequest) {
     // Validar body
     const body = await request.json();
     const validatedData = createNotificationSchema.parse(body);
+
+    // Gestor só pode notificar usuários da própria área
+    if (userData.role === 'gestor' && userData.area_id) {
+      const { data: targetUsers } = await supabase
+        .from('users')
+        .select('id, area_id')
+        .in('id', validatedData.userIds);
+
+      const outsideArea = (targetUsers || []).filter(
+        (u) => u.area_id !== userData.area_id
+      );
+
+      if (outsideArea.length > 0) {
+        return NextResponse.json(
+          { error: 'Gestores só podem notificar usuários da própria área' },
+          { status: 403 }
+        );
+      }
+    }
 
     // Criar notificações para cada usuário
     const notifications = validatedData.userIds.map((userId) => ({
