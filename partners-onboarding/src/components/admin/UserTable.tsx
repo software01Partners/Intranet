@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select, type SelectOption } from '@/components/ui/Select';
+import { MultiSelect } from '@/components/ui/MultiSelect';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Modal } from '@/components/ui/Modal';
@@ -14,18 +14,19 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { UserPlus, Search, ChevronLeft, ChevronRight, Edit2, Trash2, X } from 'lucide-react';
 import { formatDate, calculateProgress } from '@/lib/utils';
 import type { User, Area, UserRole } from '@/lib/types';
-import { logAction } from '@/lib/audit-client';
 import Image from 'next/image';
 
 interface UserWithProgress extends User {
   area?: Area | null;
+  area_ids?: string[];
+  areas?: Area[];
   overallProgress: number;
 }
 
 interface InviteFormData {
   name: string;
   email: string;
-  area_id: string;
+  area_ids: string[];
   role: UserRole;
 }
 
@@ -44,7 +45,7 @@ export function UserTable() {
   const [inviteForm, setInviteForm] = useState<InviteFormData>({
     name: '',
     email: '',
-    area_id: '',
+    area_ids: [],
     role: 'colaborador',
   });
 
@@ -52,7 +53,7 @@ export function UserTable() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [editingUser, setEditingUser] = useState<UserWithProgress | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', area_id: '', role: '' as UserRole });
+  const [editForm, setEditForm] = useState({ name: '', area_ids: [] as string[], role: '' as UserRole });
 
   // Estados para excluir usuário
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -63,101 +64,16 @@ export function UserTable() {
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [roleChangeTarget, setRoleChangeTarget] = useState<{ userId: string; userName: string; oldRole: UserRole; newRole: UserRole } | null>(null);
 
-  const supabase = createClient();
-
-  // Buscar áreas
+  // Buscar usuários e áreas via API
   useEffect(() => {
-    async function fetchAreas() {
-      const { data, error } = await supabase
-        .from('areas')
-        .select('*')
-        .order('name');
-
-      if (error) {
-        toast.error('Erro ao carregar áreas', {
-          description: error.message,
-        });
-      } else if (data) {
-        setAreas(data as Area[]);
-      }
-    }
-
-    fetchAreas();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Buscar usuários e calcular progresso
-  useEffect(() => {
-    async function fetchUsers() {
+    async function fetchData() {
       setLoading(true);
       try {
-        // Buscar todos os usuários
-        const { data: usersData, error: usersError } = await supabase
-          .from('users')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (usersError) {
-          throw usersError;
-        }
-
-        if (!usersData || usersData.length === 0) {
-          setUsers([]);
-          setLoading(false);
-          return;
-        }
-
-        // Buscar áreas dos usuários
-        const areaIds = usersData
-          .map((u) => u.area_id)
-          .filter((id): id is string => id !== null);
-
-        const areasMap = new Map<string, Area>();
-        if (areaIds.length > 0) {
-          const { data: areasData } = await supabase
-            .from('areas')
-            .select('*')
-            .in('id', areaIds);
-
-          if (areasData) {
-            areasData.forEach((area) => {
-              areasMap.set(area.id, area as Area);
-            });
-          }
-        }
-
-        // Buscar todos os módulos para calcular progresso
-        const { data: allModules } = await supabase
-          .from('modules')
-          .select('id');
-
-        const totalModules = allModules?.length || 0;
-
-        // Para cada usuário, calcular progresso geral
-        const usersWithProgress: UserWithProgress[] = await Promise.all(
-          usersData.map(async (user) => {
-            let overallProgress = 0;
-
-            if (totalModules > 0) {
-              const { data: userProgress } = await supabase
-                .from('user_progress')
-                .select('module_id, completed')
-                .eq('user_id', user.id);
-
-              const completedModules =
-                userProgress?.filter((up) => up.completed).length || 0;
-              overallProgress = calculateProgress(completedModules, totalModules);
-            }
-
-            return {
-              ...(user as User),
-              area: user.area_id ? areasMap.get(user.area_id) || null : null,
-              overallProgress,
-            };
-          })
-        );
-
-        setUsers(usersWithProgress);
+        const res = await fetch('/api/admin/users');
+        if (!res.ok) throw new Error('Erro ao buscar usuários');
+        const data = await res.json();
+        setUsers(data.users as UserWithProgress[]);
+        setAreas(data.areas as Area[]);
       } catch (error) {
         console.error('Erro ao buscar usuários:', error);
         toast.error('Erro ao carregar usuários', {
@@ -168,8 +84,7 @@ export function UserTable() {
       }
     }
 
-    fetchUsers();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchData();
   }, []);
 
   // Filtrar usuários
@@ -182,10 +97,11 @@ export function UserTable() {
         user.email.toLowerCase().includes(searchTerm.toLowerCase());
 
       // Filtro por área
+      const userAreaIds = user.area_ids || (user.area_id ? [user.area_id] : []);
       const matchesArea =
         selectedArea === 'all' ||
-        (selectedArea === 'null' && user.area_id === null) ||
-        user.area_id === selectedArea;
+        (selectedArea === 'null' && userAreaIds.length === 0) ||
+        userAreaIds.includes(selectedArea);
 
       // Filtro por role
       const matchesRole = selectedRole === 'all' || user.role === selectedRole;
@@ -210,29 +126,20 @@ export function UserTable() {
     setIsRoleModalOpen(true);
   };
 
-  // Atualizar role (após confirmação)
+  // Atualizar role (após confirmação) via API
   const handleUpdateRole = async (userId: string, newRole: UserRole) => {
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ role: newRole })
-        .eq('id', userId);
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: userId, role: newRole }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
 
-      if (error) throw error;
-
-      const targetUser = users.find((u) => u.id === userId);
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
       );
-
-      logAction({
-        action: 'update',
-        entityType: 'user',
-        entityId: userId,
-        entityName: targetUser?.name || 'Usuário',
-        details: { campo: 'role', novo_valor: newRole },
-      });
-
       toast.success('Role atualizada com sucesso!');
     } catch (error) {
       console.error('Erro ao atualizar role:', error);
@@ -242,32 +149,24 @@ export function UserTable() {
     }
   };
 
-  // Atualizar área
+  // Atualizar área via API
   const handleUpdateArea = async (userId: string, newAreaId: string | null) => {
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ area_id: newAreaId })
-        .eq('id', userId);
-
-      if (error) throw error;
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: userId, area_id: newAreaId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
 
       const newArea = newAreaId
         ? areas.find((a) => a.id === newAreaId) || null
         : null;
 
-      const targetUser = users.find((u) => u.id === userId);
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, area_id: newAreaId, area: newArea } : u))
       );
-
-      logAction({
-        action: 'update',
-        entityType: 'user',
-        entityId: userId,
-        entityName: targetUser?.name || 'Usuário',
-        details: { campo: 'area', nova_area: newArea?.name || 'Nenhuma' },
-      });
 
       toast.success('Área atualizada com sucesso!');
     } catch (error) {
@@ -281,7 +180,7 @@ export function UserTable() {
   // Abrir modal de edição
   const handleOpenEdit = (user: UserWithProgress) => {
     setEditingUser(user);
-    setEditForm({ name: user.name, area_id: user.area_id || '', role: user.role });
+    setEditForm({ name: user.name, area_ids: user.area_ids || (user.area_id ? [user.area_id] : []), role: user.role });
     setIsEditModalOpen(true);
   };
 
@@ -297,7 +196,7 @@ export function UserTable() {
         body: JSON.stringify({
           id: editingUser.id,
           name: editForm.name.trim(),
-          area_id: editForm.area_id || null,
+          area_ids: editForm.area_ids,
           role: editForm.role,
         }),
       });
@@ -305,14 +204,12 @@ export function UserTable() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
 
-      const newArea = editForm.area_id
-        ? areas.find((a) => a.id === editForm.area_id) || null
-        : null;
+      const newAreas = areas.filter((a) => editForm.area_ids.includes(a.id));
 
       setUsers((prev) =>
         prev.map((u) =>
           u.id === editingUser.id
-            ? { ...u, name: editForm.name.trim(), area_id: editForm.area_id || null, area: newArea, role: editForm.role }
+            ? { ...u, name: editForm.name.trim(), area_ids: editForm.area_ids, areas: newAreas, area_id: editForm.area_ids[0] || null, area: newAreas[0] || null, role: editForm.role }
             : u
         )
       );
@@ -365,7 +262,7 @@ export function UserTable() {
 
   // Enviar convite
   const handleInvite = async () => {
-    if (!inviteForm.name || !inviteForm.email || !inviteForm.area_id) {
+    if (!inviteForm.name || !inviteForm.email || inviteForm.area_ids.length === 0) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
@@ -399,7 +296,7 @@ export function UserTable() {
       setInviteForm({
         name: '',
         email: '',
-        area_id: '',
+        area_ids: [],
         role: 'colaborador',
       });
 
@@ -578,7 +475,26 @@ export function UserTable() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      {user.area ? (
+                      {(user.areas && user.areas.length > 0) ? (
+                        <div className="flex flex-wrap gap-1">
+                          {user.areas.map((area) => (
+                            <Badge
+                              key={area.id}
+                              color={
+                                area.color === '#3B82F6'
+                                  ? 'blue'
+                                  : area.color === '#10B981'
+                                  ? 'green'
+                                  : area.color === '#991D7D'
+                                  ? 'purple'
+                                  : 'accent'
+                              }
+                            >
+                              {area.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : user.area ? (
                         <Badge
                           color={
                             user.area.color === '#3B82F6'
@@ -711,18 +627,11 @@ export function UserTable() {
             required
           />
 
-          <Select
-            label="Área"
-            value={inviteForm.area_id}
-            onChange={(e) =>
-              setInviteForm((prev) => ({ ...prev, area_id: e.target.value }))
-            }
-            options={areas.map((area) => ({
-              value: area.id,
-              label: area.name,
-            }))}
-            placeholder="Selecione uma área"
-            required
+          <MultiSelect
+            label="Áreas"
+            options={areas.map((a) => ({ value: a.id, label: a.name }))}
+            value={inviteForm.area_ids}
+            onChange={(ids) => setInviteForm((prev) => ({ ...prev, area_ids: ids }))}
           />
 
           <Select
@@ -748,7 +657,7 @@ export function UserTable() {
             <Button
               onClick={handleInvite}
               loading={inviteLoading}
-              disabled={!inviteForm.name || !inviteForm.email || !inviteForm.area_id}
+              disabled={!inviteForm.name || !inviteForm.email || inviteForm.area_ids.length === 0}
             >
               Enviar Convite
             </Button>
@@ -773,12 +682,11 @@ export function UserTable() {
             required
           />
 
-          <Select
-            label="Área"
-            value={editForm.area_id}
-            onChange={(e) => setEditForm((prev) => ({ ...prev, area_id: e.target.value }))}
-            options={areas.map((area) => ({ value: area.id, label: area.name }))}
-            placeholder="Sem área"
+          <MultiSelect
+            label="Áreas"
+            options={areas.map((a) => ({ value: a.id, label: a.name }))}
+            value={editForm.area_ids}
+            onChange={(ids) => setEditForm((prev) => ({ ...prev, area_ids: ids }))}
           />
 
           <Select

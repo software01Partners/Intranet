@@ -10,14 +10,14 @@ import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import Image from 'next/image';
 
 interface TeamTableProps {
-  areaId: string | null;
+  areaIds: string[];
 }
 
 type SortField = 'name' | 'email' | 'progress' | 'trails' | 'lastModule' | 'status';
 type SortDirection = 'asc' | 'desc';
 type StatusFilter = 'all' | 'em_dia' | 'regular' | 'atrasado';
 
-export function TeamTable({ areaId }: TeamTableProps) {
+export function TeamTable({ areaIds }: TeamTableProps) {
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -28,8 +28,9 @@ export function TeamTable({ areaId }: TeamTableProps) {
   useEffect(() => {
     async function fetchTeamMembers() {
       try {
+        const params = areaIds.length > 0 ? `areaIds=${areaIds.join(',')}` : '';
         const response = await fetch(
-          `/api/gestor/team?${areaId ? `areaId=${areaId}` : ''}`
+          `/api/gestor/team?${params}`
         );
         if (response.ok) {
           const data = await response.json();
@@ -42,7 +43,7 @@ export function TeamTable({ areaId }: TeamTableProps) {
       }
     }
     fetchTeamMembers();
-  }, [areaId]);
+  }, [areaIds]);
 
   // Filtrar e ordenar
   const filteredAndSorted = useMemo(() => {

@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { getUserAreasMap } from '@/lib/user-areas';
 import { ModulesManager } from '@/components/admin/ModulesManager';
 import type { User } from '@/lib/types';
 
@@ -41,6 +43,14 @@ export default async function GestorModulosPage() {
     return null;
   }
 
+  // Buscar áreas do gestor via user_areas (multi-area)
+  const adminClient = createAdminClient();
+  const gestorAreasMap = await getUserAreasMap(adminClient, [user.id]);
+  const gestorAreaIds = gestorAreasMap.get(user.id) || (user.area_id ? [user.area_id] : []);
+
+  // Pass first area for areaFilter compatibility — API GET already filters by gestor's areas server-side
+  const primaryAreaId = gestorAreaIds.length > 0 ? gestorAreaIds[0] : user.area_id;
+
   return (
     <div className="space-y-6">
       <div>
@@ -50,7 +60,7 @@ export default async function GestorModulosPage() {
         </p>
       </div>
 
-      <ModulesManager areaFilter={user.area_id} userRole="gestor" />
+      <ModulesManager areaFilter={primaryAreaId} userRole="gestor" />
     </div>
   );
 }

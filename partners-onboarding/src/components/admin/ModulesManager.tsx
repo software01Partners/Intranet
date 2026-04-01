@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { Plus, Edit, Trash2, ChevronUp, ChevronDown, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -19,7 +18,6 @@ interface ModulesManagerProps {
 }
 
 export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
-  const supabase = createClient();
   const [trails, setTrails] = useState<Trail[]>([]);
   const [selectedTrailId, setSelectedTrailId] = useState<string>('');
   const [modules, setModules] = useState<Module[]>([]);
@@ -31,35 +29,19 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
   const [deletingModuleId, setDeletingModuleId] = useState<string | null>(null);
   const [reorderingModuleId, setReorderingModuleId] = useState<string | null>(null);
 
-  // Buscar trilhas
+  // Buscar trilhas via API (bypass RLS)
   useEffect(() => {
     let cancelled = false;
 
     async function fetchTrails() {
       try {
-        const { data: trailsData, error } = await supabase
-          .from('trails')
-          .select('*')
-          .is('deleted_at', null)
-          .order('name');
-
+        const params = areaFilter ? `?areaFilter=${areaFilter}` : '';
+        const res = await fetch(`/api/admin/trails${params}`);
         if (cancelled) return;
-        if (error) throw error;
+        if (!res.ok) throw new Error('Erro ao buscar trilhas');
 
-        let filtered = (trailsData as Trail[]) || [];
-
-        // Se areaFilter presente, filtrar por área via trail_areas (modo gestor)
-        if (areaFilter && filtered.length > 0) {
-          const trailIds = filtered.map((t) => t.id);
-          const { data: trailAreasData } = await supabase
-            .from('trail_areas')
-            .select('trail_id')
-            .eq('area_id', areaFilter)
-            .in('trail_id', trailIds);
-          if (cancelled) return;
-          const allowedTrailIds = new Set((trailAreasData || []).map((ta) => ta.trail_id));
-          filtered = filtered.filter((t) => allowedTrailIds.has(t.id));
-        }
+        const data = await res.json();
+        const filtered = (data as Trail[]) || [];
 
         setTrails(filtered);
 
@@ -83,7 +65,7 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [areaFilter]);
 
-  // Buscar módulos quando trilha selecionada mudar
+  // Buscar módulos via API quando trilha selecionada mudar
   useEffect(() => {
     let cancelled = false;
 
@@ -94,16 +76,12 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
       }
 
       try {
-        const { data: modulesData, error } = await supabase
-          .from('modules')
-          .select('*')
-          .eq('trail_id', selectedTrailId)
-          .order('sort_order', { ascending: true });
-
+        const res = await fetch(`/api/admin/modules?trailId=${selectedTrailId}`);
         if (cancelled) return;
-        if (error) throw error;
+        if (!res.ok) throw new Error('Erro ao buscar módulos');
 
-        setModules((modulesData as Module[]) || []);
+        const data = await res.json();
+        setModules((data as Module[]) || []);
       } catch (error) {
         if (cancelled) return;
         console.error('Erro ao buscar módulos:', error);
@@ -122,15 +100,10 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
     if (!selectedTrailId) return;
 
     try {
-      const { data: modulesData, error } = await supabase
-        .from('modules')
-        .select('*')
-        .eq('trail_id', selectedTrailId)
-        .order('sort_order', { ascending: true });
-
-      if (error) throw error;
-
-      setModules((modulesData as Module[]) || []);
+      const res = await fetch(`/api/admin/modules?trailId=${selectedTrailId}`);
+      if (!res.ok) throw new Error('Erro ao buscar módulos');
+      const data = await res.json();
+      setModules((data as Module[]) || []);
     } catch (error) {
       console.error('Erro ao buscar módulos:', error);
       toast.error('Erro ao carregar módulos', {
@@ -216,20 +189,21 @@ export function ModulesManager({ areaFilter, userRole }: ModulesManagerProps) {
     try {
       setReorderingModuleId(moduleId);
 
-      // Trocar sort_order
-      const { error: error1 } = await supabase
-        .from('modules')
-        .update({ sort_order: targetModule.sort_order })
-        .eq('id', module.id);
+      // Trocar sort_order via API
+      const [res1, res2] = await Promise.all([
+        fetch('/api/admin/modules', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: module.id, sort_order: targetModule.sort_order }),
+        }),
+        fetch('/api/admin/modules', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: targetModule.id, sort_order: module.sort_order }),
+        }),
+      ]);
 
-      if (error1) throw error1;
-
-      const { error: error2 } = await supabase
-        .from('modules')
-        .update({ sort_order: module.sort_order })
-        .eq('id', targetModule.id);
-
-      if (error2) throw error2;
+      if (!res1.ok || !res2.ok) throw new Error('Erro ao reordenar');
 
       await fetchModules();
     } catch (error) {

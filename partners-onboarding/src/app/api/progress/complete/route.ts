@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { z } from 'zod';
 import { handleTrailCompletion } from '@/lib/trail-completion';
 
@@ -40,11 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar se o usuário tem acesso à trilha deste módulo
-    const { data: userInfo } = await supabase
-      .from('users')
-      .select('area_id')
-      .eq('id', user.id)
-      .single();
+    const admin = createAdminClient();
 
     const { data: trailCheck } = await supabase
       .from('trails')
@@ -61,13 +58,20 @@ export async function POST(request: NextRequest) {
     }
 
     if (trailCheck.type === 'obrigatoria_area' || trailCheck.type === 'optativa_area') {
-      const { data: trailAreas } = await supabase
-        .from('trail_areas')
-        .select('area_id')
-        .eq('trail_id', trailCheck.id);
+      const [{ data: userAreas }, { data: trailAreas }, { data: trailUsers }] = await Promise.all([
+        admin.from('user_areas').select('area_id').eq('user_id', user.id),
+        admin.from('trail_areas').select('area_id').eq('trail_id', trailCheck.id),
+        admin.from('trail_users').select('user_id').eq('trail_id', trailCheck.id),
+      ]);
 
+      const userAreaIds = (userAreas || []).map((ua) => ua.area_id);
       const trailAreaIds = (trailAreas || []).map((ta) => ta.area_id);
-      if (!userInfo?.area_id || !trailAreaIds.includes(userInfo.area_id)) {
+      const trailUserIds = (trailUsers || []).map((tu) => tu.user_id);
+
+      const hasAreaMatch = userAreaIds.some((aid) => trailAreaIds.includes(aid));
+      const hasUserMatch = trailUserIds.includes(user.id);
+
+      if (!hasAreaMatch && !hasUserMatch) {
         return NextResponse.json(
           { error: 'Você não tem acesso a este módulo' },
           { status: 403 }

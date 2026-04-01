@@ -24,61 +24,18 @@ export function AreasManager() {
   const [editingArea, setEditingArea] = useState<Area | null>(null);
   const [deletingAreaId, setDeletingAreaId] = useState<string | null>(null);
 
-  // Buscar áreas com contagens
+  // Buscar áreas com contagens via API
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
       try {
         setLoading(true);
-
-        const { data: areasData, error: areasError } = await supabase
-          .from('areas')
-          .select('*')
-          .order('name');
-
+        const res = await fetch('/api/admin/areas');
         if (cancelled) return;
-        if (areasError) throw areasError;
-
-        if (!areasData || areasData.length === 0) {
-          setAreas([]);
-          setLoading(false);
-          return;
-        }
-
-        const areaIds = areasData.map((a) => a.id);
-        const [{ data: usersData }, { data: trailAreasData }] = await Promise.all([
-          supabase.from('users').select('area_id').in('area_id', areaIds),
-          supabase.from('trail_areas').select('area_id').in('area_id', areaIds),
-        ]);
-
-        if (cancelled) return;
-
-        const usersCountMap = new Map<string, number>();
-        if (usersData) {
-          usersData.forEach((user) => {
-            if (user.area_id) {
-              usersCountMap.set(user.area_id, (usersCountMap.get(user.area_id) || 0) + 1);
-            }
-          });
-        }
-
-        const trailsCountMap = new Map<string, number>();
-        if (trailAreasData) {
-          trailAreasData.forEach((ta) => {
-            if (ta.area_id) {
-              trailsCountMap.set(ta.area_id, (trailsCountMap.get(ta.area_id) || 0) + 1);
-            }
-          });
-        }
-
-        const areasWithCounts: AreaWithCounts[] = areasData.map((area) => ({
-          ...area,
-          usersCount: usersCountMap.get(area.id) || 0,
-          trailsCount: trailsCountMap.get(area.id) || 0,
-        }));
-
-        setAreas(areasWithCounts);
+        if (!res.ok) throw new Error('Erro ao buscar áreas');
+        const data = await res.json();
+        setAreas(data as AreaWithCounts[]);
       } catch (error) {
         if (cancelled) return;
         console.error('Erro ao buscar áreas:', error);
@@ -92,52 +49,14 @@ export function AreasManager() {
 
     load();
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function refetchAreas() {
     try {
-      const { data: areasData, error: areasError } = await supabase
-        .from('areas')
-        .select('*')
-        .order('name');
-
-      if (areasError) throw areasError;
-
-      if (!areasData || areasData.length === 0) {
-        setAreas([]);
-        return;
-      }
-
-      const areaIds = areasData.map((a) => a.id);
-      const [{ data: usersData }, { data: trailAreasData }] = await Promise.all([
-        supabase.from('users').select('area_id').in('area_id', areaIds),
-        supabase.from('trail_areas').select('area_id').in('area_id', areaIds),
-      ]);
-
-      const usersCountMap = new Map<string, number>();
-      if (usersData) {
-        usersData.forEach((user) => {
-          if (user.area_id) {
-            usersCountMap.set(user.area_id, (usersCountMap.get(user.area_id) || 0) + 1);
-          }
-        });
-      }
-
-      const trailsCountMap = new Map<string, number>();
-      if (trailAreasData) {
-        trailAreasData.forEach((ta) => {
-          if (ta.area_id) {
-            trailsCountMap.set(ta.area_id, (trailsCountMap.get(ta.area_id) || 0) + 1);
-          }
-        });
-      }
-
-      setAreas(areasData.map((area) => ({
-        ...area,
-        usersCount: usersCountMap.get(area.id) || 0,
-        trailsCount: trailsCountMap.get(area.id) || 0,
-      })));
+      const res = await fetch('/api/admin/areas');
+      if (!res.ok) throw new Error('Erro ao buscar áreas');
+      const data = await res.json();
+      setAreas(data as AreaWithCounts[]);
     } catch (error) {
       console.error('Erro ao buscar áreas:', error);
       toast.error('Erro ao carregar áreas', {

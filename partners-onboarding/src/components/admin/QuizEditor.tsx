@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -25,25 +24,20 @@ interface QuizEditorProps {
 }
 
 export function QuizEditor({ moduleId, onClose }: QuizEditorProps) {
-  const supabase = createClient();
   const [questions, setQuestions] = useState<QuestionForm[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Carregar questões existentes
+  // Carregar questões existentes via API
   useEffect(() => {
     async function loadQuestions() {
       try {
-        const { data, error } = await supabase
-          .from('quiz_questions')
-          .select('*')
-          .eq('module_id', moduleId)
-          .order('created_at', { ascending: true });
-
-        if (error) throw error;
+        const res = await fetch(`/api/admin/quiz-questions?moduleId=${moduleId}`);
+        if (!res.ok) throw new Error('Erro ao carregar questões');
+        const data = await res.json();
 
         if (data && data.length > 0) {
-          const formattedQuestions: QuestionForm[] = data.map((q) => ({
+          const formattedQuestions: QuestionForm[] = data.map((q: QuizQuestion) => ({
             id: q.id,
             question: q.question,
             options: q.options as [string, string, string, string],
@@ -152,69 +146,21 @@ export function QuizEditor({ moduleId, onClose }: QuizEditorProps) {
     try {
       setSaving(true);
 
-      // Preparar dados para upsert
       const questionsToSave = validQuestions.map((q) => ({
         id: q.id || undefined,
-        module_id: moduleId,
         question: q.question.trim(),
         options: q.options.map((opt) => opt.trim()),
         correct_answer: q.correctAnswer,
       }));
 
-      // Buscar IDs das questões existentes para deletar as que foram removidas
-      const { data: existingQuestions } = await supabase
-        .from('quiz_questions')
-        .select('id')
-        .eq('module_id', moduleId);
-
-      const existingIds = existingQuestions?.map((q) => q.id) || [];
-      const savedIds = questionsToSave.map((q) => q.id).filter((id): id is string => !!id);
-      const idsToDelete = existingIds.filter((id) => !savedIds.includes(id));
-
-      // Deletar questões removidas
-      if (idsToDelete.length > 0) {
-        const { error: deleteError } = await supabase
-          .from('quiz_questions')
-          .delete()
-          .in('id', idsToDelete);
-
-        if (deleteError) throw deleteError;
-      }
-
-      // Upsert questões (insert ou update)
-      for (const question of questionsToSave) {
-        if (question.id) {
-          // Update
-          const { error } = await supabase
-            .from('quiz_questions')
-            .update({
-              question: question.question,
-              options: question.options,
-              correct_answer: question.correct_answer,
-            })
-            .eq('id', question.id);
-
-          if (error) throw error;
-        } else {
-          // Insert
-          const { error } = await supabase.from('quiz_questions').insert({
-            module_id: question.module_id,
-            question: question.question,
-            options: question.options,
-            correct_answer: question.correct_answer,
-          });
-
-          if (error) throw error;
-        }
-      }
-
-      logAction({
-        action: 'update',
-        entityType: 'quiz_question',
-        entityId: moduleId,
-        entityName: `Quiz do módulo`,
-        details: { total_questoes: questionsToSave.length, deletadas: idsToDelete.length },
+      const res = await fetch('/api/admin/quiz-questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ moduleId, questions: questionsToSave }),
       });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Erro ao salvar questões');
 
       toast.success('Questões salvas com sucesso!');
       onClose();

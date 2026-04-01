@@ -4,11 +4,11 @@ import { Users, Award, AlertTriangle } from 'lucide-react';
 import { getTeamStats } from '@/app/(dashboard)/gestor/page';
 
 interface TeamStatsProps {
-  areaId: string | null;
+  areaIds: string[];
 }
 
-export async function TeamStats({ areaId }: TeamStatsProps) {
-  const stats = await getTeamStats(areaId);
+export async function TeamStats({ areaIds }: TeamStatsProps) {
+  const stats = await getTeamStats(areaIds);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

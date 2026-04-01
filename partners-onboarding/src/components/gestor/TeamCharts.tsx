@@ -2,13 +2,13 @@ import { getTrailProgressData, getTeamMembers } from '@/app/(dashboard)/gestor/p
 import { TeamChartsClient } from './TeamChartsClient';
 
 interface TeamChartsProps {
-  areaId: string | null;
+  areaIds: string[];
 }
 
-export async function TeamCharts({ areaId }: TeamChartsProps) {
+export async function TeamCharts({ areaIds }: TeamChartsProps) {
   const [trailData, teamMembers] = await Promise.all([
-    getTrailProgressData(areaId),
-    getTeamMembers(areaId),
+    getTrailProgressData(areaIds),
+    getTeamMembers(areaIds),
   ]);
 
   return <TeamChartsClient trailData={trailData} teamMembers={teamMembers} />;

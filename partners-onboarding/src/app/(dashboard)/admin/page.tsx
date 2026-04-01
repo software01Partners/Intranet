@@ -6,7 +6,10 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { ProgressRing } from '@/components/ui/ProgressRing';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { calculateProgress } from '@/lib/utils';
-import { getTrailAreasMap, isTrailVisibleToArea } from '@/lib/trail-areas';
+import { getTrailAreasMap, isTrailVisibleToUser } from '@/lib/trail-areas';
+import { getTrailUsersMap } from '@/lib/trail-users';
+import { getUserAreasMap } from '@/lib/user-areas';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { MetricsDashboardClient } from '@/components/metrics/MetricsDashboardClient';
 import { MetricsAreaSelector } from '@/components/metrics/MetricsAreaSelector';
 import type {
@@ -63,10 +66,11 @@ async function getAllAreas(): Promise<Area[]> {
 }
 
 async function getMetricsData(
-  areaId: string | null,
+  areaIds: string[],
   isAdmin: boolean
 ): Promise<MetricsData> {
   const supabase = await createClient();
+  const adminClient = createAdminClient();
 
   // Queries paralelas
   const [
@@ -96,18 +100,30 @@ async function getMetricsData(
   const certificates = certificatesRes.data || [];
   const areas = areasRes.data || [];
 
-  // Buscar trail_areas para todas as trilhas
-  const trailAreasMap = await getTrailAreasMap(supabase, trails.map((t) => t.id));
+  // Buscar trail_areas e trail_users para todas as trilhas
+  const allTrailIds = trails.map((t) => t.id);
+  const [trailAreasMap, trailUsersMap] = await Promise.all([
+    getTrailAreasMap(supabase, allTrailIds),
+    getTrailUsersMap(supabase, allTrailIds),
+  ]);
+
+  // Buscar user_areas para todos os usuários
+  const allUserIds = users.map((u) => u.id);
+  const userAreasMap = await getUserAreasMap(adminClient, allUserIds);
 
   // Filtrar por área se necessário
-  const filteredUsers = areaId
-    ? users.filter((u) => u.area_id === areaId)
+  const filteredUsers = areaIds.length > 0
+    ? users.filter((u) => {
+        const uAreaIds = userAreasMap.get(u.id) || (u.area_id ? [u.area_id] : []);
+        return uAreaIds.some((aid: string) => areaIds.includes(aid));
+      })
     : users;
 
   // ── Helper: trilhas visíveis para um usuário ──
-  function getVisibleTrails(userAreaId: string | null) {
+  function getVisibleTrails(userId: string, userAreaId: string | null) {
+    const uAreaIds = userAreasMap.get(userId) || (userAreaId ? [userAreaId] : []);
     return trails.filter((t) =>
-      isTrailVisibleToArea(t, userAreaId, trailAreasMap.get(t.id) || [])
+      isTrailVisibleToUser(t, uAreaIds, trailAreasMap.get(t.id) || [], trailUsersMap.get(t.id) || [], userId)
     );
   }
 
@@ -132,7 +148,7 @@ async function getMetricsData(
   }
 
   const userMetrics: UserMetrics[] = filteredUsers.map((user) => {
-    const visible = getVisibleTrails(user.area_id);
+    const visible = getVisibleTrails(user.id, user.area_id);
     const visibleModules = visible.flatMap((t) => getTrailModules(t.id));
     const userProgress = progress.filter((p) => p.user_id === user.id);
 
@@ -191,7 +207,7 @@ async function getMetricsData(
       : 0;
   const totalTrailsCompleted = userMetrics.reduce((s, u) => s + u.trailsCompleted, 0);
 
-  const filteredCerts = areaId
+  const filteredCerts = areaIds.length > 0
     ? certificates.filter((c) => {
         const user = filteredUsers.find((u) => u.id === c.user_id);
         return !!user;
@@ -221,7 +237,7 @@ async function getMetricsData(
       );
       if (blockedUntil > nowDate) {
         const userId = group[0].user_id;
-        if (!areaId || filteredUsers.some((u) => u.id === userId)) {
+        if (areaIds.length === 0 || filteredUsers.some((u) => u.id === userId)) {
           quizBlockedCount++;
         }
       }
@@ -246,7 +262,7 @@ async function getMetricsData(
   ];
 
   // ── Area Comparison (admin only) ──
-  const areaComparison: AreaComparisonItem[] = !areaId
+  const areaComparison: AreaComparisonItem[] = areaIds.length === 0
     ? areas.map((area) => {
         const areaUsers = userMetrics.filter((u) => u.areaId === area.id);
         return {
@@ -265,8 +281,8 @@ async function getMetricsData(
     : [];
 
   // ── Trail Analytics ──
-  const visibleTrails = areaId
-    ? trails.filter((t) => isTrailVisibleToArea(t, areaId, trailAreasMap.get(t.id) || []))
+  const visibleTrails = areaIds.length > 0
+    ? trails.filter((t) => isTrailVisibleToUser(t, areaIds, trailAreasMap.get(t.id) || [], trailUsersMap.get(t.id) || []))
     : trails;
 
   const trailAnalytics: TrailAnalyticsItem[] = visibleTrails.map((trail) => {
@@ -275,10 +291,11 @@ async function getMetricsData(
 
     // Quem deveria ver essa trilha
     const trailAreaIds = trailAreasMap.get(trail.id) || [];
-    const enrolledUsers =
-      trail.type === 'obrigatoria_global' || trail.type === 'optativa_global'
-        ? filteredUsers
-        : filteredUsers.filter((u) => u.area_id && trailAreaIds.includes(u.area_id));
+    const trailUserIds = trailUsersMap.get(trail.id) || [];
+    const enrolledUsers = filteredUsers.filter((u) => {
+      const uAreaIds = userAreasMap.get(u.id) || (u.area_id ? [u.area_id] : []);
+      return isTrailVisibleToUser(trail, uAreaIds, trailAreaIds, trailUserIds, u.id);
+    });
 
     let totalProgress = 0;
     let completedCount = 0;
@@ -357,7 +374,7 @@ async function getMetricsData(
 
     const dayCompletions = progress.filter((p) => {
       if (!p.completed || !p.completed_at) return false;
-      if (areaId) {
+      if (areaIds.length > 0) {
         const user = filteredUsers.find((u) => u.id === p.user_id);
         if (!user) return false;
       }
@@ -377,10 +394,11 @@ async function getMetricsData(
     .map((trail) => {
       const trailMods = getTrailModules(trail.id);
       const deadlineTrailAreaIds = trailAreasMap.get(trail.id) || [];
-      const enrolledUsers =
-        trail.type === 'obrigatoria_global' || trail.type === 'optativa_global'
-          ? filteredUsers
-          : filteredUsers.filter((u) => u.area_id && deadlineTrailAreaIds.includes(u.area_id));
+      const deadlineTrailUserIds = trailUsersMap.get(trail.id) || [];
+      const enrolledUsers = filteredUsers.filter((u) => {
+        const uAreaIds = userAreasMap.get(u.id) || (u.area_id ? [u.area_id] : []);
+        return isTrailVisibleToUser(trail, uAreaIds, deadlineTrailAreaIds, deadlineTrailUserIds, u.id);
+      });
 
       let completedUsers = 0;
       const overdueUsers: string[] = [];
@@ -416,7 +434,7 @@ async function getMetricsData(
 
   // ── Content Analytics ──
   const filteredUserIds = new Set(filteredUsers.map((u) => u.id));
-  const filteredProgress = areaId
+  const filteredProgress = areaIds.length > 0
     ? progress.filter((p) => filteredUserIds.has(p.user_id))
     : progress;
 
@@ -515,7 +533,7 @@ async function getMetricsData(
     timeline,
     deadlines,
     contentAnalytics,
-    isAdmin: isAdmin && !areaId,
+    isAdmin: isAdmin && areaIds.length === 0,
   };
 }
 
@@ -600,20 +618,26 @@ export default async function AdminDashboardPage({
     redirect('/');
   }
 
-  // Determinar área
-  let selectedAreaId: string | null = null;
+  // Determinar áreas
+  let selectedAreaIds: string[] = [];
   if (user.role === 'gestor') {
-    selectedAreaId = user.area_id;
+    // Buscar áreas do gestor via user_areas
+    const gestorAdminClient = createAdminClient();
+    const gestorAreasMap = await getUserAreasMap(gestorAdminClient, [user.id]);
+    selectedAreaIds = gestorAreasMap.get(user.id) || (user.area_id ? [user.area_id] : []);
   } else if (user.role === 'admin' && area && area !== 'all') {
-    selectedAreaId = area;
+    selectedAreaIds = [area];
   }
+
+  // Para compatibilidade com MetricsAreaSelector (que usa string | null)
+  const selectedAreaId: string | null = selectedAreaIds.length === 1 ? selectedAreaIds[0] : null;
 
   const isAdmin = user.role === 'admin';
 
   // Buscar dados em paralelo
   const [areas, metrics] = await Promise.all([
     isAdmin ? getAllAreas() : Promise.resolve([]),
-    getMetricsData(selectedAreaId, isAdmin),
+    getMetricsData(selectedAreaIds, isAdmin),
   ]);
 
   const { kpis } = metrics;
@@ -690,7 +714,7 @@ export default async function AdminDashboardPage({
 
       {/* Quizzes Bloqueados */}
       <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-        <QuizBlockedSection areaId={selectedAreaId} />
+        <QuizBlockedSection areaIds={selectedAreaIds} />
       </Suspense>
     </div>
   );

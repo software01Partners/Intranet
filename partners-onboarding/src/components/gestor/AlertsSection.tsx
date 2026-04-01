@@ -21,17 +21,17 @@ interface TeamMember {
 }
 
 interface AlertsSectionProps {
-  areaId: string | null;
+  areaIds: string[];
 }
 
-export function AlertsSection({ areaId }: AlertsSectionProps) {
+export function AlertsSection({ areaIds }: AlertsSectionProps) {
   const [delayedMembers, setDelayedMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchDelayed() {
       try {
-        const params = areaId ? `?areaId=${areaId}` : '';
+        const params = areaIds.length > 0 ? `?areaIds=${areaIds.join(',')}` : '';
         const res = await fetch(`/api/gestor/team${params}`);
         if (!res.ok) throw new Error('Erro ao buscar equipe');
         const members: TeamMember[] = await res.json();
@@ -43,7 +43,7 @@ export function AlertsSection({ areaId }: AlertsSectionProps) {
       }
     }
     fetchDelayed();
-  }, [areaId]);
+  }, [areaIds]);
   if (loading) {
     return (
       <Card>

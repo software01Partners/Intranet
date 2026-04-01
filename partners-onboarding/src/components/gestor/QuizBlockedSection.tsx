@@ -3,21 +3,28 @@ import { QuizBlockedTable } from './QuizBlockedTable';
 import type { QuizBlockedItem } from './QuizBlockedTable';
 
 interface QuizBlockedSectionProps {
-  areaId: string | null;
+  areaIds: string[];
 }
 
 const LOCKOUT_HOURS = 72;
 
-export async function QuizBlockedSection({ areaId }: QuizBlockedSectionProps) {
+export async function QuizBlockedSection({ areaIds }: QuizBlockedSectionProps) {
   const supabase = await createClient();
 
-  // Buscar todos os usuários (filtrado por área se necessário)
+  // Buscar todos os usuários (filtrado por áreas se necessário)
   let usersQuery = supabase
     .from('users')
     .select('id, name, area_id');
 
-  if (areaId) {
-    usersQuery = usersQuery.eq('area_id', areaId);
+  if (areaIds.length > 0) {
+    // Buscar user_ids que pertencem a qualquer dessas áreas via user_areas
+    const { data: userAreaRows } = await supabase
+      .from('user_areas')
+      .select('user_id')
+      .in('area_id', areaIds);
+    const userIdsInAreas = [...new Set((userAreaRows || []).map((r: { user_id: string }) => r.user_id))];
+    if (userIdsInAreas.length === 0) return null;
+    usersQuery = usersQuery.in('id', userIdsInAreas);
   }
 
   const { data: users } = await usersQuery;

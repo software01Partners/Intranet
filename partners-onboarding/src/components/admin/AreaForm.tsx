@@ -5,11 +5,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { createClient } from '@/lib/supabase/client';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import type { Area } from '@/lib/types';
-import { logAction } from '@/lib/audit-client';
 
 // Schema de validação
 const areaFormSchema = z.object({
@@ -33,12 +31,13 @@ interface AreaFormProps {
 }
 
 export function AreaForm({ initialData, onSuccess, onCancel }: AreaFormProps) {
-  const supabase = createClient();
   const isEditMode = !!initialData;
 
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<AreaFormData>({
     resolver: zodResolver(areaFormSchema),
@@ -51,60 +50,33 @@ export function AreaForm({ initialData, onSuccess, onCancel }: AreaFormProps) {
 
   const onSubmit = async (data: AreaFormData) => {
     try {
+      const payload = { name: data.name, abbreviation: data.abbreviation, color: data.color };
+
       if (isEditMode && initialData) {
-        // Atualizar área existente
-        const { error } = await supabase
-          .from('areas')
-          .update({
-            name: data.name,
-            abbreviation: data.abbreviation,
-            color: data.color,
-          })
-          .eq('id', initialData.id);
-
-        if (error) {
-          throw error;
-        }
-
-        logAction({
-          action: 'update',
-          entityType: 'area',
-          entityId: initialData.id,
-          entityName: data.name,
+        const res = await fetch('/api/admin/areas', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: initialData.id, ...payload }),
         });
-
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Erro ao atualizar área');
         toast.success('Área atualizada com sucesso!');
       } else {
-        // Criar nova área
-        const { data: newArea, error } = await supabase
-          .from('areas')
-          .insert({
-            name: data.name,
-            abbreviation: data.abbreviation,
-            color: data.color,
-          })
-          .select()
-          .single();
-
-        if (error) {
-          throw error;
-        }
-
-        logAction({
-          action: 'create',
-          entityType: 'area',
-          entityId: newArea?.id,
-          entityName: data.name,
+        const res = await fetch('/api/admin/areas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
         });
-
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Erro ao criar área');
         toast.success('Área criada com sucesso!');
       }
 
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao salvar área:', error);
       toast.error('Erro ao salvar área', {
-        description: error.message || 'Ocorreu um erro inesperado',
+        description: error instanceof Error ? error.message : 'Ocorreu um erro inesperado',
       });
     }
   };
@@ -135,7 +107,8 @@ export function AreaForm({ initialData, onSuccess, onCancel }: AreaFormProps) {
         <div className="flex items-center gap-3">
           <input
             type="color"
-            {...register('color')}
+            value={watch('color') || '#3B82F6'}
+            onChange={(e) => setValue('color', e.target.value, { shouldValidate: true })}
             className="w-16 h-10 rounded-xl border border-[#E0DCD6] dark:border-[#3D3D3D] cursor-pointer bg-[#F5F3EF] dark:bg-[#1A1A1A]"
             disabled={isSubmitting}
           />

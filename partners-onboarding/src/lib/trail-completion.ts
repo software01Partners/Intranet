@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 /**
  * Verifica se o usuário completou todos os módulos de uma trilha.
@@ -10,6 +11,7 @@ export async function handleTrailCompletion(
   userId: string,
   trailId: string
 ): Promise<boolean> {
+  const admin = createAdminClient();
   // Buscar todos os módulos da trilha
   const { data: allModules } = await supabase
     .from('modules')
@@ -57,7 +59,7 @@ export async function handleTrailCompletion(
 
   // Notificar colaborador
   if (trail) {
-    await supabase.from('notifications').insert({
+    await admin.from('notifications').insert({
       user_id: userId,
       type: 'certificado',
       message: `Parabéns! Você concluiu a trilha "${trail.name}" e recebeu seu certificado.`,
@@ -65,22 +67,45 @@ export async function handleTrailCompletion(
     });
   }
 
-  // Notificar gestor(es) da área
-  if (userData?.area_id && trail) {
-    const { data: gestores } = await supabase
-      .from('users')
-      .select('id')
-      .eq('area_id', userData.area_id)
-      .eq('role', 'gestor');
+  // Notificar gestor(es) que gerenciam qualquer área do usuário
+  if (trail) {
+    // Fetch user's areas from user_areas
+    const { data: userAreasData } = await admin
+      .from('user_areas')
+      .select('area_id')
+      .eq('user_id', userId);
 
-    if (gestores && gestores.length > 0) {
-      const notifications = gestores.map((gestor) => ({
-        user_id: gestor.id,
-        type: 'certificado' as const,
-        message: `${userData.name || 'Um colaborador'} concluiu a trilha "${trail.name}".`,
-        read: false,
-      }));
-      await supabase.from('notifications').insert(notifications);
+    const userAreaIds = (userAreasData || []).map((ua) => ua.area_id);
+    // Fallback to deprecated area_id
+    if (userAreaIds.length === 0 && userData?.area_id) {
+      userAreaIds.push(userData.area_id);
+    }
+
+    if (userAreaIds.length > 0) {
+      // Find gestors in any of those areas via user_areas
+      const { data: gestorAreaEntries } = await admin
+        .from('user_areas')
+        .select('user_id')
+        .in('area_id', userAreaIds);
+
+      const potentialGestorIds = [...new Set((gestorAreaEntries || []).map((e) => e.user_id))];
+      if (potentialGestorIds.length > 0) {
+        const { data: gestores } = await admin
+          .from('users')
+          .select('id')
+          .in('id', potentialGestorIds)
+          .eq('role', 'gestor');
+
+        if (gestores && gestores.length > 0) {
+          const notifications = gestores.map((gestor) => ({
+            user_id: gestor.id,
+            type: 'certificado' as const,
+            message: `${userData?.name || 'Um colaborador'} concluiu a trilha "${trail.name}".`,
+            read: false,
+          }));
+          await admin.from('notifications').insert(notifications);
+        }
+      }
     }
   }
 

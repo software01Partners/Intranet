@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { CertificateModal } from '@/components/certificate/CertificateModal';
 import { Card, CardContent } from '@/components/ui/Card';
 import { formatDuration, formatDeadline, getDeadlineStatus } from '@/lib/utils';
 import { calculateProgress } from '@/lib/utils';
@@ -288,31 +289,13 @@ export function TrailPlayerClient({
         </div>
       </div>
 
-      {/* Modal de Conclusão */}
-      <Modal
+      {/* Modal de Conclusão — usa CertificateModal para baixar PDF */}
+      <CertificateModal
         isOpen={showCompletionModal}
         onClose={() => setShowCompletionModal(false)}
-        title="Parabéns! 🎉"
-        size="md"
-      >
-        <div className="space-y-4">
-          <p className="text-[#2D2A26] dark:text-[#E8E5E0]">
-            Você concluiu todos os módulos desta trilha!
-          </p>
-          <div className="flex gap-3">
-            <Link href="/certificados" className="flex-1">
-              <Button icon={Award} className="w-full" size="lg">
-                Ver Certificado
-              </Button>
-            </Link>
-            <Link href="/trilhas" className="flex-1">
-              <Button variant="secondary" className="w-full" size="lg">
-                Ver Outras Trilhas
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </Modal>
+        trailId={trail.id}
+        trailName={trail.name}
+      />
     </>
   );
 }

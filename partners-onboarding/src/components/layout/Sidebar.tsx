@@ -17,7 +17,7 @@ import {
   ScrollText,
   Trash2,
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { createClient } from '@/lib/supabase/client';
 import type { UserRole } from '@/lib/types';
 
 interface SidebarProps {
@@ -122,16 +122,16 @@ const menuItems: MenuItem[] = [
 export function Sidebar({ isOpen, onClose, role: roleProp }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { signOut } = useAuth();
   const role = roleProp;
 
   const handleLogout = async () => {
     try {
-      await signOut();
-      router.push('/login');
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error);
+      const supabase = createClient();
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch {
+      // ignorar erro
     }
+    window.location.href = '/login';
   };
 
   const filteredMenuItems = menuItems.filter(
@@ -274,10 +274,10 @@ export function Sidebar({ isOpen, onClose, role: roleProp }: SidebarProps) {
           )}
         </nav>
 
-        <div className="p-4 border-t border-[#E0DCD6] dark:border-[#3D3D3D]">
+        <div className="flex-shrink-0 p-4 border-t border-[#E0DCD6] dark:border-[#3D3D3D]">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0] hover:bg-[#EDE9E3] dark:hover:bg-[#3D3D3D] transition-all"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0] hover:bg-[#EDE9E3] dark:hover:bg-[#3D3D3D] transition-all cursor-pointer"
           >
             <LogOut className="w-5 h-5" />
             <span className="font-medium">Sair</span>

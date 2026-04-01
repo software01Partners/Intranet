@@ -2,6 +2,104 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logAuditAction } from '@/lib/audit';
+import { calculateProgress } from '@/lib/utils';
+import { getUserAreasMap } from '@/lib/user-areas';
+
+// GET — listar usuários com progresso
+export async function GET() {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+
+    if (!authUser) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+    }
+
+    const admin = createAdminClient();
+    const { data: currentUser } = await admin
+      .from('users')
+      .select('role')
+      .eq('id', authUser.id)
+      .single();
+
+    if (!currentUser || currentUser.role !== 'admin') {
+      return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
+    }
+
+    // Buscar todos os usuários
+    const { data: usersData, error } = await admin
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (!usersData || usersData.length === 0) {
+      return NextResponse.json({ users: [], areas: [] });
+    }
+
+    // Buscar áreas
+    const { data: areasData } = await admin
+      .from('areas')
+      .select('*')
+      .is('deleted_at', null)
+      .order('name');
+
+    const areasMap = new Map<string, typeof areasData extends (infer T)[] | null ? T : never>();
+    (areasData || []).forEach((area) => areasMap.set(area.id, area));
+
+    // Buscar user_areas para todos os usuários
+    const userIds = usersData.map((u) => u.id);
+    const userAreasMap = await getUserAreasMap(admin, userIds);
+
+    // Buscar módulos e progresso em batch
+    const { data: allModules } = await admin
+      .from('modules')
+      .select('id')
+      .is('deleted_at', null);
+
+    const totalModules = allModules?.length || 0;
+
+    const { data: allProgress } = await admin
+      .from('user_progress')
+      .select('user_id, module_id, completed');
+
+    const progressByUser = new Map<string, number>();
+    if (allProgress && totalModules > 0) {
+      const moduleIds = new Set((allModules || []).map((m) => m.id));
+      allProgress.forEach((p) => {
+        if (p.completed && moduleIds.has(p.module_id)) {
+          progressByUser.set(p.user_id, (progressByUser.get(p.user_id) || 0) + 1);
+        }
+      });
+    }
+
+    const users = usersData.map((user) => {
+      const areaIds = userAreasMap.get(user.id) || (user.area_id ? [user.area_id] : []);
+      const userAreas = areaIds
+        .map((aid) => areasMap.get(aid))
+        .filter(Boolean);
+      return {
+        ...user,
+        area_ids: areaIds,
+        areas: userAreas,
+        area: user.area_id ? areasMap.get(user.area_id) || null : null,
+        overallProgress: totalModules > 0
+          ? calculateProgress(progressByUser.get(user.id) || 0, totalModules)
+          : 0,
+      };
+    });
+
+    return NextResponse.json({ users, areas: areasData || [] });
+  } catch (error) {
+    console.error('Erro ao listar usuários:', error);
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+  }
+}
 
 // DELETE — excluir usuário
 export async function DELETE(request: NextRequest) {
@@ -63,11 +161,17 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
+    // Limpar referências FK que apontam para este usuário
+    await admin.from('trails').update({ created_by: null }).eq('created_by', id);
+    await admin.from('trail_users').update({ assigned_by: null }).eq('assigned_by', id);
+
     // Excluir dados relacionados do usuário
     await admin.from('quiz_attempts').delete().eq('user_id', id);
     await admin.from('user_progress').delete().eq('user_id', id);
     await admin.from('notifications').delete().eq('user_id', id);
     await admin.from('certificates').delete().eq('user_id', id);
+    await admin.from('user_areas').delete().eq('user_id', id);
+    await admin.from('trail_users').delete().eq('user_id', id);
 
     // Excluir registro na tabela users
     const { error: deleteUserError } = await admin
@@ -128,7 +232,13 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Apenas admin pode editar usuários' }, { status: 403 });
     }
 
-    const { id, name, area_id, role } = await request.json();
+    const body = await request.json();
+    const { id, name, role } = body;
+    // Support area_ids (array) or area_id (single) for backward compat
+    let area_ids: string[] | undefined = body.area_ids;
+    if (!area_ids && body.area_id !== undefined) {
+      area_ids = body.area_id ? [body.area_id] : [];
+    }
 
     if (!id) {
       return NextResponse.json({ error: 'ID do usuário é obrigatório' }, { status: 400 });
@@ -145,7 +255,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const updates: Record<string, string | null> = {};
-    const changes: Record<string, { de: string | null; para: string | null }> = {};
+    const changes: Record<string, { de: string | null; para: string | null } | { de: string[]; para: string[] }> = {};
 
     if (name !== undefined && name !== targetUser.name) {
       updates.name = name;
@@ -155,22 +265,45 @@ export async function PATCH(request: NextRequest) {
       updates.role = role;
       changes.role = { de: targetUser.role, para: role };
     }
-    if (area_id !== undefined && area_id !== targetUser.area_id) {
-      updates.area_id = area_id;
-      changes.area_id = { de: targetUser.area_id, para: area_id };
+
+    // Handle area_ids: update user_areas and sync users.area_id
+    if (area_ids !== undefined) {
+      const newPrimaryArea = area_ids[0] || null;
+      if (newPrimaryArea !== targetUser.area_id) {
+        updates.area_id = newPrimaryArea;
+      }
+
+      // Fetch old area_ids for audit
+      const { data: oldUserAreas } = await admin
+        .from('user_areas')
+        .select('area_id')
+        .eq('user_id', id);
+      const oldAreaIds = (oldUserAreas || []).map((ua) => ua.area_id);
+
+      // Replace user_areas entries
+      await admin.from('user_areas').delete().eq('user_id', id);
+      if (area_ids.length > 0) {
+        await admin.from('user_areas').insert(
+          area_ids.map((areaId) => ({ user_id: id, area_id: areaId }))
+        );
+      }
+
+      changes.area_ids = { de: oldAreaIds, para: area_ids };
     }
 
-    if (Object.keys(updates).length === 0) {
+    if (Object.keys(updates).length === 0 && area_ids === undefined) {
       return NextResponse.json({ success: true, message: 'Nenhuma alteração' });
     }
 
-    const { error } = await admin
-      .from('users')
-      .update(updates)
-      .eq('id', id);
+    if (Object.keys(updates).length > 0) {
+      const { error } = await admin
+        .from('users')
+        .update(updates)
+        .eq('id', id);
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
     }
 
     await logAuditAction({

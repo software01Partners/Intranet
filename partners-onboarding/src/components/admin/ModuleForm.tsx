@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { createClient } from '@/lib/supabase/client';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
@@ -32,7 +31,10 @@ const createModuleFormSchema = (hasExistingContent: boolean) =>
           return !!data.externalUrl && data.externalUrl.trim().length > 0;
         }
         // Se tipo é video ou document com upload, arquivo é obrigatório (se não tiver content_url existente)
-        if ((data.type === 'video' || data.type === 'document') && !data.file && !hasExistingContent) {
+        if (data.type === 'video' && data.contentSource !== 'link' && !data.file && !hasExistingContent) {
+          return false;
+        }
+        if (data.type === 'document' && !data.file && !hasExistingContent) {
           return false;
         }
         return true;
@@ -72,7 +74,6 @@ export function ModuleForm({
   onSuccess,
   onCancel,
 }: ModuleFormProps) {
-  const supabase = createClient();
   const isEditMode = !!initialData;
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -146,12 +147,6 @@ export function ModuleForm({
 
   const onSubmit = async (data: ModuleFormData) => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session?.user) {
-        toast.error('Erro', { description: 'Usuário não autenticado' });
-        return;
-      }
-
       let contentUrl = initialData?.content_url || null;
 
       // Se vídeo com link externo, salvar URL diretamente (sem upload)
@@ -223,59 +218,29 @@ export function ModuleForm({
       };
 
       if (isEditMode && initialData) {
-        // Update
-        const { error } = await supabase
-          .from('modules')
-          .update(payload)
-          .eq('id', initialData.id);
-
-        if (error) throw error;
-
-        logAction({
-          action: 'update',
-          entityType: 'module',
-          entityId: initialData.id,
-          entityName: data.title,
-          details: { type: data.type, trail_id: trailId },
+        // Update via API
+        const response = await fetch('/api/admin/modules', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: initialData.id, ...payload }),
         });
+
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Erro ao atualizar módulo');
 
         toast.success('Módulo atualizado com sucesso!');
       } else {
-        // Insert - buscar próximo sort_order
-        const { data: modulesData } = await supabase
-          .from('modules')
-          .select('sort_order')
-          .eq('trail_id', trailId)
-          .order('sort_order', { ascending: false })
-          .limit(1);
-
-        const nextSortOrder = modulesData && modulesData.length > 0
-          ? (modulesData[0].sort_order || 0) + 1
-          : 0;
-
-        const { data: newModule, error } = await supabase
-          .from('modules')
-          .insert({ ...payload, sort_order: nextSortOrder })
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        logAction({
-          action: 'create',
-          entityType: 'module',
-          entityId: newModule?.id,
-          entityName: data.title,
-          details: { type: data.type, trail_id: trailId },
+        // Create via API (sort_order calculado no server)
+        const response = await fetch('/api/admin/modules', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
         });
 
-        toast.success('Módulo criado com sucesso!');
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Erro ao criar módulo');
 
-        // Se for quiz, abrir editor de questões
-        if (data.type === 'quiz' && newModule) {
-          // O onSuccess será chamado e o ModulesManager abrirá o QuizEditor
-          // Passamos o moduleId via callback ou state
-        }
+        toast.success('Módulo criado com sucesso!');
       }
 
       setIsUploading(false);

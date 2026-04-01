@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { z } from 'zod';
 import { handleTrailCompletion } from '@/lib/trail-completion';
 
@@ -49,11 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar se o usuário tem acesso à trilha deste módulo
-    const { data: userData } = await supabase
-      .from('users')
-      .select('area_id')
-      .eq('id', user.id)
-      .single();
+    const adminClient = createAdminClient();
 
     const { data: trail } = await supabase
       .from('trails')
@@ -69,15 +66,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar visibilidade da trilha para a área do usuário
+    // Verificar visibilidade da trilha com multi-area + trail_users
     if (trail.type === 'obrigatoria_area' || trail.type === 'optativa_area') {
-      const { data: trailAreas } = await supabase
-        .from('trail_areas')
-        .select('area_id')
-        .eq('trail_id', trail.id);
+      const [{ data: userAreas }, { data: trailAreas }, { data: trailUsers }] = await Promise.all([
+        adminClient.from('user_areas').select('area_id').eq('user_id', user.id),
+        adminClient.from('trail_areas').select('area_id').eq('trail_id', trail.id),
+        adminClient.from('trail_users').select('user_id').eq('trail_id', trail.id),
+      ]);
 
+      const userAreaIds = (userAreas || []).map((ua) => ua.area_id);
       const trailAreaIds = (trailAreas || []).map((ta) => ta.area_id);
-      if (!userData?.area_id || !trailAreaIds.includes(userData.area_id)) {
+      const trailUserIds = (trailUsers || []).map((tu) => tu.user_id);
+
+      const hasAreaMatch = userAreaIds.some((aid) => trailAreaIds.includes(aid));
+      const hasUserMatch = trailUserIds.includes(user.id);
+
+      if (!hasAreaMatch && !hasUserMatch) {
         return NextResponse.json(
           { error: 'Você não tem acesso a este quiz' },
           { status: 403 }
@@ -229,34 +233,56 @@ export async function POST(request: NextRequest) {
         Date.now() + LOCKOUT_HOURS * 60 * 60 * 1000
       ).toISOString();
 
-      const { data: userData } = await supabase
+      const { data: failedUserData } = await supabase
         .from('users')
         .select('name, area_id')
         .eq('id', user.id)
         .single();
 
-      const { data: trail } = await supabase
+      const { data: failedTrail } = await supabase
         .from('trails')
         .select('name')
         .eq('id', moduleData.trail_id)
         .single();
 
-      if (userData?.area_id && trail) {
-        const { data: gestores } = await supabase
-          .from('users')
-          .select('id')
-          .eq('area_id', userData.area_id)
-          .eq('role', 'gestor');
+      if (failedUserData && failedTrail) {
+        // Find gestors who manage any of this user's areas
+        const { data: failedUserAreas } = await adminClient
+          .from('user_areas')
+          .select('area_id')
+          .eq('user_id', user.id);
 
-        if (gestores && gestores.length > 0) {
-          const notifications = gestores.map((gestor) => ({
-            user_id: gestor.id,
-            type: 'quiz_bloqueado' as const,
-            message: `${userData.name || 'Um colaborador'} falhou 3 vezes no quiz "${moduleData.title}" da trilha "${trail.name}"`,
-            read: false,
-          }));
+        const failedUserAreaIds = (failedUserAreas || []).map((ua) => ua.area_id);
+        if (failedUserAreaIds.length === 0 && failedUserData.area_id) {
+          failedUserAreaIds.push(failedUserData.area_id);
+        }
 
-          await supabase.from('notifications').insert(notifications);
+        if (failedUserAreaIds.length > 0) {
+          // Find gestors in any of those areas via user_areas
+          const { data: gestorAreaEntries } = await adminClient
+            .from('user_areas')
+            .select('user_id')
+            .in('area_id', failedUserAreaIds);
+
+          const potentialGestorIds = [...new Set((gestorAreaEntries || []).map((e) => e.user_id))];
+          if (potentialGestorIds.length > 0) {
+            const { data: gestores } = await adminClient
+              .from('users')
+              .select('id')
+              .in('id', potentialGestorIds)
+              .eq('role', 'gestor');
+
+            if (gestores && gestores.length > 0) {
+              const notifications = gestores.map((gestor) => ({
+                user_id: gestor.id,
+                type: 'quiz_bloqueado' as const,
+                message: `${failedUserData.name || 'Um colaborador'} falhou 3 vezes no quiz "${moduleData.title}" da trilha "${failedTrail.name}"`,
+                read: false,
+              }));
+
+              await adminClient.from('notifications').insert(notifications);
+            }
+          }
         }
       }
     }

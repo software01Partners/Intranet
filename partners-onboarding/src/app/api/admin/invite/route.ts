@@ -35,12 +35,19 @@ export async function POST(request: NextRequest) {
 
     // Ler dados do body
     const body = await request.json();
-    const { name, email, area_id, role } = body;
+    const { name, email, role } = body;
+    // Support area_ids (array) or area_id (single) for backward compat
+    const area_ids: string[] = body.area_ids
+      ? body.area_ids
+      : body.area_id
+        ? [body.area_id]
+        : [];
+    const area_id = area_ids[0] || null;
 
     // Validação
-    if (!name || !email || !area_id || !role) {
+    if (!name || !email || !role || area_ids.length === 0) {
       return NextResponse.json(
-        { error: 'Campos obrigatórios: name, email, area_id, role' },
+        { error: 'Campos obrigatórios: name, email, area_ids (ou area_id), role' },
         { status: 400 }
       );
     }
@@ -108,6 +115,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Inserir registros na tabela user_areas
+    if (area_ids.length > 0) {
+      const { error: uaError } = await adminClient
+        .from('user_areas')
+        .insert(area_ids.map((aid: string) => ({ user_id: newAuthUser.user.id, area_id: aid })));
+
+      if (uaError) {
+        console.error('Erro ao inserir user_areas:', uaError);
+        // Cleanup: remover user e auth
+        await adminClient.from('users').delete().eq('id', newAuthUser.user.id);
+        await adminClient.auth.admin.deleteUser(newAuthUser.user.id);
+        return NextResponse.json(
+          { error: 'Erro ao vincular áreas ao usuário', details: uaError.message },
+          { status: 500 }
+        );
+      }
+    }
+
     await logAuditAction({
       userId: authUser.id,
       userName: userData.name,
@@ -116,7 +141,7 @@ export async function POST(request: NextRequest) {
       entityType: 'user',
       entityId: newAuthUser.user.id,
       entityName: name,
-      details: { email, role, area_id },
+      details: { email, role, area_id, area_ids },
     });
 
     return NextResponse.json({

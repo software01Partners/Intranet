@@ -2,6 +2,109 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logAuditAction } from '@/lib/audit';
+import { getTrailUsersMap } from '@/lib/trail-users';
+
+// GET — listar trilhas (admin vê todas, gestor vê da área)
+export async function GET(request: Request) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+
+    if (!authUser) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+    }
+
+    const admin = createAdminClient();
+    const { data: userData } = await admin
+      .from('users')
+      .select('role, area_id')
+      .eq('id', authUser.id)
+      .single();
+
+    if (!userData || (userData.role !== 'admin' && userData.role !== 'gestor')) {
+      return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const areaFilter = searchParams.get('areaFilter');
+
+    let trails;
+    const { data: allTrails, error } = await admin
+      .from('trails')
+      .select('*')
+      .is('deleted_at', null)
+      .order('name');
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    trails = allTrails || [];
+
+    // Se gestor ou filtro de área, filtrar por trail_areas
+    const filterArea = userData.role === 'gestor' ? userData.area_id : areaFilter;
+    if (filterArea && filterArea !== 'all') {
+      const trailIds = trails.map((t) => t.id);
+      if (trailIds.length > 0) {
+        const { data: trailAreas } = await admin
+          .from('trail_areas')
+          .select('trail_id')
+          .eq('area_id', filterArea)
+          .in('trail_id', trailIds);
+
+        const allowedIds = new Set((trailAreas || []).map((ta) => ta.trail_id));
+        trails = trails.filter((t) => allowedIds.has(t.id));
+      }
+    }
+
+    // Buscar trail_areas, módulos e criadores em batch
+    if (trails.length > 0) {
+      const trailIds = trails.map((t) => t.id);
+      const creatorIds = [...new Set(trails.map((t) => t.created_by).filter(Boolean))];
+
+      const [{ data: allTrailAreas }, { data: allModules }, { data: creatorsData }, trailUsersMap] = await Promise.all([
+        admin.from('trail_areas').select('trail_id, area_id').in('trail_id', trailIds),
+        admin.from('modules').select('trail_id').is('deleted_at', null).in('trail_id', trailIds),
+        creatorIds.length > 0
+          ? admin.from('users').select('id, name, email').in('id', creatorIds)
+          : Promise.resolve({ data: [] }),
+        getTrailUsersMap(admin, trailIds),
+      ]);
+
+      const areasMap = new Map<string, string[]>();
+      (allTrailAreas || []).forEach((ta) => {
+        const existing = areasMap.get(ta.trail_id) || [];
+        existing.push(ta.area_id);
+        areasMap.set(ta.trail_id, existing);
+      });
+
+      const modulesCountMap = new Map<string, number>();
+      (allModules || []).forEach((m) => {
+        modulesCountMap.set(m.trail_id, (modulesCountMap.get(m.trail_id) || 0) + 1);
+      });
+
+      const creatorsMap = new Map<string, string>();
+      (creatorsData || []).forEach((u) => {
+        creatorsMap.set(u.id, u.name || u.email);
+      });
+
+      trails = trails.map((t) => ({
+        ...t,
+        area_ids: areasMap.get(t.id) || [],
+        user_ids: trailUsersMap.get(t.id) || [],
+        modulesCount: modulesCountMap.get(t.id) || 0,
+        creatorName: creatorsMap.get(t.created_by) || null,
+      }));
+    }
+
+    return NextResponse.json(trails);
+  } catch (error) {
+    console.error('Erro ao listar trilhas:', error);
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+  }
+}
 
 // POST — criar trilha
 export async function POST(request: Request) {
@@ -31,20 +134,22 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, description, type, area_ids, duration, deadline } = body;
+    const { name, description, type, area_ids, duration, deadline, user_ids } = body;
 
     const isAreaType = type === 'obrigatoria_area' || type === 'optativa_area';
 
     // Determinar lista de áreas
     let resolvedAreaIds: string[] = [];
+    const resolvedUserIds: string[] = Array.isArray(user_ids) ? user_ids : [];
     if (isAreaType) {
       if (Array.isArray(area_ids) && area_ids.length > 0) {
         resolvedAreaIds = area_ids;
       } else if (body.area_id) {
         resolvedAreaIds = [body.area_id];
-      } else {
+      } else if (resolvedUserIds.length === 0) {
+        // Só exige área se não tem colaboradores individuais
         return NextResponse.json(
-          { error: 'Selecione pelo menos uma área para trilhas da área' },
+          { error: 'Selecione pelo menos uma área ou colaborador individual' },
           { status: 400 }
         );
       }
@@ -106,6 +211,17 @@ export async function POST(request: Request) {
       }
     }
 
+    // Inserir trail_users (atribuição individual)
+    if (resolvedUserIds.length > 0) {
+      const { error: tuError } = await admin
+        .from('trail_users')
+        .insert(resolvedUserIds.map((uid) => ({ trail_id: trail.id, user_id: uid })));
+
+      if (tuError) {
+        console.error('Erro ao vincular usuários à trilha:', tuError);
+      }
+    }
+
     await logAuditAction({
       userId: authUser.id,
       userName: userData.name,
@@ -114,10 +230,10 @@ export async function POST(request: Request) {
       entityType: 'trail',
       entityId: trail.id,
       entityName: name,
-      details: { type, area_ids: resolvedAreaIds },
+      details: { type, area_ids: resolvedAreaIds, user_ids: resolvedUserIds },
     });
 
-    return NextResponse.json({ ...trail, area_ids: resolvedAreaIds });
+    return NextResponse.json({ ...trail, area_ids: resolvedAreaIds, user_ids: resolvedUserIds });
   } catch (error) {
     console.error('Erro na API de trilhas:', error);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
@@ -152,7 +268,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { id, name, description, type, area_ids, duration, deadline } = body;
+    const { id, name, description, type, area_ids, duration, deadline, user_ids } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'ID da trilha é obrigatório' }, { status: 400 });
@@ -236,6 +352,21 @@ export async function PUT(request: Request) {
       }
     }
 
+    // Atualizar trail_users (atribuição individual)
+    const resolvedUserIds: string[] = Array.isArray(user_ids) ? user_ids : [];
+    if (user_ids !== undefined) {
+      await admin.from('trail_users').delete().eq('trail_id', id);
+      if (resolvedUserIds.length > 0) {
+        const { error: tuError } = await admin
+          .from('trail_users')
+          .insert(resolvedUserIds.map((uid) => ({ trail_id: id, user_id: uid })));
+
+        if (tuError) {
+          console.error('Erro ao atualizar usuários da trilha:', tuError);
+        }
+      }
+    }
+
     await logAuditAction({
       userId: authUser.id,
       userName: userData.name,
@@ -244,10 +375,10 @@ export async function PUT(request: Request) {
       entityType: 'trail',
       entityId: id,
       entityName: name,
-      details: { type, area_ids: resolvedAreaIds },
+      details: { type, area_ids: resolvedAreaIds, user_ids: resolvedUserIds },
     });
 
-    return NextResponse.json({ ...trail, area_ids: resolvedAreaIds });
+    return NextResponse.json({ ...trail, area_ids: resolvedAreaIds, user_ids: resolvedUserIds });
   } catch (error) {
     console.error('Erro na API de trilhas:', error);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });

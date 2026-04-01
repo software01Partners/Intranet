@@ -4,9 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Menu, ChevronRight, Sun, Moon } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
-import { createClient } from '@/lib/supabase/client';
 import { NotificationBell } from './NotificationBell';
 import Image from 'next/image';
 
@@ -16,28 +14,27 @@ interface TopBarProps {
 
 export function TopBar({ onMenuClick }: TopBarProps) {
   const pathname = usePathname();
-  const { user, role, userName } = useAuth();
   const { theme, toggleTheme, mounted } = useTheme();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchAvatar = async () => {
-      if (!user?.id) return;
-
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('users')
-        .select('avatar_url')
-        .eq('id', user.id)
-        .single();
-
-      if (data?.avatar_url) {
-        setAvatarUrl(data.avatar_url);
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch('/api/me');
+        if (!res.ok) return;
+        const data = await res.json();
+        setAvatarUrl(data.avatar_url || null);
+        setUserName(data.name || null);
+        setRole(data.role || null);
+      } catch {
+        // silently fail
       }
     };
 
-    fetchAvatar();
-  }, [user?.id]);
+    fetchProfile();
+  }, []);
 
   const getRoleLabel = (role: string | null) => {
     switch (role) {
@@ -160,12 +157,12 @@ export function TopBar({ onMenuClick }: TopBarProps) {
                   <span className="text-white text-sm font-semibold">
                     {userName
                       ? userName.charAt(0).toUpperCase()
-                      : user?.email?.charAt(0).toUpperCase() || 'U'}
+                      : userName?.charAt(0).toUpperCase() || 'U'}
                   </span>
                 </div>
               )}
               <span className="hidden md:block text-[#2D2A26] dark:text-[#E8E5E0] text-sm font-medium">
-                {userName || user?.email || 'Usuário'}
+                {userName || 'Usuário'}
               </span>
             </button>
           </div>

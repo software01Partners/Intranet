@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { z } from 'zod';
 
 const createNotificationSchema = z.object({
@@ -46,16 +47,46 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = createNotificationSchema.parse(body);
 
-    // Gestor só pode notificar usuários da própria área
-    if (userData.role === 'gestor' && userData.area_id) {
-      const { data: targetUsers } = await supabase
-        .from('users')
-        .select('id, area_id')
-        .in('id', validatedData.userIds);
+    // Gestor só pode notificar usuários que compartilham pelo menos uma área
+    if (userData.role === 'gestor') {
+      const admin = createAdminClient();
 
-      const outsideArea = (targetUsers || []).filter(
-        (u) => u.area_id !== userData.area_id
-      );
+      // Fetch gestor's areas from user_areas
+      const { data: gestorAreas } = await admin
+        .from('user_areas')
+        .select('area_id')
+        .eq('user_id', user.id);
+
+      const gestorAreaIds = (gestorAreas || []).map((ga) => ga.area_id);
+      // Fallback to deprecated area_id
+      if (gestorAreaIds.length === 0 && userData.area_id) {
+        gestorAreaIds.push(userData.area_id);
+      }
+
+      if (gestorAreaIds.length === 0) {
+        return NextResponse.json(
+          { error: 'Gestor não possui área definida' },
+          { status: 403 }
+        );
+      }
+
+      // Fetch target users' areas
+      const { data: targetUserAreas } = await admin
+        .from('user_areas')
+        .select('user_id, area_id')
+        .in('user_id', validatedData.userIds);
+
+      const targetAreasMap = new Map<string, string[]>();
+      (targetUserAreas || []).forEach((tua) => {
+        const existing = targetAreasMap.get(tua.user_id) || [];
+        existing.push(tua.area_id);
+        targetAreasMap.set(tua.user_id, existing);
+      });
+
+      const outsideArea = validatedData.userIds.filter((uid) => {
+        const userAreaIds = targetAreasMap.get(uid) || [];
+        return !userAreaIds.some((aid) => gestorAreaIds.includes(aid));
+      });
 
       if (outsideArea.length > 0) {
         return NextResponse.json(
@@ -73,7 +104,9 @@ export async function POST(request: NextRequest) {
       read: false,
     }));
 
-    const { error: insertError } = await supabase
+    // Usar admin client para inserir notificações destinadas a outros usuários (bypass RLS)
+    const admin = createAdminClient();
+    const { error: insertError } = await admin
       .from('notifications')
       .insert(notifications);
 
@@ -102,5 +135,61 @@ export async function POST(request: NextRequest) {
       { error: 'Erro interno do servidor' },
       { status: 500 }
     );
+  }
+}
+
+// GET — buscar notificações do usuário autenticado
+export async function GET() {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from('notifications')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(data || []);
+  } catch (error) {
+    console.error('Erro ao buscar notificações:', error);
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+  }
+}
+
+// PATCH — marcar notificação(ões) como lida(s)
+export async function PATCH(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+
+    const admin = createAdminClient();
+    const { id, markAll } = await request.json();
+
+    if (markAll) {
+      const { error } = await admin
+        .from('notifications')
+        .update({ read: true })
+        .eq('user_id', user.id)
+        .eq('read', false);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    } else if (id) {
+      const { error } = await admin
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', id)
+        .eq('user_id', user.id);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Erro ao atualizar notificação:', error);
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }

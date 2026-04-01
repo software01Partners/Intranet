@@ -8,7 +8,10 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Users, Award, AlertTriangle } from 'lucide-react';
 import { calculateProgress } from '@/lib/utils';
-import { getTrailAreasMap, isTrailVisibleToArea } from '@/lib/trail-areas';
+import { getTrailAreasMap, isTrailVisibleToUser } from '@/lib/trail-areas';
+import { getTrailUsersMap } from '@/lib/trail-users';
+import { getUserAreasMap } from '@/lib/user-areas';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { TeamTable } from '@/components/gestor/TeamTable';
 import { TeamStats } from '@/components/gestor/TeamStats';
 import { TeamCharts } from '@/components/gestor/TeamCharts';
@@ -84,17 +87,25 @@ async function getAllAreas(): Promise<Area[]> {
 }
 
 // Função para buscar membros da equipe (exportada para uso em componentes)
-export async function getTeamMembers(areaId: string | null): Promise<TeamMember[]> {
+export async function getTeamMembers(areaIds: string[]): Promise<TeamMember[]> {
   const supabase = await createClient();
+  const adminClient = createAdminClient();
 
-  // Buscar colaboradores da área
+  // Buscar colaboradores da área(s)
   let query = supabase
     .from('users')
     .select('id, name, email, avatar_url, area_id')
     .eq('role', 'colaborador');
 
-  if (areaId) {
-    query = query.eq('area_id', areaId);
+  if (areaIds.length > 0) {
+    // Buscar user_ids que pertencem a qualquer dessas áreas via user_areas
+    const { data: userAreaRows } = await adminClient
+      .from('user_areas')
+      .select('user_id')
+      .in('area_id', areaIds);
+    const userIdsInAreas = [...new Set((userAreaRows || []).map((r) => r.user_id))];
+    if (userIdsInAreas.length === 0) return [];
+    query = query.in('id', userIdsInAreas);
   }
 
   const { data: members, error } = await query;
@@ -124,14 +135,20 @@ export async function getTeamMembers(areaId: string | null): Promise<TeamMember[
     }));
   }
 
-  // Buscar trail_areas
-  const trailAreasMap = await getTrailAreasMap(supabase, allTrails.map((t) => t.id));
+  // Buscar trail_areas, trail_users e user_areas
+  const allTrailIds = allTrails.map((t) => t.id);
+  const [trailAreasMap, trailUsersMap, memberAreasMap] = await Promise.all([
+    getTrailAreasMap(supabase, allTrailIds),
+    getTrailUsersMap(supabase, allTrailIds),
+    getUserAreasMap(adminClient, memberIds),
+  ]);
 
-  // Filtrar trilhas visíveis para cada membro (baseado na área dele)
+  // Filtrar trilhas visíveis para cada membro (baseado nas áreas dele + trail_users)
   const visibleTrailsByMember = new Map<string, string[]>();
   members.forEach((member) => {
+    const memberAreaIds = memberAreasMap.get(member.id) || (member.area_id ? [member.area_id] : []);
     const visible = allTrails.filter((trail) =>
-      isTrailVisibleToArea(trail, member.area_id, trailAreasMap.get(trail.id) || [])
+      isTrailVisibleToUser(trail, memberAreaIds, trailAreasMap.get(trail.id) || [], trailUsersMap.get(trail.id) || [], member.id)
     );
     visibleTrailsByMember.set(member.id, visible.map((t) => t.id));
   });
@@ -239,9 +256,9 @@ export async function getTeamMembers(areaId: string | null): Promise<TeamMember[
 
 // Função para calcular estatísticas da equipe (exportada para uso em componentes)
 export async function getTeamStats(
-  areaId: string | null
+  areaIds: string[]
 ): Promise<TeamStatsData> {
-  const members = await getTeamMembers(areaId);
+  const members = await getTeamMembers(areaIds);
 
   if (members.length === 0) {
     return {
@@ -271,10 +288,10 @@ export async function getTeamStats(
 
 // Função para calcular progresso médio por trilha (exportada para uso em componentes)
 export async function getTrailProgressData(
-  areaId: string | null
+  areaIds: string[]
 ): Promise<TrailProgressData[]> {
   const supabase = await createClient();
-  const members = await getTeamMembers(areaId);
+  const members = await getTeamMembers(areaIds);
 
   if (members.length === 0) {
     return [];
@@ -291,13 +308,17 @@ export async function getTrailProgressData(
     return [];
   }
 
-  // Buscar trail_areas
-  const trailAreasMapProgress = await getTrailAreasMap(supabase, allTrails.map((t) => t.id));
+  // Buscar trail_areas e trail_users
+  const allTrailIds = allTrails.map((t) => t.id);
+  const [trailAreasMapProgress, trailUsersMapProgress] = await Promise.all([
+    getTrailAreasMap(supabase, allTrailIds),
+    getTrailUsersMap(supabase, allTrailIds),
+  ]);
 
-  // Filtrar trilhas visíveis para a área (ou todas se admin)
+  // Filtrar trilhas visíveis para as áreas (ou todas se sem filtro)
   const visibleTrails = allTrails.filter((trail) => {
-    if (areaId) {
-      return isTrailVisibleToArea(trail, areaId, trailAreasMapProgress.get(trail.id) || []);
+    if (areaIds.length > 0) {
+      return isTrailVisibleToUser(trail, areaIds, trailAreasMapProgress.get(trail.id) || [], trailUsersMapProgress.get(trail.id) || []);
     }
     return true; // Admin vê todas
   });
@@ -390,13 +411,19 @@ export default async function GestorPage({
     redirect('/');
   }
 
-  // Determinar área a visualizar
-  let selectedAreaId: string | null = null;
+  // Determinar áreas a visualizar
+  let selectedAreaIds: string[] = [];
   if (user.role === 'gestor') {
-    selectedAreaId = user.area_id;
+    // Buscar todas as áreas do gestor via user_areas
+    const adminClient = createAdminClient();
+    const gestorAreasMap = await getUserAreasMap(adminClient, [user.id]);
+    selectedAreaIds = gestorAreasMap.get(user.id) || (user.area_id ? [user.area_id] : []);
   } else if (user.role === 'admin' && area) {
-    selectedAreaId = area === 'all' ? null : area;
+    selectedAreaIds = area === 'all' ? [] : [area];
   }
+
+  // Para compatibilidade com AreaSelector (que usa string | null)
+  const selectedAreaId: string | null = selectedAreaIds.length === 1 ? selectedAreaIds[0] : (selectedAreaIds.length === 0 ? null : selectedAreaIds[0]);
 
   // Buscar áreas para o seletor (apenas admin)
   const areas = user.role === 'admin' ? await getAllAreas() : [];
@@ -422,7 +449,7 @@ export default async function GestorPage({
 
       {/* Stats Cards */}
       <Suspense fallback={<StatsSkeleton />}>
-        <TeamStats areaId={selectedAreaId} />
+        <TeamStats areaIds={selectedAreaIds} />
       </Suspense>
 
       {/* Tabela da Equipe */}
@@ -432,24 +459,24 @@ export default async function GestorPage({
         </CardHeader>
         <CardContent>
           <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-            <TeamTable areaId={selectedAreaId} />
+            <TeamTable areaIds={selectedAreaIds} />
           </Suspense>
         </CardContent>
       </Card>
 
       {/* Gráficos */}
       <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-        <TeamCharts areaId={selectedAreaId} />
+        <TeamCharts areaIds={selectedAreaIds} />
       </Suspense>
 
       {/* Alertas de Atraso */}
       <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-        <AlertsSection areaId={selectedAreaId} />
+        <AlertsSection areaIds={selectedAreaIds} />
       </Suspense>
 
       {/* Quizzes Bloqueados */}
       <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-        <QuizBlockedSection areaId={selectedAreaId} />
+        <QuizBlockedSection areaIds={selectedAreaIds} />
       </Suspense>
     </div>
   );

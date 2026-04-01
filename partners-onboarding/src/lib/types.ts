@@ -21,7 +21,8 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  area_id: string | null;
+  area_id: string | null; // @deprecated - usar area_ids via user_areas
+  area_ids?: string[]; // populated from user_areas junction table
   role: UserRole;
   avatar_url: string | null;
   created_at: string;
@@ -34,6 +35,7 @@ export interface Trail {
   type: TrailType;
   area_id: string | null; // @deprecated - usar area_ids via trail_areas
   area_ids?: string[]; // populated from trail_areas junction table
+  user_ids?: string[]; // populated from trail_users junction table (atribuição individual)
   created_by: string;
   duration: number | null; // em minutos
   deadline: string | null; // ISO timestamp ou null = sem prazo

@@ -1,13 +1,13 @@
 import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
-import { User, Trail, Module, UserProgress, Certificate } from '@/lib/types';
+import { User, Trail, Module, UserProgress } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ProgressRing } from '@/components/ui/ProgressRing';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { ContinueButton } from '@/components/dashboard/ContinueButton';
+import { EmptyLastModule, EmptyRequiredTrails } from '@/components/dashboard/DashboardEmptyStates';
 import {
   BookOpen,
   CheckCircle2,
@@ -17,7 +17,10 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { formatDateFull, calculateProgress } from '@/lib/utils';
-import { getTrailAreasMap, isTrailVisibleToArea } from '@/lib/trail-areas';
+import { getTrailAreasMap, isTrailVisibleToUser } from '@/lib/trail-areas';
+import { getTrailUsersMap } from '@/lib/trail-users';
+import { getUserAreasMap } from '@/lib/user-areas';
+import { createAdminClient } from '@/lib/supabase/admin';
 import Link from 'next/link';
 import { CertificateDownloadButton } from '@/components/certificate/CertificateDownloadButton';
 
@@ -68,7 +71,7 @@ async function getUserData(): Promise<User | null> {
 // Função para buscar estatísticas
 async function getDashboardStats(
   userId: string,
-  areaId: string | null
+  areaIds: string[]
 ): Promise<DashboardStats> {
   const supabase = await createClient();
 
@@ -154,7 +157,7 @@ async function getLastModule(userId: string): Promise<LastModule | null> {
   // Buscar último progresso não concluído, ordenado por created_at DESC
   const { data: lastProgressList } = await supabase
     .from('user_progress')
-    .select('*, modules!inner(id, trail_id, title, type, content_url, duration, sort_order, created_at, trails(*))')
+    .select('*, modules!inner(id, trail_id, title, type, content_url, duration, sort_order, created_at, trails!inner(*))')
     .eq('user_id', userId)
     .eq('completed', false)
     .order('created_at', { ascending: false })
@@ -163,18 +166,21 @@ async function getLastModule(userId: string): Promise<LastModule | null> {
   if (lastProgressList && lastProgressList.length > 0) {
     const lastProgressData = lastProgressList[0];
     const moduleData = lastProgressData.modules as Module & { trails: Trail };
-    return {
-      ...moduleData,
-      trail: moduleData.trails,
-      progress: lastProgressData as UserProgress,
-    };
+    if (moduleData.trails) {
+      return {
+        ...moduleData,
+        trail: moduleData.trails,
+        progress: lastProgressData as UserProgress,
+      };
+    }
   }
 
   // Se não há progresso não concluído, buscar o próximo módulo a fazer
-  // Buscar trilhas visíveis (RLS já filtra)
+  // Buscar trilhas visíveis (excluir deletadas)
   const { data: visibleTrails } = await supabase
     .from('trails')
     .select('id')
+    .is('deleted_at', null)
     .order('sort_order', { ascending: true })
     .limit(10);
 
@@ -183,17 +189,19 @@ async function getLastModule(userId: string): Promise<LastModule | null> {
   // Buscar primeiro módulo da primeira trilha (ordenado por sort_order)
   const { data: firstModuleList } = await supabase
     .from('modules')
-    .select('*, trails(*)')
+    .select('*, trails!inner(*)')
     .in(
       'trail_id',
       visibleTrails.map((t) => t.id)
     )
+    .is('deleted_at', null)
     .order('sort_order', { ascending: true })
     .limit(1);
 
   if (!firstModuleList || firstModuleList.length === 0) return null;
 
   const firstModule = firstModuleList[0];
+  if (!firstModule.trails) return null;
 
   return {
     ...(firstModule as Module & { trails: Trail }),
@@ -205,7 +213,7 @@ async function getLastModule(userId: string): Promise<LastModule | null> {
 // Função para buscar trilhas obrigatórias com progresso
 async function getRequiredTrails(
   userId: string,
-  areaId: string | null
+  areaIds: string[]
 ): Promise<TrailWithProgress[]> {
   const supabase = await createClient();
 
@@ -217,14 +225,18 @@ async function getRequiredTrails(
 
   if (!allTrails || allTrails.length === 0) return [];
 
-  // Buscar trail_areas para determinar visibilidade
-  const trailAreasMap = await getTrailAreasMap(supabase, allTrails.map((t) => t.id));
+  // Buscar trail_areas e trail_users para determinar visibilidade
+  const allTrailIds = allTrails.map((t) => t.id);
+  const [trailAreasMap, trailUsersMap] = await Promise.all([
+    getTrailAreasMap(supabase, allTrailIds),
+    getTrailUsersMap(supabase, allTrailIds),
+  ]);
 
-  // Filtrar apenas obrigatórias visíveis para a área do usuário
+  // Filtrar apenas obrigatórias visíveis para o usuário (multi-area + trail_users)
   const trailsData = allTrails.filter(
     (trail) =>
-      trail.type === 'obrigatoria_global' ||
-      (trail.type === 'obrigatoria_area' && isTrailVisibleToArea(trail, areaId, trailAreasMap.get(trail.id) || []))
+      (trail.type === 'obrigatoria_global' || trail.type === 'obrigatoria_area') &&
+      isTrailVisibleToUser(trail, areaIds, trailAreasMap.get(trail.id) || [], trailUsersMap.get(trail.id) || [], userId)
   );
 
   if (!trailsData || trailsData.length === 0) {
@@ -334,7 +346,7 @@ async function getUserCertificates(userId: string): Promise<
 // Função para buscar trilhas optativas com progresso
 async function getOptionalTrails(
   userId: string,
-  areaId: string | null
+  areaIds: string[]
 ): Promise<TrailWithProgress[]> {
   const supabase = await createClient();
 
@@ -346,12 +358,16 @@ async function getOptionalTrails(
 
   if (!allTrails || allTrails.length === 0) return [];
 
-  const trailAreasMap = await getTrailAreasMap(supabase, allTrails.map((t) => t.id));
+  const allOptTrailIds = allTrails.map((t) => t.id);
+  const [trailAreasMap, trailUsersMap] = await Promise.all([
+    getTrailAreasMap(supabase, allOptTrailIds),
+    getTrailUsersMap(supabase, allOptTrailIds),
+  ]);
 
   const trailsData = allTrails.filter(
     (trail) =>
-      trail.type === 'optativa_global' ||
-      (trail.type === 'optativa_area' && isTrailVisibleToArea(trail, areaId, trailAreasMap.get(trail.id) || []))
+      (trail.type === 'optativa_global' || trail.type === 'optativa_area') &&
+      isTrailVisibleToUser(trail, areaIds, trailAreasMap.get(trail.id) || [], trailUsersMap.get(trail.id) || [], userId)
   );
 
   if (!trailsData || trailsData.length === 0) {
@@ -463,12 +479,12 @@ function TrailsSkeleton() {
 // Componente para exibir as estatísticas
 async function StatsCards({
   userId,
-  areaId,
+  areaIds,
 }: {
   userId: string;
-  areaId: string | null;
+  areaIds: string[];
 }) {
-  const stats = await getDashboardStats(userId, areaId);
+  const stats = await getDashboardStats(userId, areaIds);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -555,11 +571,7 @@ async function LastModuleCard({ userId }: { userId: string }) {
           <CardTitle>Continuar de onde parou</CardTitle>
         </CardHeader>
         <CardContent>
-          <EmptyState
-            icon={BookOpen}
-            title="Nada em andamento"
-            description="Você ainda não iniciou nenhum módulo. Explore as trilhas disponíveis para começar!"
-          />
+          <EmptyLastModule />
         </CardContent>
       </Card>
     );
@@ -672,20 +684,16 @@ async function LastModuleCard({ userId }: { userId: string }) {
 // Componente para exibir trilhas obrigatórias
 async function RequiredTrailsGrid({
   userId,
-  areaId,
+  areaIds,
 }: {
   userId: string;
-  areaId: string | null;
+  areaIds: string[];
 }) {
-  const trails = await getRequiredTrails(userId, areaId);
+  const trails = await getRequiredTrails(userId, areaIds);
 
   if (trails.length === 0) {
     return (
-      <EmptyState
-        icon={BookOpen}
-        title="Nenhuma trilha obrigatória"
-        description="Não há trilhas obrigatórias disponíveis no momento."
-      />
+      <EmptyRequiredTrails />
     );
   }
 
@@ -734,8 +742,8 @@ async function RequiredTrailsGrid({
 }
 
 // Componente para exibir trilhas optativas
-async function OptionalTrailsGrid({ userId, areaId }: { userId: string; areaId: string | null }) {
-  const trails = await getOptionalTrails(userId, areaId);
+async function OptionalTrailsGrid({ userId, areaIds }: { userId: string; areaIds: string[] }) {
+  const trails = await getOptionalTrails(userId, areaIds);
 
   if (trails.length === 0) {
     return null; // Não renderizar seção se não houver optativas
@@ -789,6 +797,11 @@ export default async function DashboardPage() {
     );
   }
 
+  // Buscar áreas do usuário via user_areas (multi-area)
+  const adminClient = createAdminClient();
+  const userAreasMap = await getUserAreasMap(adminClient, [user.id]);
+  const areaIds = userAreasMap.get(user.id) || (user.area_id ? [user.area_id] : []);
+
   const userName = user.name || user.email.split('@')[0];
   const currentDate = formatDateFull(new Date());
 
@@ -804,7 +817,7 @@ export default async function DashboardPage() {
 
       {/* Stats Cards */}
       <Suspense fallback={<StatsSkeleton />}>
-        <StatsCards userId={user.id} areaId={user.area_id} />
+        <StatsCards userId={user.id} areaIds={areaIds} />
       </Suspense>
 
       {/* Continuar de onde parou */}
@@ -818,13 +831,13 @@ export default async function DashboardPage() {
           Trilhas Obrigatórias
         </h2>
         <Suspense fallback={<TrailsSkeleton />}>
-          <RequiredTrailsGrid userId={user.id} areaId={user.area_id} />
+          <RequiredTrailsGrid userId={user.id} areaIds={areaIds} />
         </Suspense>
       </div>
 
       {/* Trilhas Optativas */}
       <Suspense fallback={null}>
-        <OptionalTrailsSection userId={user.id} areaId={user.area_id} />
+        <OptionalTrailsSection userId={user.id} areaIds={areaIds} />
       </Suspense>
 
       {/* Meus Certificados */}
@@ -836,8 +849,8 @@ export default async function DashboardPage() {
 }
 
 // Componente wrapper para trilhas optativas (para poder usar Suspense)
-async function OptionalTrailsSection({ userId, areaId }: { userId: string; areaId: string | null }) {
-  const trails = await getOptionalTrails(userId, areaId);
+async function OptionalTrailsSection({ userId, areaIds }: { userId: string; areaIds: string[] }) {
+  const trails = await getOptionalTrails(userId, areaIds);
 
   if (trails.length === 0) {
     return null;
@@ -848,7 +861,7 @@ async function OptionalTrailsSection({ userId, areaId }: { userId: string; areaI
       <h2 className="text-2xl font-bold text-[#2D2A26] dark:text-[#E8E5E0] mb-4">
         Trilhas Optativas
       </h2>
-      <OptionalTrailsGrid userId={userId} areaId={areaId} />
+      <OptionalTrailsGrid userId={userId} areaIds={areaIds} />
     </div>
   );
 }

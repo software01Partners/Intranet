@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { Search, Plus, Edit, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -12,7 +11,7 @@ import { Modal } from '@/components/ui/Modal';
 import { TrailForm } from './TrailForm';
 import { Card, CardContent } from '@/components/ui/Card';
 import { formatDeadline, getDeadlineStatus } from '@/lib/utils';
-import type { Trail, TrailType, Area, User } from '@/lib/types';
+import type { Trail, TrailType, Area } from '@/lib/types';
 
 interface TrailWithCounts extends Trail {
   modulesCount: number;
@@ -26,17 +25,14 @@ interface TrailsManagerProps {
 }
 
 export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
-  const supabase = createClient();
   const [trails, setTrails] = useState<TrailWithCounts[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<TrailType | 'all'>('all');
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingTrail, setEditingTrail] = useState<Trail | null>(null);
   const [deletingTrailId, setDeletingTrailId] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<{ id: string; areaId: string | null } | null>(null);
 
   // Buscar dados iniciais
   useEffect(() => {
@@ -46,55 +42,16 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
       try {
         setLoading(true);
 
-        // Buscar usuário atual
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+        // Buscar áreas via API
+        const areasRes = await fetch('/api/admin/areas');
         if (cancelled) return;
-        if (!session?.user) {
-          toast.error('Erro', { description: 'Usuário não autenticado' });
-          return;
-        }
-
-        const { data: userData } = await supabase
-          .from('users')
-          .select('id, area_id')
-          .eq('id', session.user.id)
-          .single();
-
-        if (cancelled) return;
-
-        if (userData) {
-          setCurrentUser({ id: userData.id, areaId: userData.area_id });
-        }
-
-        // Buscar áreas e usuários em paralelo (gestor só vê sua área)
-        let areasQuery = supabase.from('areas').select('*').is('deleted_at', null).order('name');
-        let usersQuery = supabase.from('users').select('*').order('name');
-
-        if (areaFilter) {
-          areasQuery = supabase.from('areas').select('*').eq('id', areaFilter).is('deleted_at', null).order('name');
-          usersQuery = supabase.from('users').select('*').eq('area_id', areaFilter).order('name');
-        }
-
-        const [areasResult, usersResult] = await Promise.all([
-          areasQuery,
-          usersQuery,
-        ]);
-
-        if (cancelled) return;
-
-        if (areasResult.error) throw areasResult.error;
-        if (usersResult.error) throw usersResult.error;
-
-        const areasData = areasResult.data || [];
-        const usersData = usersResult.data || [];
+        if (!areasRes.ok) throw new Error('Erro ao buscar áreas');
+        const areasData = await areasRes.json();
 
         setAreas(areasData);
-        setUsers(usersData);
 
         // Buscar trilhas
-        await fetchTrails(areasData, usersData);
+        await fetchTrails(areasData);
       } catch (error) {
         if (cancelled) return;
         console.error('Erro ao buscar dados:', error);
@@ -111,96 +68,37 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [areaFilter]);
 
-  // Buscar trilhas
-  async function fetchTrails(areasData?: Area[], usersData?: User[]) {
+  // Buscar trilhas via API (bypass RLS)
+  async function fetchTrails(areasData?: Area[]) {
     try {
-      const { data: trailsData, error: trailsError } = await supabase
-        .from('trails')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const params = areaFilter ? `?areaFilter=${areaFilter}` : '';
+      const res = await fetch(`/api/admin/trails${params}`);
+      if (!res.ok) throw new Error('Erro ao buscar trilhas');
 
-      if (trailsError) throw trailsError;
+      const trailsData = await res.json();
 
       if (!trailsData || trailsData.length === 0) {
         setTrails([]);
         return;
       }
 
-      const trailIds = trailsData.map((t) => t.id);
-
-      // Buscar trail_areas para todas as trilhas
-      const { data: trailAreasData } = await supabase
-        .from('trail_areas')
-        .select('trail_id, area_id')
-        .in('trail_id', trailIds);
-
-      // Mapa: trail_id -> area_ids[]
-      const trailAreasMap = new Map<string, string[]>();
-      if (trailAreasData) {
-        trailAreasData.forEach((ta) => {
-          const existing = trailAreasMap.get(ta.trail_id) || [];
-          existing.push(ta.area_id);
-          trailAreasMap.set(ta.trail_id, existing);
-        });
-      }
-
-      // Se areaFilter presente (modo gestor), filtrar trilhas que pertencem à área
-      let filteredTrailsData = trailsData;
-      if (areaFilter) {
-        filteredTrailsData = trailsData.filter((trail) => {
-          const trailAreaIds = trailAreasMap.get(trail.id) || [];
-          return trailAreaIds.includes(areaFilter);
-        });
-      }
-
-      if (filteredTrailsData.length === 0) {
-        setTrails([]);
-        return;
-      }
-
-      // Buscar contagem de módulos por trilha
-      const filteredTrailIds = filteredTrailsData.map((t) => t.id);
-      const { data: modulesData } = await supabase
-        .from('modules')
-        .select('trail_id')
-        .in('trail_id', filteredTrailIds);
-
-      // Criar mapa de contagem de módulos
-      const modulesCountMap = new Map<string, number>();
-      if (modulesData) {
-        modulesData.forEach((module) => {
-          const count = modulesCountMap.get(module.trail_id) || 0;
-          modulesCountMap.set(module.trail_id, count + 1);
-        });
-      }
-
-      // Usar áreas e usuários passados como parâmetro ou do estado
+      // Usar áreas passadas como parâmetro ou do estado
       const areasToUse = areasData || areas;
-      const usersToUse = usersData || users;
 
       // Criar mapa de nomes de áreas
-      const areasMap = new Map<string, string>();
-      areasToUse.forEach((area) => {
-        areasMap.set(area.id, area.name);
+      const areasNamesMap = new Map<string, string>();
+      areasToUse.forEach((area: Area) => {
+        areasNamesMap.set(area.id, area.name);
       });
 
-      // Criar mapa de nomes de usuários
-      const usersMap = new Map<string, string>();
-      usersToUse.forEach((user) => {
-        usersMap.set(user.id, user.name || user.email);
-      });
-
-      // Montar dados completos
-      const trailsWithCounts: TrailWithCounts[] = filteredTrailsData.map((trail) => {
-        const areaIds = trailAreasMap.get(trail.id) || [];
+      // Montar dados completos (modulesCount e creatorName já vêm da API)
+      const trailsWithCounts: TrailWithCounts[] = trailsData.map((trail: TrailWithCounts) => {
+        const areaIds = trail.area_ids || [];
         const areaNames = areaIds
-          .map((aid) => areasMap.get(aid))
+          .map((aid: string) => areasNamesMap.get(aid))
           .filter(Boolean) as string[];
         return {
-          ...(trail as Trail),
-          area_ids: areaIds,
-          modulesCount: modulesCountMap.get(trail.id) || 0,
-          creatorName: usersMap.get(trail.created_by) || null,
+          ...trail,
           areaNames,
         };
       });
@@ -486,16 +384,14 @@ export function TrailsManager({ areaFilter, userRole }: TrailsManagerProps) {
         title={editingTrail ? 'Editar Trilha' : 'Nova Trilha'}
         size="lg"
       >
-        {currentUser && (
-          <TrailForm
-            initialData={editingTrail || undefined}
-            userRole={userRole}
-            userAreaId={currentUser.areaId}
-            areas={areas}
-            onSuccess={handleFormSuccess}
-            onCancel={handleCloseModal}
-          />
-        )}
+        <TrailForm
+          initialData={editingTrail || undefined}
+          userRole={userRole}
+          userAreaIds={areaFilter ? [areaFilter] : []}
+          areas={areas}
+          onSuccess={handleFormSuccess}
+          onCancel={handleCloseModal}
+        />
       </Modal>
     </div>
   );

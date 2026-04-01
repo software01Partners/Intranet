@@ -1,14 +1,18 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { TeamMember } from '@/app/(dashboard)/gestor/page';
 import { calculateProgress } from '@/lib/utils';
-import { getTrailAreasMap, isTrailVisibleToArea } from '@/lib/trail-areas';
+import { getTrailAreasMap, isTrailVisibleToUser } from '@/lib/trail-areas';
+import { getUserAreasMap, getUserIdsByAreas } from '@/lib/user-areas';
+import { getTrailUsersMap } from '@/lib/trail-users';
 
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const areaId = searchParams.get('areaId');
+    const areaIdsParam = searchParams.get('areaIds');
 
     // Verificar autenticação
     const {
@@ -19,8 +23,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
+    const admin = createAdminClient();
+
     // Buscar dados do usuário
-    const { data: userData, error: userError } = await supabase
+    const { data: userData, error: userError } = await admin
       .from('users')
       .select('role, area_id')
       .eq('id', authUser.id)
@@ -38,34 +44,53 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
     }
 
-    // Determinar área a buscar
-    let targetAreaId: string | null = null;
+    // Determinar áreas alvo
+    let targetAreaIds: string[] = [];
     if (userData.role === 'gestor') {
-      targetAreaId = userData.area_id;
-    } else if (userData.role === 'admin' && areaId) {
-      targetAreaId = areaId === 'all' ? null : areaId;
+      // Fetch gestor's areas from user_areas
+      const gestorAreasMap = await getUserAreasMap(admin, [authUser.id]);
+      targetAreaIds = gestorAreasMap.get(authUser.id) || (userData.area_id ? [userData.area_id] : []);
+    } else if (userData.role === 'admin') {
+      // Support both areaIds (comma-separated) and legacy areaId param
+      if (areaIdsParam) {
+        targetAreaIds = areaIdsParam.split(',').filter(Boolean);
+      } else if (areaId && areaId !== 'all') {
+        targetAreaIds = [areaId];
+      }
+      // empty → fetch all
     }
 
-    // Buscar colaboradores da área
-    let query = supabase
+    // Buscar colaboradores das áreas via user_areas
+    let memberIds: string[] = [];
+    if (targetAreaIds.length > 0) {
+      memberIds = await getUserIdsByAreas(admin, targetAreaIds);
+    }
+
+    let membersQuery = admin
       .from('users')
       .select('id, name, email, avatar_url, area_id')
       .eq('role', 'colaborador');
 
-    if (targetAreaId) {
-      query = query.eq('area_id', targetAreaId);
+    if (targetAreaIds.length > 0) {
+      if (memberIds.length === 0) {
+        return NextResponse.json([]);
+      }
+      membersQuery = membersQuery.in('id', memberIds);
     }
 
-    const { data: members, error: membersError } = await query;
+    const { data: members, error: membersError } = await membersQuery;
 
     if (membersError || !members || members.length === 0) {
       return NextResponse.json([]);
     }
 
-    const memberIds = members.map((m) => m.id);
+    const allMemberIds = members.map((m) => m.id);
+
+    // Buscar user_areas para todos os membros
+    const membersAreasMap = await getUserAreasMap(admin, allMemberIds);
 
     // Buscar todas as trilhas visíveis (excluir deletadas)
-    const { data: allTrails } = await supabase
+    const { data: allTrails } = await admin
       .from('trails')
       .select('id, name, type, area_id')
       .is('deleted_at', null);
@@ -86,20 +111,31 @@ export async function GET(request: Request) {
       );
     }
 
-    // Buscar trail_areas
-    const trailAreasMap = await getTrailAreasMap(supabase, allTrails.map((t) => t.id));
+    // Buscar trail_areas e trail_users
+    const trailIds = allTrails.map((t) => t.id);
+    const [trailAreasMap, trailUsersMap] = await Promise.all([
+      getTrailAreasMap(admin, trailIds),
+      getTrailUsersMap(admin, trailIds),
+    ]);
 
-    // Filtrar trilhas visíveis para cada membro
+    // Filtrar trilhas visíveis para cada membro (multi-area + trail_users)
     const visibleTrailsByMember = new Map<string, string[]>();
     members.forEach((member) => {
+      const memberAreaIds = membersAreasMap.get(member.id) || (member.area_id ? [member.area_id] : []);
       const visible = allTrails.filter((trail) =>
-        isTrailVisibleToArea(trail, member.area_id, trailAreasMap.get(trail.id) || [])
+        isTrailVisibleToUser(
+          trail,
+          memberAreaIds,
+          trailAreasMap.get(trail.id) || [],
+          trailUsersMap.get(trail.id) || [],
+          member.id
+        )
       );
       visibleTrailsByMember.set(member.id, visible.map((t) => t.id));
     });
 
     // Buscar todos os módulos (excluir deletados)
-    const { data: allModules } = await supabase
+    const { data: allModules } = await admin
       .from('modules')
       .select('id, trail_id')
       .is('deleted_at', null);
@@ -121,10 +157,10 @@ export async function GET(request: Request) {
     }
 
     // Buscar progresso de todos os membros
-    const { data: allProgress } = await supabase
+    const { data: allProgress } = await admin
       .from('user_progress')
       .select('user_id, module_id, completed, completed_at')
-      .in('user_id', memberIds);
+      .in('user_id', allMemberIds);
 
     // Calcular estatísticas para cada membro
     const teamMembers: TeamMember[] = members.map((member) => {

@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { createClient } from '@/lib/supabase/client';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
@@ -23,25 +22,21 @@ const trailFormSchema = z
     duration: z.number().min(0, 'Duração deve ser maior ou igual a 0').optional(),
     deadline: z.string().nullable(),
   })
-  .refine(
-    (data) => {
-      if (data.type === 'obrigatoria_area' || data.type === 'optativa_area') {
-        return data.area_ids && data.area_ids.length > 0;
-      }
-      return true;
-    },
-    {
-      message: 'Selecione pelo menos uma área',
-      path: ['area_ids'],
-    }
-  );
+;
 
 type TrailFormData = z.infer<typeof trailFormSchema>;
+
+interface UserOption {
+  id: string;
+  name: string;
+  area_id: string | null;
+}
 
 interface TrailFormProps {
   initialData?: Trail;
   userRole: 'gestor' | 'admin';
-  userAreaId: string | null;
+  userAreaId?: string | null;
+  userAreaIds?: string[];
   areas: Area[];
   onSuccess: () => void;
   onCancel: () => void;
@@ -51,11 +46,14 @@ export function TrailForm({
   initialData,
   userRole,
   userAreaId,
+  userAreaIds,
   areas,
   onSuccess,
   onCancel,
 }: TrailFormProps) {
-  const supabase = createClient();
+  // userAreaIds takes priority over legacy userAreaId
+  const resolvedAreaIds = userAreaIds ?? (userAreaId ? [userAreaId] : []);
+
   const isEditMode = !!initialData;
   const isGestor = userRole === 'gestor';
 
@@ -65,10 +63,44 @@ export function TrailForm({
   // Multi-select de áreas
   const initialAreaIds = initialData?.area_ids && initialData.area_ids.length > 0
     ? initialData.area_ids
-    : isGestor && userAreaId
-      ? [userAreaId]
+    : isGestor && resolvedAreaIds.length > 0
+      ? resolvedAreaIds
       : [];
   const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>(initialAreaIds);
+
+  // Individual user assignment
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(initialData?.user_ids ?? []);
+  const [availableUsers, setAvailableUsers] = useState<UserOption[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+
+  // Fetch available users on mount
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchUsers() {
+      setLoadingUsers(true);
+      try {
+        const res = await fetch('/api/admin/users');
+        if (!res.ok) return;
+        const data = await res.json();
+        const allUsers = (data.users || []) as Array<{ id: string; name: string; role: string; area_id: string | null }>;
+        // Mostrar todos os usuários (colaboradores, gestores, admins)
+        let filteredUsers = allUsers;
+        // Se gestor, filtrar apenas usuários das áreas que ele gerencia
+        if (isGestor && resolvedAreaIds.length > 0) {
+          filteredUsers = allUsers.filter((u) => u.area_id && resolvedAreaIds.includes(u.area_id));
+        }
+        if (!cancelled) {
+          setAvailableUsers(filteredUsers.map((u) => ({ id: u.id, name: u.name, area_id: u.area_id })));
+        }
+      } catch (err) {
+        console.error('Erro ao buscar usuários:', err);
+      } finally {
+        if (!cancelled) setLoadingUsers(false);
+      }
+    }
+    fetchUsers();
+    return () => { cancelled = true; };
+  }, [isGestor, resolvedAreaIds]);
 
   // Se gestor, tipo fixo em obrigatoria_area e área fixa
   const defaultType = isGestor ? 'obrigatoria_area' : undefined;
@@ -106,12 +138,12 @@ export function TrailForm({
       if (selectedType !== 'obrigatoria_area' && selectedType !== 'optativa_area') {
         setValue('type', 'obrigatoria_area');
       }
-      if (userAreaId) {
-        setValue('area_ids', [userAreaId]);
-        setSelectedAreaIds([userAreaId]);
+      if (resolvedAreaIds.length > 0) {
+        setValue('area_ids', resolvedAreaIds);
+        setSelectedAreaIds(resolvedAreaIds);
       }
     }
-  }, [isGestor, userAreaId, selectedType, setValue]);
+  }, [isGestor, resolvedAreaIds, selectedType, setValue]);
 
   // Limpar area_ids quando tipo não for _area
   useEffect(() => {
@@ -123,12 +155,18 @@ export function TrailForm({
 
   const onSubmit = async (data: TrailFormData) => {
     try {
+      const isAreaType = data.type === 'obrigatoria_area' || data.type === 'optativa_area';
+
+      // Validar: para tipos _area, precisa de pelo menos uma área OU um colaborador individual
+      if (isAreaType && selectedAreaIds.length === 0 && selectedUserIds.length === 0) {
+        toast.error('Selecione pelo menos uma área ou um colaborador individual');
+        return;
+      }
+
       let deadlineValue: string | null = null;
       if (hasDeadline && data.deadline) {
         deadlineValue = data.deadline;
       }
-
-      const isAreaType = data.type === 'obrigatoria_area' || data.type === 'optativa_area';
 
       const payload = {
         ...(isEditMode && initialData ? { id: initialData.id } : {}),
@@ -136,6 +174,7 @@ export function TrailForm({
         description: data.description || null,
         type: data.type,
         area_ids: isAreaType ? selectedAreaIds : [],
+        user_ids: selectedUserIds,
         duration: data.duration || 0,
         deadline: deadlineValue,
       };
@@ -158,21 +197,19 @@ export function TrailForm({
       if (!isEditMode && result.id) {
         (async () => {
           try {
-            let targetUserIds: string[] = [];
+            // Buscar usuários relevantes via API
+            const usersRes = await fetch('/api/admin/users');
+            if (!usersRes.ok) return;
+            const usersApiData = await usersRes.json();
+            const allUsers = (usersApiData.users || []) as Array<{ id: string; role: string; area_id: string | null }>;
 
+            let targetUserIds: string[] = [];
             if (data.type === 'obrigatoria_global' || data.type === 'optativa_global') {
-              const { data: allUsers } = await supabase
-                .from('users')
-                .select('id')
-                .eq('role', 'colaborador');
-              if (allUsers) targetUserIds = allUsers.map((u) => u.id);
+              targetUserIds = allUsers.filter((u) => u.role === 'colaborador').map((u) => u.id);
             } else if (isAreaType && selectedAreaIds.length > 0) {
-              const { data: areaUsers } = await supabase
-                .from('users')
-                .select('id')
-                .eq('role', 'colaborador')
-                .in('area_id', selectedAreaIds);
-              if (areaUsers) targetUserIds = areaUsers.map((u) => u.id);
+              targetUserIds = allUsers
+                .filter((u) => u.role === 'colaborador' && u.area_id && selectedAreaIds.includes(u.area_id))
+                .map((u) => u.id);
             }
 
             if (targetUserIds.length > 0) {
@@ -267,6 +304,20 @@ export function TrailForm({
           placeholder="Selecione uma ou mais áreas"
         />
       )}
+
+      {/* Atribuição individual de colaboradores */}
+      <MultiSelect
+        label="Colaboradores individuais (opcional)"
+        options={availableUsers.map((u) => {
+          const area = areas.find((a) => a.id === u.area_id);
+          const areaLabel = area ? area.name : 'Sem área';
+          return { value: u.id, label: `${u.name} (${areaLabel})` };
+        })}
+        value={selectedUserIds}
+        onChange={setSelectedUserIds}
+        disabled={isSubmitting || loadingUsers}
+        placeholder={loadingUsers ? 'Carregando usuários...' : 'Buscar e selecionar colaboradores'}
+      />
 
       <Input
         label="Duração estimada (minutos)"

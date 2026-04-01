@@ -4,7 +4,7 @@ import { User, Trail } from '@/lib/types';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { TrailCatalogClient } from './TrailCatalogClient';
 import { Card } from '@/components/ui/Card';
-import { getTrailAreasMap, isTrailVisibleToArea } from '@/lib/trail-areas';
+import { getTrailAreasMap } from '@/lib/trail-areas';
 
 interface TrailWithProgress extends Trail {
   totalModules: number;

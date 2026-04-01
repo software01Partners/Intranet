@@ -27,20 +27,53 @@ export async function getTrailAreasMap(
 }
 
 /**
- * Verifica se uma trilha é visível para um usuário com base na área dele.
- * Usa trail_areas para tipos _area.
+ * Verifica se uma trilha é visível para um usuário com base nas áreas dele
+ * e atribuição individual.
+ *
+ * @param trail - a trilha com tipo
+ * @param userAreaIds - array de area_ids do usuário (de user_areas)
+ * @param trailAreaIds - area_ids da trilha (de trail_areas)
+ * @param trailUserIds - user_ids atribuídos individualmente à trilha (de trail_users)
+ * @param userId - id do usuário atual
+ */
+export function isTrailVisibleToUser(
+  trail: { type: string },
+  userAreaIds: string[],
+  trailAreaIds: string[],
+  trailUserIds: string[] = [],
+  userId?: string
+): boolean {
+  // Global → todos veem
+  if (trail.type === 'obrigatoria_global' || trail.type === 'optativa_global') {
+    return true;
+  }
+
+  // Por área → vê se qualquer área do usuário está na trilha
+  if (trail.type === 'obrigatoria_area' || trail.type === 'optativa_area') {
+    const hasAreaMatch = userAreaIds.some((areaId) => trailAreaIds.includes(areaId));
+    if (hasAreaMatch) return true;
+  }
+
+  // Atribuição individual → vê se o usuário está na lista
+  if (userId && trailUserIds.includes(userId)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * @deprecated Use isTrailVisibleToUser instead
+ * Mantida para backward compatibility durante migração
  */
 export function isTrailVisibleToArea(
   trail: { type: string; area_id?: string | null },
   userAreaId: string | null,
   trailAreaIds: string[]
 ): boolean {
-  if (trail.type === 'obrigatoria_global' || trail.type === 'optativa_global') {
-    return true;
-  }
-  if (trail.type === 'obrigatoria_area' || trail.type === 'optativa_area') {
-    if (!userAreaId) return false;
-    return trailAreaIds.includes(userAreaId);
-  }
-  return false;
+  return isTrailVisibleToUser(
+    trail,
+    userAreaId ? [userAreaId] : [],
+    trailAreaIds
+  );
 }
