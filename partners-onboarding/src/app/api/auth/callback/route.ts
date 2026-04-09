@@ -6,7 +6,7 @@ import { type NextRequest } from 'next/server';
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
-  const type = requestUrl.searchParams.get('type');
+  const flow = requestUrl.searchParams.get('flow');
 
   if (code) {
     const cookieStore = await cookies();
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Convite ou recuperação de senha → redireciona para definir senha
-      if (type === 'invite' || type === 'recovery') {
+      if (flow === 'invite' || flow === 'recovery') {
         return NextResponse.redirect(new URL('/set-password', requestUrl.origin));
       }
 
