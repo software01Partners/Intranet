@@ -6,10 +6,11 @@ import { type NextRequest } from 'next/server';
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
+  const type = requestUrl.searchParams.get('type');
 
   if (code) {
     const cookieStore = await cookies();
-    
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -40,6 +41,11 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(
           new URL('/login?error=auth_failed', requestUrl.origin)
         );
+      }
+
+      // Convite ou recuperação de senha → redireciona para definir senha
+      if (type === 'invite' || type === 'recovery') {
+        return NextResponse.redirect(new URL('/set-password', requestUrl.origin));
       }
 
       // Redireciona para a página inicial após autenticação bem-sucedida

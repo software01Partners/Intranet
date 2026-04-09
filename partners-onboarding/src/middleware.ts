@@ -5,7 +5,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Rotas públicas que não precisam de autenticação
-  const publicRoutes = ['/login', '/auth/callback'];
+  const publicRoutes = ['/login', '/auth/callback', '/set-password'];
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
 
   // Rotas do Next.js e assets estáticos
