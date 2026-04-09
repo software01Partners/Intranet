@@ -10,30 +10,26 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const supabase = createClient();
 
-    const handleCallback = async () => {
-      // O Supabase client detecta automaticamente os tokens do hash da URL
-      const { data: { session }, error } = await supabase.auth.getSession();
+    // Capturar o type antes que o hash seja limpo pelo Supabase
+    const hash = window.location.hash;
+    const searchParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(hash.replace('#', ''));
+    const type = searchParams.get('type') || hashParams.get('type');
 
-      if (error || !session) {
-        router.push('/login?error=auth_failed');
-        return;
+    // Escutar mudanças de auth — o Supabase processa os tokens do hash automaticamente
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (type === 'invite' || type === 'recovery') {
+          router.push('/set-password');
+        } else {
+          router.push('/');
+        }
       }
+    });
 
-      // Verificar o type na URL (query param ou hash param)
-      const hash = window.location.hash;
-      const searchParams = new URLSearchParams(window.location.search);
-      const hashParams = new URLSearchParams(hash.replace('#', ''));
-
-      const type = searchParams.get('type') || hashParams.get('type');
-
-      if (type === 'invite' || type === 'recovery') {
-        router.push('/set-password');
-      } else {
-        router.push('/');
-      }
+    return () => {
+      subscription.unsubscribe();
     };
-
-    handleCallback();
   }, [router]);
 
   return (
