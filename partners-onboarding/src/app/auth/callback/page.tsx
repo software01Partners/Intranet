@@ -9,46 +9,48 @@ export default function AuthCallbackPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = createClient();
+    const handleCallback = async () => {
+      const hash = window.location.hash.substring(1); // remove o #
+      const hashParams = new URLSearchParams(hash);
 
-    // Capturar params antes que o hash seja limpo pelo Supabase
-    const hash = window.location.hash;
-    const searchParams = new URLSearchParams(window.location.search);
-    const hashParams = new URLSearchParams(hash.replace('#', ''));
-
-    // Verificar se há erro no hash (ex: otp_expired)
-    const hashError = hashParams.get('error_description');
-    if (hashError) {
-      const errorMessages: Record<string, string> = {
-        'Email+link+is+invalid+or+has+expired': 'O link expirou ou já foi utilizado. Solicite um novo convite ao administrador.',
-      };
-      setError(errorMessages[hashParams.get('error_description') || ''] || decodeURIComponent(hashError.replace(/\+/g, ' ')));
-      return;
-    }
-
-    // O Supabase adiciona type=invite ou type=recovery no hash automaticamente
-    const type = hashParams.get('type');
-
-    // Escutar mudanças de auth — o Supabase processa os tokens do hash automaticamente
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (type === 'invite' || type === 'recovery') {
-          router.push('/set-password');
-        } else {
-          router.push('/');
-        }
+      // Verificar se há erro no hash (ex: otp_expired)
+      const hashError = hashParams.get('error_description');
+      if (hashError) {
+        setError(decodeURIComponent(hashError.replace(/\+/g, ' ')));
+        return;
       }
-    });
 
-    // Timeout de segurança — se nada acontecer em 10s, mostrar erro
-    const timeout = setTimeout(() => {
-      setError('Não foi possível autenticar. Tente novamente ou solicite um novo link.');
-    }, 10000);
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      const type = hashParams.get('type');
 
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(timeout);
+      if (!accessToken || !refreshToken) {
+        setError('Link inválido. Solicite um novo convite ao administrador.');
+        return;
+      }
+
+      const supabase = createClient();
+
+      // Definir a sessão manualmente com os tokens do hash
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+
+      if (sessionError) {
+        setError('Erro ao autenticar. Tente novamente ou solicite um novo link.');
+        return;
+      }
+
+      // Convite ou recuperação → definir senha
+      if (type === 'invite' || type === 'recovery') {
+        router.push('/set-password');
+      } else {
+        router.push('/');
+      }
     };
+
+    handleCallback();
   }, [router]);
 
   return (
@@ -61,7 +63,7 @@ export default function AuthCallbackPage() {
         {error ? (
           <>
             <h2 className="text-lg font-semibold text-[#2D2A26] dark:text-[#E8E5E0] mb-2">
-              Link invalido
+              Link inválido
             </h2>
             <p className="text-[#7A7468] dark:text-[#9A9590] mb-6">
               {error}
