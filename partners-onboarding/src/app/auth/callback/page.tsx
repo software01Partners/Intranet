@@ -1,21 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
-function AuthCallbackContent() {
+export default function AuthCallbackPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleCallback = async () => {
-      const supabase = createClient();
-      const code = searchParams.get('code');
       const hash = window.location.hash.substring(1);
       const hashParams = new URLSearchParams(hash);
+      const searchParams = new URLSearchParams(window.location.search);
 
       // Verificar se há erro no hash (ex: otp_expired)
       const hashError = hashParams.get('error_description');
@@ -24,31 +21,11 @@ function AuthCallbackContent() {
         return;
       }
 
-      // Fluxo PKCE (recovery, magic link) — code vem como query param
+      // Fluxo PKCE (recovery, magic link) — redirecionar para API route server-side
+      const code = searchParams.get('code');
       if (code) {
-        const { error: codeError } = await supabase.auth.exchangeCodeForSession(code);
-
-        if (codeError) {
-          setError('O link expirou ou já foi utilizado. Solicite um novo.');
-          return;
-        }
-
-        // Após trocar o code, verificar se é recovery escutando o evento
-        // O Supabase emite PASSWORD_RECOVERY para recovery
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          // Checar se o usuário veio de recovery (reauthenticated via recovery link)
-          const { data: { user } } = await supabase.auth.getUser();
-          const isRecovery = user?.aud === 'authenticated' &&
-            user?.recovery_sent_at &&
-            (Date.now() - new Date(user.recovery_sent_at).getTime()) < 600000; // 10 min
-
-          if (isRecovery) {
-            router.push('/set-password');
-          } else {
-            router.push('/');
-          }
-        }
+        const flow = searchParams.get('flow') || '';
+        window.location.href = `/api/auth/callback?code=${encodeURIComponent(code)}&flow=${encodeURIComponent(flow)}`;
         return;
       }
 
@@ -61,6 +38,8 @@ function AuthCallbackContent() {
         setError('Link inválido. Solicite um novo convite ao administrador.');
         return;
       }
+
+      const supabase = createClient();
 
       const { error: sessionError } = await supabase.auth.setSession({
         access_token: accessToken,
@@ -80,7 +59,7 @@ function AuthCallbackContent() {
     };
 
     handleCallback();
-  }, [router, searchParams]);
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F5F3EF] to-[#1B4D3E]/5 dark:from-[#1A1A1A] dark:to-[#262626] flex items-center justify-center p-4">
@@ -109,17 +88,5 @@ function AuthCallbackContent() {
         )}
       </div>
     </div>
-  );
-}
-
-export default function AuthCallbackPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-b from-[#F5F3EF] to-[#1B4D3E]/5 dark:from-[#1A1A1A] dark:to-[#262626] flex items-center justify-center">
-        <p className="text-[#7A7468] dark:text-[#9A9590]">Carregando...</p>
-      </div>
-    }>
-      <AuthCallbackContent />
-    </Suspense>
   );
 }
