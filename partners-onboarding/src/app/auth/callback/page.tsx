@@ -1,16 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleCallback = async () => {
-      const hash = window.location.hash.substring(1); // remove o #
+      const supabase = createClient();
+      const code = searchParams.get('code');
+      const hash = window.location.hash.substring(1);
       const hashParams = new URLSearchParams(hash);
 
       // Verificar se há erro no hash (ex: otp_expired)
@@ -20,6 +24,35 @@ export default function AuthCallbackPage() {
         return;
       }
 
+      // Fluxo PKCE (recovery, magic link) — code vem como query param
+      if (code) {
+        const { error: codeError } = await supabase.auth.exchangeCodeForSession(code);
+
+        if (codeError) {
+          setError('O link expirou ou já foi utilizado. Solicite um novo.');
+          return;
+        }
+
+        // Após trocar o code, verificar se é recovery escutando o evento
+        // O Supabase emite PASSWORD_RECOVERY para recovery
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          // Checar se o usuário veio de recovery (reauthenticated via recovery link)
+          const { data: { user } } = await supabase.auth.getUser();
+          const isRecovery = user?.aud === 'authenticated' &&
+            user?.recovery_sent_at &&
+            (Date.now() - new Date(user.recovery_sent_at).getTime()) < 600000; // 10 min
+
+          if (isRecovery) {
+            router.push('/set-password');
+          } else {
+            router.push('/');
+          }
+        }
+        return;
+      }
+
+      // Fluxo implícito (invite) — tokens vêm no hash
       const accessToken = hashParams.get('access_token');
       const refreshToken = hashParams.get('refresh_token');
       const type = hashParams.get('type');
@@ -29,9 +62,6 @@ export default function AuthCallbackPage() {
         return;
       }
 
-      const supabase = createClient();
-
-      // Definir a sessão manualmente com os tokens do hash
       const { error: sessionError } = await supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
@@ -42,7 +72,6 @@ export default function AuthCallbackPage() {
         return;
       }
 
-      // Convite ou recuperação → definir senha
       if (type === 'invite' || type === 'recovery') {
         router.push('/set-password');
       } else {
@@ -51,7 +80,7 @@ export default function AuthCallbackPage() {
     };
 
     handleCallback();
-  }, [router]);
+  }, [router, searchParams]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F5F3EF] to-[#1B4D3E]/5 dark:from-[#1A1A1A] dark:to-[#262626] flex items-center justify-center p-4">
@@ -80,5 +109,17 @@ export default function AuthCallbackPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-b from-[#F5F3EF] to-[#1B4D3E]/5 dark:from-[#1A1A1A] dark:to-[#262626] flex items-center justify-center">
+        <p className="text-[#7A7468] dark:text-[#9A9590]">Carregando...</p>
+      </div>
+    }>
+      <AuthCallbackContent />
+    </Suspense>
   );
 }
