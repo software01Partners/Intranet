@@ -14,23 +14,15 @@ const emailPasswordSchema = z.object({
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
 });
 
-const magicLinkSchema = z.object({
-  email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
-});
-
 const resetPasswordSchema = z.object({
   email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
 });
 
 type EmailPasswordForm = z.infer<typeof emailPasswordSchema>;
-type MagicLinkForm = z.infer<typeof magicLinkSchema>;
 type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
-
-type TabType = 'email' | 'magic';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabType>('email');
   const [isLoading, setIsLoading] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const supabase = createClient();
@@ -41,14 +33,6 @@ export default function LoginPage() {
     formState: { errors: errorsEmailPassword },
   } = useForm<EmailPasswordForm>({
     resolver: zodResolver(emailPasswordSchema),
-  });
-
-  const {
-    register: registerMagicLink,
-    handleSubmit: handleSubmitMagicLink,
-    formState: { errors: errorsMagicLink },
-  } = useForm<MagicLinkForm>({
-    resolver: zodResolver(magicLinkSchema),
   });
 
   const {
@@ -78,38 +62,9 @@ export default function LoginPage() {
       toast.success('Login realizado com sucesso!');
       router.push('/');
       router.refresh();
-    } catch (error) {
+    } catch {
       toast.error('Erro inesperado', {
         description: 'Ocorreu um erro ao fazer login. Tente novamente.',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const onSubmitMagicLink = async (data: MagicLinkForm) => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: data.email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) {
-        toast.error('Erro ao enviar link', {
-          description: error.message || 'Não foi possível enviar o link de acesso',
-        });
-        return;
-      }
-
-      toast.success('Link enviado para seu email!', {
-        description: 'Verifique sua caixa de entrada e clique no link para fazer login',
-      });
-    } catch (error) {
-      toast.error('Erro inesperado', {
-        description: 'Ocorreu um erro ao enviar o link. Tente novamente.',
       });
     } finally {
       setIsLoading(false);
@@ -135,7 +90,7 @@ export default function LoginPage() {
       });
       setShowResetPassword(false);
       resetResetPassword();
-    } catch (error) {
+    } catch {
       toast.error('Erro inesperado', {
         description: 'Ocorreu um erro ao enviar o email. Tente novamente.',
       });
@@ -161,134 +116,70 @@ export default function LoginPage() {
 
         {/* Card de Login */}
         <div className="bg-white dark:bg-[#262626] border border-[#E0DCD6] dark:border-[#3D3D3D] rounded-2xl p-6 shadow-lg">
-          {/* Tabs */}
-          <div className="flex gap-2 mb-6">
-            <button
-              type="button"
-              onClick={() => setActiveTab('email')}
-              className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${
-                activeTab === 'email'
-                  ? 'bg-[#1B4D3E] dark:bg-[#34D399] text-white dark:text-[#1A1A1A]'
-                  : 'bg-[#F5F3EF] dark:bg-[#1A1A1A] text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0]'
-              }`}
-            >
-              Email/Senha
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('magic')}
-              className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${
-                activeTab === 'magic'
-                  ? 'bg-[#1B4D3E] dark:bg-[#34D399] text-white dark:text-[#1A1A1A]'
-                  : 'bg-[#F5F3EF] dark:bg-[#1A1A1A] text-[#7A7468] dark:text-[#9A9590] hover:text-[#2D2A26] dark:hover:text-[#E8E5E0]'
-              }`}
-            >
-              Magic Link
-            </button>
-          </div>
-
-          {activeTab === 'email' && (
-            <form
-              onSubmit={handleSubmitEmailPassword(onSubmitEmailPassword)}
-              className="space-y-4"
-            >
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0] mb-2"
-                >
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  {...registerEmailPassword('email')}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#F5F3EF] dark:bg-[#1A1A1A] border border-[#E0DCD6] dark:border-[#3D3D3D] text-[#2D2A26] dark:text-[#E8E5E0] placeholder-[#B0A99E] dark:placeholder-[#7A7468] focus:outline-none focus:ring-2 focus:ring-[#1B4D3E]/30 dark:focus:ring-[#34D399]/30 focus:border-[#1B4D3E] dark:focus:border-[#34D399]"
-                  placeholder="seu@email.com"
-                />
-                {errorsEmailPassword.email && (
-                  <p className="mt-1 text-sm text-[#EF4444]">
-                    {errorsEmailPassword.email.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0] mb-2"
-                >
-                  Senha
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  {...registerEmailPassword('password')}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#F5F3EF] dark:bg-[#1A1A1A] border border-[#E0DCD6] dark:border-[#3D3D3D] text-[#2D2A26] dark:text-[#E8E5E0] placeholder-[#B0A99E] dark:placeholder-[#7A7468] focus:outline-none focus:ring-2 focus:ring-[#1B4D3E]/30 dark:focus:ring-[#34D399]/30 focus:border-[#1B4D3E] dark:focus:border-[#34D399]"
-                  placeholder="••••••••"
-                />
-                {errorsEmailPassword.password && (
-                  <p className="mt-1 text-sm text-[#EF4444]">
-                    {errorsEmailPassword.password.message}
-                  </p>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-2.5 px-4 bg-[#1B4D3E] dark:bg-[#34D399] text-white dark:text-[#1A1A1A] rounded-xl font-semibold hover:bg-[#153D31] dark:hover:bg-[#2BB585] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          <form
+            onSubmit={handleSubmitEmailPassword(onSubmitEmailPassword)}
+            className="space-y-4"
+          >
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0] mb-2"
               >
-                {isLoading ? 'Entrando...' : 'Entrar'}
-              </button>
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                {...registerEmailPassword('email')}
+                className="w-full px-4 py-2.5 rounded-xl bg-[#F5F3EF] dark:bg-[#1A1A1A] border border-[#E0DCD6] dark:border-[#3D3D3D] text-[#2D2A26] dark:text-[#E8E5E0] placeholder-[#B0A99E] dark:placeholder-[#7A7468] focus:outline-none focus:ring-2 focus:ring-[#1B4D3E]/30 dark:focus:ring-[#34D399]/30 focus:border-[#1B4D3E] dark:focus:border-[#34D399]"
+                placeholder="seu@email.com"
+              />
+              {errorsEmailPassword.email && (
+                <p className="mt-1 text-sm text-[#EF4444]">
+                  {errorsEmailPassword.email.message}
+                </p>
+              )}
+            </div>
 
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setShowResetPassword(true)}
-                  className="text-sm text-[#1B4D3E] dark:text-[#34D399] hover:text-[#153D31] dark:hover:text-[#2BB585] transition-colors"
-                >
-                  Esqueci minha senha
-                </button>
-              </div>
-            </form>
-          )}
-
-          {activeTab === 'magic' && (
-            <form
-              onSubmit={handleSubmitMagicLink(onSubmitMagicLink)}
-              className="space-y-4"
-            >
-              <div>
-                <label
-                  htmlFor="magic-email"
-                  className="block text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0] mb-2"
-                >
-                  Email
-                </label>
-                <input
-                  id="magic-email"
-                  type="email"
-                  {...registerMagicLink('email')}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#F5F3EF] dark:bg-[#1A1A1A] border border-[#E0DCD6] dark:border-[#3D3D3D] text-[#2D2A26] dark:text-[#E8E5E0] placeholder-[#B0A99E] dark:placeholder-[#7A7468] focus:outline-none focus:ring-2 focus:ring-[#1B4D3E]/30 dark:focus:ring-[#34D399]/30 focus:border-[#1B4D3E] dark:focus:border-[#34D399]"
-                  placeholder="seu@email.com"
-                />
-                {errorsMagicLink.email && (
-                  <p className="mt-1 text-sm text-[#EF4444]">
-                    {errorsMagicLink.email.message}
-                  </p>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-2.5 px-4 bg-[#1B4D3E] dark:bg-[#34D399] text-white dark:text-[#1A1A1A] rounded-xl font-semibold hover:bg-[#153D31] dark:hover:bg-[#2BB585] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-[#2D2A26] dark:text-[#E8E5E0] mb-2"
               >
-                {isLoading ? 'Enviando...' : 'Enviar link de acesso'}
+                Senha
+              </label>
+              <input
+                id="password"
+                type="password"
+                {...registerEmailPassword('password')}
+                className="w-full px-4 py-2.5 rounded-xl bg-[#F5F3EF] dark:bg-[#1A1A1A] border border-[#E0DCD6] dark:border-[#3D3D3D] text-[#2D2A26] dark:text-[#E8E5E0] placeholder-[#B0A99E] dark:placeholder-[#7A7468] focus:outline-none focus:ring-2 focus:ring-[#1B4D3E]/30 dark:focus:ring-[#34D399]/30 focus:border-[#1B4D3E] dark:focus:border-[#34D399]"
+                placeholder="••••••••"
+              />
+              {errorsEmailPassword.password && (
+                <p className="mt-1 text-sm text-[#EF4444]">
+                  {errorsEmailPassword.password.message}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-2.5 px-4 bg-[#1B4D3E] dark:bg-[#34D399] text-white dark:text-[#1A1A1A] rounded-xl font-semibold hover:bg-[#153D31] dark:hover:bg-[#2BB585] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Entrando...' : 'Entrar'}
+            </button>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setShowResetPassword(true)}
+                className="text-sm text-[#1B4D3E] dark:text-[#34D399] hover:text-[#153D31] dark:hover:text-[#2BB585] transition-colors"
+              >
+                Esqueci minha senha
               </button>
-            </form>
-          )}
+            </div>
+          </form>
         </div>
       </div>
 
