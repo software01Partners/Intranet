@@ -26,12 +26,13 @@ export default function AuthCallbackPage() {
       return;
     }
 
-    const flow = searchParams.get('flow') || hashParams.get('flow');
+    // O Supabase adiciona type=invite ou type=recovery no hash automaticamente
+    const type = hashParams.get('type');
 
     // Escutar mudanças de auth — o Supabase processa os tokens do hash automaticamente
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (flow === 'invite' || flow === 'recovery') {
+        if (type === 'invite' || type === 'recovery') {
           router.push('/set-password');
         } else {
           router.push('/');

@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     const { data: newAuthUser, error: inviteError } =
       await adminClient.auth.admin.inviteUserByEmail(email, {
         data: { name },
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?flow=invite`,
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
       });
 
     if (inviteError || !newAuthUser.user) {
