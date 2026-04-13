@@ -552,23 +552,23 @@ interface KPICardProps {
 function KPICard({ icon, label, value, color, subtext }: KPICardProps) {
   return (
     <Card>
-      <CardContent className="p-5">
-        <div className="flex items-center gap-3">
+      <CardContent className="p-3 sm:p-4 lg:p-5">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex-shrink-0 flex items-center justify-center"
             style={{ backgroundColor: `${color}15` }}
           >
             <div style={{ color }}>{icon}</div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-[#7A7468] dark:text-[#9A9590] uppercase tracking-wider">
+            <p className="text-[10px] sm:text-xs font-medium text-[#7A7468] dark:text-[#9A9590] uppercase tracking-wider truncate">
               {label}
             </p>
-            <p className="text-2xl font-bold text-[#2D2A26] dark:text-[#E8E5E0]">
+            <p className="text-lg sm:text-xl lg:text-2xl font-bold text-[#2D2A26] dark:text-[#E8E5E0] truncate">
               {value}
             </p>
             {subtext && (
-              <p className="text-xs text-[#7A7468] dark:text-[#9A9590]">{subtext}</p>
+              <p className="text-[10px] sm:text-xs text-[#7A7468] dark:text-[#9A9590] truncate">{subtext}</p>
             )}
           </div>
         </div>
@@ -584,8 +584,8 @@ function KPICard({ icon, label, value, color, subtext }: KPICardProps) {
 function DashboardSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4">
+        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
           <Card key={i}>
             <CardContent className="p-5">
               <Skeleton className="h-4 w-20 mb-2" />
@@ -660,7 +660,7 @@ export default async function AdminDashboardPage({
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4">
         <KPICard
           icon={<Users className="w-5 h-5" />}
           label="Colaboradores"
