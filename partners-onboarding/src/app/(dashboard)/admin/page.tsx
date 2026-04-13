@@ -552,26 +552,26 @@ interface KPICardProps {
 function KPICard({ icon, label, value, color, subtext }: KPICardProps) {
   return (
     <Card>
-      <CardContent className="p-3 sm:p-4 lg:p-5">
-        <div className="flex items-center gap-2 sm:gap-3">
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <p className="text-[11px] sm:text-xs font-medium text-[#7A7468] dark:text-[#9A9590] leading-tight break-words">
+            {label}
+          </p>
           <div
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex-shrink-0 flex items-center justify-center"
+            className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center"
             style={{ backgroundColor: `${color}15` }}
           >
             <div style={{ color }}>{icon}</div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] sm:text-xs font-medium text-[#7A7468] dark:text-[#9A9590] uppercase tracking-wider truncate">
-              {label}
-            </p>
-            <p className="text-lg sm:text-xl lg:text-2xl font-bold text-[#2D2A26] dark:text-[#E8E5E0] truncate">
-              {value}
-            </p>
-            {subtext && (
-              <p className="text-[10px] sm:text-xs text-[#7A7468] dark:text-[#9A9590] truncate">{subtext}</p>
-            )}
-          </div>
         </div>
+        <p className="text-xl sm:text-2xl font-bold text-[#2D2A26] dark:text-[#E8E5E0] leading-tight">
+          {value}
+        </p>
+        {subtext && (
+          <p className="text-[10px] sm:text-xs text-[#7A7468] dark:text-[#9A9590] mt-1 leading-tight">
+            {subtext}
+          </p>
+        )}
       </CardContent>
     </Card>
   );
