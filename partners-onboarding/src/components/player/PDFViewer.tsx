@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
+import { FullscreenButton } from '@/components/ui/FullscreenButton';
 import { CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CertificateModal } from '@/components/certificate/CertificateModal';
@@ -29,6 +30,7 @@ export function PDFViewer({
   const [isCompleting, setIsCompleting] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const startTimeRef = useRef<number>(Date.now());
+  const viewerRef = useRef<HTMLDivElement>(null);
 
   const handleMarkAsCompleted = async () => {
     setIsCompleting(true);
@@ -76,7 +78,11 @@ export function PDFViewer({
 
   return (
     <div className="w-full space-y-4">
-      <div className="relative w-full aspect-[4/3] bg-[#0A0A0F] rounded-xl overflow-hidden border border-[#333333]">
+      <div
+        ref={viewerRef}
+        className="relative w-full aspect-[4/3] bg-[#0A0A0F] rounded-xl overflow-hidden border border-[#333333] group"
+      >
+        <FullscreenButton targetRef={viewerRef} />
         <iframe
           src={pdfUrl}
           className="w-full h-full"

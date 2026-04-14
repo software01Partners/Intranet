@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
+import { FullscreenButton } from '@/components/ui/FullscreenButton';
 import { CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CertificateModal } from '@/components/certificate/CertificateModal';
@@ -35,6 +36,7 @@ export function ExternalVideoPlayer({
   const [isCompleting, setIsCompleting] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const startTimeRef = useRef<number>(Date.now());
+  const viewerRef = useRef<HTMLDivElement>(null);
 
   // Determinar URL de embed
   let embedUrl: string | null = null;
@@ -99,7 +101,11 @@ export function ExternalVideoPlayer({
 
   return (
     <div className="w-full space-y-4">
-      <div className="relative w-full aspect-video bg-[#1A1A1A] dark:bg-[#262626] rounded-2xl overflow-hidden border border-[#E0DCD6] dark:border-[#3D3D3D]">
+      <div
+        ref={viewerRef}
+        className="relative w-full aspect-video bg-[#1A1A1A] dark:bg-[#262626] rounded-2xl overflow-hidden border border-[#E0DCD6] dark:border-[#3D3D3D]"
+      >
+        <FullscreenButton targetRef={viewerRef} />
         <iframe
           src={embedUrl}
           className="w-full h-full"
