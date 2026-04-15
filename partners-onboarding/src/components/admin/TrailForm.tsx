@@ -145,11 +145,12 @@ export function TrailForm({
     }
   }, [isGestor, resolvedAreaIds, selectedType, setValue]);
 
-  // Limpar area_ids quando tipo não for _area
+  // Limpar area_ids e user_ids quando tipo não for _area
   useEffect(() => {
     if (selectedType !== 'obrigatoria_area' && selectedType !== 'optativa_area') {
       setValue('area_ids', []);
       setSelectedAreaIds([]);
+      setSelectedUserIds([]);
     }
   }, [selectedType, setValue]);
 
@@ -305,19 +306,21 @@ export function TrailForm({
         />
       )}
 
-      {/* Atribuição individual de colaboradores */}
-      <MultiSelect
-        label="Colaboradores individuais (opcional)"
-        options={availableUsers.map((u) => {
-          const area = areas.find((a) => a.id === u.area_id);
-          const areaLabel = area ? area.name : 'Sem área';
-          return { value: u.id, label: `${u.name} (${areaLabel})` };
-        })}
-        value={selectedUserIds}
-        onChange={setSelectedUserIds}
-        disabled={isSubmitting || loadingUsers}
-        placeholder={loadingUsers ? 'Carregando usuários...' : 'Buscar e selecionar colaboradores'}
-      />
+      {/* Atribuição individual de colaboradores — apenas para trilhas de área */}
+      {showAreaSelector && (
+        <MultiSelect
+          label="Colaboradores individuais (opcional)"
+          options={availableUsers.map((u) => {
+            const area = areas.find((a) => a.id === u.area_id);
+            const areaLabel = area ? area.name : 'Sem área';
+            return { value: u.id, label: `${u.name} (${areaLabel})` };
+          })}
+          value={selectedUserIds}
+          onChange={setSelectedUserIds}
+          disabled={isSubmitting || loadingUsers}
+          placeholder={loadingUsers ? 'Carregando usuários...' : 'Buscar e selecionar colaboradores'}
+        />
+      )}
 
       <Input
         label="Duração estimada (minutos)"

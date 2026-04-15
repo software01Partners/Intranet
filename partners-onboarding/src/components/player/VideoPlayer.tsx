@@ -17,6 +17,7 @@ interface VideoPlayerProps {
   moduleId: string;
   trailId: string;
   trailName?: string;
+  alreadyCompleted?: boolean;
   onComplete: (payload?: CompletePayload) => void;
 }
 
@@ -25,6 +26,7 @@ export function VideoPlayer({
   moduleId,
   trailId,
   trailName,
+  alreadyCompleted = false,
   onComplete,
 }: VideoPlayerProps) {
   const [videoFinished, setVideoFinished] = useState(false);
@@ -100,17 +102,22 @@ export function VideoPlayer({
       </div>
 
       <div className="flex justify-center">
-        <Button
-          onClick={handleMarkAsCompleted}
-          loading={isCompleting}
-          icon={videoFinished ? CheckCircle2 : undefined}
-          size="lg"
-          disabled={!videoFinished}
-          variant={videoFinished ? 'primary' : 'secondary'}
-          className={!videoFinished ? 'opacity-70 cursor-not-allowed' : ''}
-        >
-          {videoFinished ? 'Marcar como Concluído' : 'Assista o vídeo completo'}
-        </Button>
+        {(() => {
+          const unlocked = videoFinished || alreadyCompleted;
+          return (
+            <Button
+              onClick={handleMarkAsCompleted}
+              loading={isCompleting}
+              icon={unlocked ? CheckCircle2 : undefined}
+              size="lg"
+              disabled={!unlocked}
+              variant={unlocked ? 'primary' : 'secondary'}
+              className={!unlocked ? 'opacity-70 cursor-not-allowed' : ''}
+            >
+              {unlocked ? 'Marcar como Concluído' : 'Assista o vídeo completo'}
+            </Button>
+          );
+        })()}
       </div>
 
       <CertificateModal

@@ -139,20 +139,25 @@ export function TrailPlayerClient({
           {/* Player baseado no tipo */}
           {currentModule.type === 'video' && currentModule.signedUrl && isExternalVideoUrl(currentModule.signedUrl) && (
             <ExternalVideoPlayer
+              key={currentModule.id}
               videoUrl={currentModule.signedUrl}
               moduleId={currentModule.id}
               trailId={trail.id}
               trailName={trail.name}
+              duration={currentModule.duration}
+              alreadyCompleted={!!currentModule.progress?.completed}
               onComplete={handleModuleComplete}
             />
           )}
 
           {currentModule.type === 'video' && currentModule.signedUrl && !isExternalVideoUrl(currentModule.signedUrl) && (
             <VideoPlayer
+              key={currentModule.id}
               videoUrl={currentModule.signedUrl}
               moduleId={currentModule.id}
               trailId={trail.id}
               trailName={trail.name}
+              alreadyCompleted={!!currentModule.progress?.completed}
               onComplete={handleModuleComplete}
             />
           )}
